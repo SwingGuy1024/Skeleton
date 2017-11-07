@@ -1,0 +1,148 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>neptunedreams.com</groupId>
+  <artifactId>skeleton</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>skeleton</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <!--<dependency>-->
+      <!--<groupId>junit</groupId>-->
+      <!--<artifactId>junit</artifactId>-->
+      <!--<version>3.8.1</version>-->
+      <!--<scope>test</scope>-->
+    <!--</dependency>-->
+
+    <!-- https://mvnrepository.com/artifact/org.apache.derby/derby -->
+    <dependency>
+      <groupId>org.apache.derby</groupId>
+      <artifactId>derby</artifactId>
+      <version>10.14.1.0</version>
+    </dependency>
+
+    <!--&lt;!&ndash; https://mvnrepository.com/artifact/javax.persistence/persistence-api &ndash;&gt;-->
+    <!--<dependency>-->
+      <!--<groupId>javax.persistence</groupId>-->
+      <!--<artifactId>persistence-api</artifactId>-->
+      <!--<version>1.0.2</version>-->
+    <!--</dependency>-->
+
+    <!-- https://mvnrepository.com/artifact/org.jetbrains/annotations -->
+    <dependency>
+      <groupId>org.jetbrains</groupId>
+      <artifactId>annotations</artifactId>
+      <version>13.0</version>
+    </dependency>
+  </dependencies>
+  
+  <build>
+    <plugins>
+      <!--This is the standard Maven plugin-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+      <!--<plugin>-->
+        <!--<groupId>org.apache.maven.plugins</groupId>-->
+        <!--<artifactId>maven-surefire-plugin</artifactId>-->
+        <!--<version>2.5</version>-->
+        <!--<configuration>-->
+          <!--<systemPropertyVariables>-->
+            <!--<derby.system.home>${user.home}/.skeleton}</derby.system.home>-->
+            <!--<buildDirectory>${project.build.directory}</buildDirectory>-->
+          <!--</systemPropertyVariables>-->
+        <!--</configuration>-->
+      <!--</plugin>-->
+
+      <!--This packs all the classes into a single jar-->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <!--This remove the "with-dependencies" from the name, so it ends with ".jar"-->
+          <appendAssemblyId>false</appendAssemblyId>
+        </configuration>
+      </plugin>
+
+      <!--I don't remember what this does. I may not need it. But it make assist the assembly plugin-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>
+                ${project.build.directory}/libs
+              </outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!--This creates an executable jar file.-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.6</version>
+        <configuration>
+          <detail>
+            <derby.system.home>${user.home}/.skeleton</derby.system.home>
+          </detail>
+          <archive>
+            <manifest>
+              <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      
+      <!--This one will bundle everything into a Mac Application bundle, I hope.-->
+      <plugin>
+        <!-- https://github.com/federkasten/appbundle-maven-plugin -->
+        <groupId>sh.tak.appbundler</groupId>
+        <artifactId>appbundle-maven-plugin</artifactId>
+        <version>1.2.0</version>
+        <configuration>
+          <!--Put your custom Info.plist and Icon.icns under your maven resource paths (src/main/resources on default configuration).-->
+          <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
+          <!--<dictionaryFile>YourCustomInfo.plist</dictionaryFile>-->
+          <iconFile>globe.icns</iconFile>
+          <jrePath>/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk</jrePath>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
