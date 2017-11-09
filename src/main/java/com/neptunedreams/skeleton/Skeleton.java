@@ -10,7 +10,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Properties;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -30,12 +29,11 @@ import com.neptunedreams.skeleton.ui.RecordView;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
 public final class Skeleton extends JPanel
 {
-  private static final String DERBY_SYSTEM_HOME = "derby.system.home";
   // Done: Write an import mechanism.
   // Done: Test packaging
-  // todo: Test Bundling: https://github.com/federkasten/appbundle-maven-plugin
+  // Done: Test Bundling: https://github.com/federkasten/appbundle-maven-plugin
   // Done: Add an info line: 4/15 (25 total)
-  // Todo: Write a query thread to handle find requests.
+  // Done: Write a query thread to handle find requests.
   // Todo: immediately resort when changing sort field.
   // Done: BUG: Fix finding no records.
   // TODO: BUG: Fix search in field.
@@ -46,13 +44,22 @@ public final class Skeleton extends JPanel
   // Todo: enable buttons on new record. ??
   // Todo: Convert to jOOQ
   // Done: Add a getTotal method for info line.
-  // Todo: Figure out a better way to get the ID of a new record. Can we ask the sequencer?
+  // TODO: Figure out a better way to get the ID of a new record. Can we ask the sequencer?
+  // Todo  For accessing a sequencer, see https://stackoverflow.com/questions/5729063/how-to-use-sequence-in-apache-derby
+  
+  // https://db.apache.org/ojb/docu/howtos/howto-use-db-sequences.html
+  // https://db.apache.org/derby/docs/10.8/ref/rrefsqljcreatesequence.html 
+  // https://db.apache.org/derby/docs/10.9/ref/rrefsistabssyssequences.html
+  // Derby System Tables: https://db.apache.org/derby/docs/10.7/ref/rrefsistabs38369.html
+  // .
 
+  private static final String DERBY_SYSTEM_HOME = "derby.system.home";
   private Connection connection;
   private JPanel mainPanel;
   private static JFrame frame;
 
   public static void main(String[] args ) throws IOException {
+//    org.jooq.util.JavaGenerator generator;
     frame = new JFrame("Skeleton");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.setLocationByPlatform(true);
@@ -66,7 +73,7 @@ public final class Skeleton extends JPanel
   private Skeleton() throws IOException {
     super();
     String userHome = System.getProperty("user.home");
-    System.out.printf("user.home: %s%n", userHome);
+//    System.out.printf("user.home: %s%n", userHome);
     //noinspection StringConcatenation,HardcodedFileSeparator
     final String derbySystemHome = userHome + "/.skeleton";
     System.setProperty(DERBY_SYSTEM_HOME, derbySystemHome);
@@ -134,6 +141,7 @@ public final class Skeleton extends JPanel
 
   private Dao<?> connect() throws SQLException {
     String connectionUrl = "jdbc:derby:skeleton;create=true;collation=TERRITORY_BASED:PRIMARY";
+//    String connectionUrl = "jdbc:derby:skeleton2;create=true";
     System.out.printf("URL: %s%n", connectionUrl);
 //    DataSource dataSource =
     try {
@@ -143,12 +151,12 @@ public final class Skeleton extends JPanel
       e.printStackTrace();
 //      connection = DriverManager.getConnection(connectionUrl);
     }
-    Map<String, Class<?>> typeMap =  connection.getTypeMap();
-    int size = typeMap.size();
-    System.out.printf("Total of %d types:%n", size);
-    for (String s: typeMap.keySet()) {
-      System.out.printf("%s: %s%n", s, typeMap.get(s));
-    }
+//    Map<String, Class<?>> typeMap =  connection.getTypeMap();
+//    int size = typeMap.size();
+//    System.out.printf("Total of %d types:%n", size);
+//    for (String s: typeMap.keySet()) {
+//      System.out.printf("%s: %s%n", s, typeMap.get(s));
+//    }
 
     ConnectionSource connectionSource = () -> connection;
     RecordDao recordDao = new RecordDao(connectionSource);
@@ -216,7 +224,7 @@ public final class Skeleton extends JPanel
   private static void shutDownDatabase() {
     try {
       // NO need to safely close. We're shutting down!
-      //noinspection CallToDriverManagerGetConnection,JDBCResourceOpenedButNotSafelyClosed
+      //noinspection CallToDriverManagerGetConnection,JDBCResourceOpenedButNotSafelyClosed,resource
       DriverManager.getConnection("jdbc:derby:;shutdown=true");
     } catch (SQLException e1) {
       if (!e1.getMessage().contains("Derby system shutdown.")) {
