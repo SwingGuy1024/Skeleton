@@ -42,6 +42,7 @@ import com.neptunedreams.skeleton.task.QueuedTask;
 @SuppressWarnings("HardCodedStringLiteral")
 public class RecordUI extends JPanel implements RecordModelListener {
 
+  private static final long DELAY = 1000L;
   private JTextField findField;
   private final RecordController controller;
   private ButtonGroup buttonGroup;
@@ -54,7 +55,7 @@ public class RecordUI extends JPanel implements RecordModelListener {
   private JLabel infoLine;
   private final ParameterizedCallable<String, Collection<Record>> callable = createCallable();
   private final Consumer<Collection<Record>> recordConsumer = createRecordConsumer();
-  private QueuedTask<String, Collection<Record>> queuedTask = new QueuedTask<>(1000L, callable, recordConsumer);
+  private QueuedTask<String, Collection<Record>> queuedTask = new QueuedTask<>(DELAY, callable, recordConsumer);
 
   public RecordUI(RecordModel model, RecordView theView, RecordController theController) {
     super(new BorderLayout());
@@ -67,8 +68,8 @@ public class RecordUI extends JPanel implements RecordModelListener {
     setBorder(new MatteBorder(4, 4, 4, 4, getBackground()));
     recordModel.addModelListener(this);
     
-    findField.addPropertyChangeListener("text", 
-        (evt) -> System.out.printf("Change %s from %s to %s%n", evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
+//    findField.addPropertyChangeListener("text", 
+//        (evt) -> System.out.printf("Change %s from %s to %s%n", evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
     findField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(final DocumentEvent e) {

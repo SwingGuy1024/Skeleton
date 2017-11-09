@@ -13,8 +13,9 @@ import com.neptunedreams.skeleton.data.Record;
  *
  * @author Miguel Mu\u00f1oz
  */
+@SuppressWarnings("WeakerAccess")
 public class RecordModel {
-  final private List<RecordModelListener> listenerList = new LinkedList<>();
+  private final List<RecordModelListener> listenerList = new LinkedList<>();
   
 //  RecordModel() {
 //    Thread.dumpStack();
@@ -46,6 +47,7 @@ public class RecordModel {
     listenerList.add(listener);
   }
   
+  @SuppressWarnings("unused")
   public void removeModelListener(RecordModelListener listener) {
     listenerList.remove(listener);
   }

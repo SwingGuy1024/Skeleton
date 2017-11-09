@@ -26,6 +26,7 @@ import com.neptunedreams.skeleton.data.Record;
  *
  * @author Miguel Mu\u00f1oz
  */
+@SuppressWarnings("WeakerAccess")
 public class RecordView extends JPanel {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
@@ -40,6 +41,7 @@ public class RecordView extends JPanel {
   private JTextComponent pwField;
   private JTextComponent notesField;
   
+  @SuppressWarnings("HardCodedStringLiteral")
   private Record currentRecord = new Record("D", "D", "D", "D");
   
   private RecordController controller;
@@ -191,9 +193,9 @@ public class RecordView extends JPanel {
     theRecord.setNotes(notesField.getText().trim());
   }
   
-  public void setButtonState(boolean nextEnabled, boolean prevEnabled) {
-    
-  }
+//  public void setButtonState(boolean nextEnabled, boolean prevEnabled) {
+//    
+//  }
   
 //  private class LoggingCaret extends DefaultCaret {
 //    LoggingCaret() {
