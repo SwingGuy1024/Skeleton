@@ -6,6 +6,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.sql.SQLException;
+import java.util.function.Function;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -17,7 +18,8 @@ import javax.swing.JTextField;
 import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.JTextComponent;
-import com.neptunedreams.skeleton.data.Record;
+import com.neptunedreams.Setter;
+import com.neptunedreams.skeleton.data.RecordField;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -27,29 +29,57 @@ import com.neptunedreams.skeleton.data.Record;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings("WeakerAccess")
-public class RecordView extends JPanel {
+public final class RecordView<R> extends JPanel {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
   private JPanel labelPanel = new JPanel(new GridLayout(0, 1));
   private JPanel fieldPanel = new JPanel(new GridLayout(0, 1));
   private JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
   private ButtonGroup buttonGroup = new ButtonGroup();
-  
+
+  private Function<R, Integer> idGetter;
+  private Setter<R, Integer> idSetter;
+  private Function<R, String> sourceGetter;
+  private Setter<R, String> sourceSetter;
+  private Function<R, String> userNameGetter;
+  private Setter<R, String> userNameSetter;
+  private Function<R, String> passwordGetter;
+  private Setter<R, String> passwordSetter;
+  private Function<R, String> notesGetter;
+  private Setter<R, String> notesSetter;
+
   private JLabel idField;
   private JTextComponent sourceField;
   private JTextComponent usernameField;
   private JTextComponent pwField;
   private JTextComponent notesField;
-  
-  @SuppressWarnings("HardCodedStringLiteral")
-  private Record currentRecord = new Record("D", "D", "D", "D");
-  
-  private RecordController controller;
 
-  public RecordView() {
+  @SuppressWarnings("HardCodedStringLiteral")
+  private R currentRecord; // = new Record("D", "D", "D", "D");
+  
+  private RecordController<R, ?> controller;
+
+  private RecordView(R record,
+                     Function<R, Integer> getIdFunction, Setter<R, Integer> setIdFunction,
+                     Function<R, String> getSourceFunction, Setter<R, String> setSourceFunction,
+                     Function<R, String> getUserNameFunction, Setter<R, String> setUserNameFunction,
+                     Function<R, String> getPasswordFunction, Setter<R, String> setPasswordFunction,
+                     Function<R, String> getNotesFunction, Setter<R, String> setNotesFunction
+   ) {
     super(new BorderLayout());
-    currentRecord.setId(-999);
+    idGetter = getIdFunction;
+    idSetter = setIdFunction;
+    sourceGetter = getSourceFunction;
+    sourceSetter = setSourceFunction;
+    userNameGetter = getUserNameFunction;
+    userNameSetter = setUserNameFunction;
+    passwordGetter = getPasswordFunction;
+    passwordSetter = setPasswordFunction;
+    notesGetter = getNotesFunction;
+    notesSetter = setNotesFunction;
+    idSetter.setValue(currentRecord,-999);
     add(makeTopPanel(), BorderLayout.PAGE_START);
+    currentRecord = record;
   }
 
   private JPanel makeTopPanel() {
@@ -60,14 +90,14 @@ public class RecordView extends JPanel {
     return topPanel;
   }
 
-  public void setController(RecordController theController) {
+  public void setController(RecordController<R, ?> theController) {
     controller = theController;
     
     // This is safe because setController is only called once.
-    idField = (JLabel) addField("ID", false, Record.FIELD.ID);
-    sourceField = (JTextComponent) addField("Source", true, Record.FIELD.SOURCE);
-    usernameField = (JTextComponent) addField("User Name", true, Record.FIELD.USERNAME);
-    pwField = (JTextComponent) addField("Password", true, Record.FIELD.PASSWORD);
+    idField = (JLabel) addField("ID", false, RecordField.ID);
+    sourceField = (JTextComponent) addField("Source", true, RecordField.SOURCE);
+    usernameField = (JTextComponent) addField("User Name", true, RecordField.USERNAME);
+    pwField = (JTextComponent) addField("Password", true, RecordField.PASSWORD);
     notesField = addNotesField();
     installStandardCaret(sourceField);
     installStandardCaret(usernameField);
@@ -94,7 +124,7 @@ public class RecordView extends JPanel {
     caret.setBlinkRate(blinkRate);
   }
 
-  private JComponent addField(final String labelText, final boolean editable, final Record.FIELD orderField) {
+  private JComponent addField(final String labelText, final boolean editable, final RecordField orderField) {
     JLabel label = new JLabel(labelText + ':');
     labelPanel.add(label);
     JComponent field;
@@ -130,7 +160,7 @@ public class RecordView extends JPanel {
     return new JScrollPane(wrapped, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
   }
   
-  void setCurrentRecord(Record newRecord) {
+  void setCurrentRecord(R newRecord) {
     currentRecord = newRecord;
 //    if (currentRecord == null) {
 //      idField.setText("");
@@ -139,11 +169,11 @@ public class RecordView extends JPanel {
 //      pwField.setText("");
 //      notesField.setText("");
 //    } else {
-      idField.setText(String.valueOf(currentRecord.getId()));
-      sourceField.setText(currentRecord.getSource());
-      usernameField.setText(currentRecord.getUserName());
-      pwField.setText(currentRecord.getPassword());
-      notesField.setText(currentRecord.getNotes());
+      idField.setText(String.valueOf(idGetter.apply(currentRecord)));
+      sourceField.setText(sourceGetter.apply(currentRecord));
+      usernameField.setText(userNameGetter.apply(currentRecord));
+      pwField.setText(passwordGetter.apply(currentRecord));
+      notesField.setText(notesGetter.apply(currentRecord));
 //    }
   }
   
@@ -156,21 +186,21 @@ public class RecordView extends JPanel {
 //          !notesField.getText().trim().isEmpty();
 //    }
     //noinspection EqualsReplaceableByObjectsCall
-    return !currentRecord.getUserName().trim().equals(usernameField.getText().trim()) ||
-        !currentRecord.getPassword().trim().equals(pwField.getText().trim()) ||
-        !currentRecord.getSource().trim().equals(sourceField.getText().trim()) ||
-        !currentRecord.getNotes().trim().equals(notesField.getText().trim());
+    return !userNameGetter.apply(currentRecord).trim().equals(usernameField.getText().trim()) ||
+        !passwordGetter.apply(currentRecord).trim().equals(pwField.getText().trim()) ||
+        !sourceGetter.apply(currentRecord).trim().equals(sourceField.getText().trim()) ||
+        !notesGetter.apply(currentRecord).trim().equals(notesField.getText().trim());
   }
   
   public void saveOnExit() throws SQLException {
-    final Record current = getCurrentRecord();
-    if ((current.getId() == 0) && recordHasChanged()) {
+    final R current = getCurrentRecord();
+    if ((idGetter.apply(current) == 0) && recordHasChanged()) {
       loadNewData(current);
       controller.getDao().save(current);
     }
   }
 
-  public Record getCurrentRecord() {
+  public R getCurrentRecord() {
 //    if (recordHasChanged()) {
 //      Record newRecord = new Record();
 //      final int id = (currentRecord == null) ? 0 : currentRecord.getId();
@@ -184,13 +214,13 @@ public class RecordView extends JPanel {
     return currentRecord;
   }
   
-  public void loadNewData(Record theRecord) {
-    final int id = (currentRecord == null) ? 0 : currentRecord.getId();
-    theRecord.setId(id);
-    theRecord.setSource(sourceField.getText().trim());
-    theRecord.setUserName(usernameField.getText().trim());
-    theRecord.setPassword(pwField.getText().trim());
-    theRecord.setNotes(notesField.getText().trim());
+  public void loadNewData(R theRecord) {
+    final int id = (currentRecord == null) ? 0 : idGetter.apply(currentRecord);
+    idSetter.setValue(theRecord, id);
+    sourceSetter.setValue(theRecord, sourceField.getText().trim());
+    userNameSetter.setValue(theRecord, usernameField.getText().trim());
+    passwordSetter.setValue(theRecord, pwField.getText().trim());
+    notesSetter.setValue(theRecord, notesField.getText().trim());
   }
   
 //  public void setButtonState(boolean nextEnabled, boolean prevEnabled) {
@@ -213,4 +243,62 @@ public class RecordView extends JPanel {
 //      System.out.printf("Dot mov to %d to %d (requested %d)%n", getDot(), getMark(), dot);
 //    }
 //  }
+    public static class Builder<RR> {
+      private RR record;
+      private Function<RR, Integer> getId;
+      private Setter<RR, Integer> setId;
+      private Function<RR, String> getSource;
+      private Setter<RR, String> setSource;
+      private Function<RR, String> getUserName;
+      private Setter<RR, String> setUserName;
+      private Function<RR, String> getPassword;
+      private Setter<RR, String> setPassword;
+      private Function<RR, String> getNotes;
+      private Setter<RR, String> setNotes;
+      public Builder(RR record) {
+        this.record = record;
+      }
+  
+    public Builder<RR> id(Function<RR, Integer> getter, Setter<RR, Integer> setter) {
+      getId = getter;
+      setId = setter;
+      return this;
+    }
+  
+    public Builder<RR> source(Function<RR, String> getter, Setter<RR, String> setter) {
+      getSource = getter;
+      setSource = setter;
+      return this;
+    }
+  
+    public Builder<RR> userName(Function<RR, String> getter, Setter<RR, String> setter) {
+      getUserName = getter;
+      setUserName = setter;
+      return this;
+    }
+  
+    public Builder<RR> password(Function<RR, String> getter, Setter<RR, String> setter) {
+      getPassword = getter;
+      setPassword = setter;
+      return this;
+    }
+  
+    public Builder<RR> notes(Function<RR, String> getter, Setter<RR, String> setter) {
+      getNotes = getter;
+      setNotes = setter;
+      return this;
+    }
+    
+    public RecordView<RR> build() {
+      return new RecordView<>(
+          record, 
+          getId, setId, 
+          getSource, setSource, 
+          getUserName, setUserName, 
+          getPassword, setPassword, 
+          getNotes, setNotes
+      );
+    }
+  
+  }
 }

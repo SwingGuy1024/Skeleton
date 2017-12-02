@@ -12,6 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.Record;
+import com.neptunedreams.skeleton.data.RecordField;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -21,8 +22,8 @@ import com.neptunedreams.skeleton.data.Record;
  * @author Miguel Mu\u00f1oz
  */
 class ImportDialog extends JDialog {
-  private final Dao<Record> recordDao;
-  ImportDialog(Window parent, Dao<Record> dao) {
+  private final Dao<Record, ?> recordDao;
+  ImportDialog(Window parent, Dao<Record, ?> dao) {
     super(parent, ModalityType.DOCUMENT_MODAL);
     recordDao = dao;
 

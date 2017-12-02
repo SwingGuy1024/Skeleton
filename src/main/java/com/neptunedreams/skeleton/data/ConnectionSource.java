@@ -1,4 +1,4 @@
-package com.neptunedreams.skeleton;
+package com.neptunedreams.skeleton.data;
 
 import java.sql.Connection;
 
@@ -9,6 +9,7 @@ import java.sql.Connection;
  *
  * @author Miguel Mu\u00f1oz
  */
+@FunctionalInterface
 public interface ConnectionSource {
   Connection getConnection();
 }

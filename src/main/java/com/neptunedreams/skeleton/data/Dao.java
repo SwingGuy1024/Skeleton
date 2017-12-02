@@ -2,8 +2,8 @@ package com.neptunedreams.skeleton.data;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -12,19 +12,21 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Miguel Mu\u00f1oz
  */
-public interface Dao<E> {
+public interface Dao<E, PK> {
   boolean createTableIfNeeded() throws SQLException;
   
-  Collection<E> getAll(@Nullable Enum orderBy) throws SQLException;
+  Collection<E> getAll(@Nullable RecordField orderBy) throws SQLException;
   
-  Collection<E> find(String text, @Nullable Enum orderBy) throws SQLException;
+  Collection<E> find(String text, @Nullable RecordField orderBy) throws SQLException;
   
-  Collection<E> findInField(String text, @NotNull Enum fieldName, @Nullable Enum orderBy) throws SQLException;
+  Collection<E> findInField(String text, @NonNull RecordField fieldName, @Nullable RecordField orderBy) throws SQLException;
+  
+//  E newEmptyRecord();
 
   /**
    * insert or update the entity.
    * @param entity The entity
-   * @return True if the entity was new and was inserted, false if it updated an existing entry.
+//   * @return True if the entity was new and was inserted, false if it updated an existing entry.
    * @throws SQLException Yeah, you know.
    */
   void save(E entity) throws SQLException;
@@ -33,7 +35,13 @@ public interface Dao<E> {
 
   void delete(E entity) throws SQLException;
   
-  int getNewId(E entity) throws SQLException;
+//  int getNewId(E entity) throws SQLException;
   
-  int getNextId() throws SQLException;
+  PK getNextId() throws SQLException;
+  
+  PK getPrimaryKey(E entity);
+
+  void setPrimaryKey(E entity, PK primaryKey);
+  
+//  <T> Collection<T> getTableInfo() throws SQLException;
 }

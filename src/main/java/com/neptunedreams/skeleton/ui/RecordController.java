@@ -4,7 +4,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import com.ErrorReport;
 import com.neptunedreams.skeleton.data.Dao;
-import com.neptunedreams.skeleton.data.Record;
+import com.neptunedreams.skeleton.data.RecordField;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -14,45 +14,55 @@ import com.neptunedreams.skeleton.data.Record;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "WeakerAccess", "HardCodedStringLiteral"})
-public class RecordController implements RecordModelListener {
-  private Record.FIELD order = Record.FIELD.SOURCE;
-  private final Dao<Record> dao;
+public class RecordController<R, PK> implements RecordModelListener {
+  // For DerbyRecordDao, E was Record.FIELD
+//  private E order = Record.FIELD.SOURCE;
+  private RecordField order;
+  private final Dao<R, PK> dao;
   private final RecordView recordView;
-  private final RecordModel model = new RecordModel();
+  private final RecordModel<R> model;
 
-  public RecordController(Dao<Record> theDao, RecordView view) {
+  public RecordController(
+      Class<R> recordClass, 
+      Dao<R, PK> theDao, 
+      RecordView view, 
+      RecordField initialOrder
+  ) {
     dao = theDao;
     recordView = view;
+    model = new RecordModel<>(recordClass);
     model.addModelListener(this);
+    order = initialOrder;
   }
 
-  public RecordModel getModel() {
+  public RecordModel<R> getModel() {
     return model;
   }
   
-  public Dao<Record> getDao() { return dao; }
+  public Dao<R, PK> getDao() { return dao; }
 
-  public void specifyOrder(Record.FIELD theOrder) {
+  public void specifyOrder(RecordField theOrder) {
     order = theOrder;
   }
 
-  public Record.FIELD getOrder() {
+  public RecordField getOrder() {
     return order;
   }
 
-  public void loadNewRecord(Record record, int prior) {
+  public void loadNewRecord(R record, int prior) {
     if ((prior >= 0) && (prior < model.getSize())) {
-      Record currentRecord = model.getRecordAt(prior);
+      R currentRecord = model.getRecordAt(prior);
       if (recordView.recordHasChanged()) {
         try {
           recordView.loadNewData(currentRecord);
-          currentRecord.setId(dao.getNextId());
+          dao.setPrimaryKey(currentRecord, dao.getNextId());
+//          currentRecord.setId(dao.getNextId());
           dao.insert(currentRecord);
           model.incrementTotal();
         } catch (SQLException e) {
           ErrorReport.reportException("Insert", e);
         }
-      } else if (currentRecord.getId() == 0) {
+      } else if (dao.getPrimaryKey(currentRecord) == null) {
         // remove currentRecord. It hasn't changed so it's empty.
         model.deleteSelected(false, prior);
       }
@@ -62,28 +72,28 @@ public class RecordController implements RecordModelListener {
   }
 
   public void addBlankRecord() {
-    Record emptyRecord = new Record();
+    R emptyRecord = model.createNewEmptyRecord();
     model.append(emptyRecord);
     loadNewRecord(emptyRecord, model.getRecordIndex()+1);
   }
 
-  public void setFoundRecords(final Collection<Record> theFoundItems) {
+  public void setFoundRecords(final Collection<R> theFoundItems) {
     model.setNewList(theFoundItems);
 //    model.goFirst();
     if (theFoundItems.isEmpty()) {
       addBlankRecord();
     } else {
-      final Record selectedRecord = model.getSelectedRecord();
+      final R selectedRecord = model.getSelectedRecord();
       assert selectedRecord != null;
       loadNewRecord(selectedRecord, -1);
     }
   }
 
-  public void findTextInField(String dirtyText, final Record.FIELD field) {
+  public void findTextInField(String dirtyText, final RecordField field) {
     //noinspection TooBroadScope
     String text = dirtyText.trim();
     try {
-      Collection<Record> foundItems = findRecordsInField(text, field);
+      Collection<R> foundItems = findRecordsInField(text, field);
       setFoundRecords(foundItems);
       model.goFirst();
     } catch (SQLException e) {
@@ -92,7 +102,7 @@ public class RecordController implements RecordModelListener {
     }
   }
 
-  Collection<Record> findRecordsInField(final String text, final Record.FIELD field) throws SQLException {
+  Collection<R> findRecordsInField(final String text, final RecordField field) throws SQLException {
     if (text.trim().isEmpty()) {
       return dao.getAll(getOrder());
     } else {
@@ -104,7 +114,7 @@ public class RecordController implements RecordModelListener {
     //noinspection TooBroadScope
     String text = dirtyText.trim();
     try {
-      Collection<Record> foundItems = findRecordsAnywhere(text);
+      Collection<R> foundItems = findRecordsAnywhere(text);
       setFoundRecords(foundItems);
       model.goFirst();
     } catch (SQLException e) {
@@ -112,8 +122,8 @@ public class RecordController implements RecordModelListener {
     }
   }
 
-  Collection<Record> findRecordsAnywhere(final String text) throws SQLException {
-    Collection<Record> foundItems;
+  Collection<R> findRecordsAnywhere(final String text) throws SQLException {
+    Collection<R> foundItems;
     if (text.isEmpty()) {
       foundItems = dao.getAll(getOrder());
     } else {
@@ -133,7 +143,7 @@ public class RecordController implements RecordModelListener {
     loadNewRecord(model.getSelectedRecord(), prior);
   }
 
-  public void delete(final Record selectedRecord) throws SQLException {
+  public void delete(final R selectedRecord) throws SQLException {
     dao.delete(selectedRecord);
     model.decrementTotal();
   }

@@ -1,10 +1,11 @@
 package com.neptunedreams.skeleton.ui;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import com.neptunedreams.skeleton.data.Record;
+//import com.neptunedreams.skeleton.data.Record;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -14,16 +15,21 @@ import com.neptunedreams.skeleton.data.Record;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings("WeakerAccess")
-public class RecordModel {
+public class RecordModel<R> {
   private final List<RecordModelListener> listenerList = new LinkedList<>();
   
 //  RecordModel() {
 //    Thread.dumpStack();
 //  }
 //
-  private List<Record> foundItems;
+  private List<R> foundItems;
   private int recordIndex = 0;
   private int total = 0;
+  private Class<R> recordClass;
+  
+  RecordModel(Class<R> theRecordClass) {
+    recordClass = theRecordClass;
+  }
 
   public int getRecordIndex() {
     return recordIndex;
@@ -52,13 +58,25 @@ public class RecordModel {
     listenerList.remove(listener);
   }
  
-  public void setNewList(Collection<Record> records) {
+  public void setNewList(Collection<R> records) {
     foundItems = new ArrayList<>(records);
     recordIndex = 0;
     if (foundItems.isEmpty()) {
-      foundItems.add(new Record());
+    final R record;
+      record = createNewEmptyRecord();
+      foundItems.add(record);
     }
     fireModelListChanged();
+  }
+
+  public R createNewEmptyRecord() {
+    final R record;
+    try {
+      record = recordClass.getConstructor().newInstance();
+    } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new IllegalArgumentException("Record type needs no-argument constructor", e);
+    }
+    return record;
   }
 
   public void goNext() {
@@ -101,23 +119,23 @@ public class RecordModel {
     }
   }
 
-  public void append(Record insertedRecord) {
+  public void append(R insertedRecord) {
     foundItems.add(recordIndex, insertedRecord);
 //    recordIndex++; // Should we call setRecordIndex() here?
     fireModelListChanged();
   }
 
-  public Record getSelectedRecord() {
+  public R getSelectedRecord() {
     if (!foundItems.isEmpty()) {
       return foundItems.get(recordIndex);
     }
-    Record emptyRecord = new Record();
+    R emptyRecord = createNewEmptyRecord();
     foundItems.add(emptyRecord);
     fireModelListChanged(); // Is it dangerous to fire the listener before returning the record?
     return emptyRecord;
   }
   
-  public Record getRecordAt(int index) {
+  public R getRecordAt(int index) {
     return foundItems.get(index);
   }
 
@@ -130,7 +148,7 @@ public class RecordModel {
     if (index >= 0) {
       foundItems.remove(index);
       if (foundItems.isEmpty()) {
-        foundItems.add(new Record());
+        foundItems.add(createNewEmptyRecord());
       }
       if (recordIndex >= foundItems.size()) {
         recordIndex--; // Should we call setRecordIndex() here?

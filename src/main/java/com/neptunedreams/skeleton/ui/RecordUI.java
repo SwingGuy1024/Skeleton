@@ -23,7 +23,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import com.ErrorReport;
-import com.neptunedreams.skeleton.data.Record;
+import com.neptunedreams.skeleton.data.RecordField;
 import com.neptunedreams.skeleton.task.ParameterizedCallable;
 import com.neptunedreams.skeleton.task.QueuedTask;
 
@@ -40,24 +40,24 @@ import com.neptunedreams.skeleton.task.QueuedTask;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings("HardCodedStringLiteral")
-public class RecordUI extends JPanel implements RecordModelListener {
+public class RecordUI<R> extends JPanel implements RecordModelListener {
 
   private static final long DELAY = 1000L;
   private JTextField findField;
-  private final RecordController controller;
+  private final RecordController<R, Integer> controller;
   private ButtonGroup buttonGroup;
-  private RecordView view;
-  private final RecordModel recordModel;
+  private RecordView<R> view;
+  private final RecordModel<R> recordModel;
   private JButton prev;
   private JButton next;
   private JButton first;
   private JButton last;
   private JLabel infoLine;
-  private final ParameterizedCallable<String, Collection<Record>> callable = createCallable();
-  private final Consumer<Collection<Record>> recordConsumer = createRecordConsumer();
-  private QueuedTask<String, Collection<Record>> queuedTask = new QueuedTask<>(DELAY, callable, recordConsumer);
+  private final ParameterizedCallable<String, Collection<R>> callable = createCallable();
+  private final Consumer<Collection<R>> recordConsumer = createRecordConsumer();
+  private QueuedTask<String, Collection<R>> queuedTask = new QueuedTask<>(DELAY, callable, recordConsumer);
 
-  public RecordUI(RecordModel model, RecordView theView, RecordController theController) {
+  public RecordUI(RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
     super(new BorderLayout());
     recordModel = model;
     view = theView;
@@ -96,6 +96,12 @@ public class RecordUI extends JPanel implements RecordModelListener {
         }
       }
     });
+
+//    try {
+//      Collection<String> data = controller.getDao().getTableInfo();
+//    } catch (SQLException e) {
+//      e.printStackTrace();
+//    }
   }
 
   private JPanel createControlPanel() {
@@ -128,7 +134,7 @@ public class RecordUI extends JPanel implements RecordModelListener {
   private void delete() {
     if (JOptionPane.showConfirmDialog(this, "Are you sure?", "Delete Record", 
         JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-      Record selectedRecord = recordModel.getSelectedRecord();
+      R selectedRecord = recordModel.getSelectedRecord();
       try {
         controller.delete(selectedRecord); // Removes from database
         recordModel.deleteSelected(true, recordModel.getRecordIndex());
@@ -178,14 +184,14 @@ public class RecordUI extends JPanel implements RecordModelListener {
     searchPanel.add(findIcon, BorderLayout.LINE_START);
     searchPanel.add(findField, BorderLayout.CENTER);
     findField.addActionListener((e) -> findText());
-
     return searchPanel;
   }
   
   private void findText() {
     ButtonModel selectedModel = buttonGroup.getSelection();
     if (selectedModel instanceof EnumToggleModel) {
-      Record.FIELD field = ((EnumToggleModel)selectedModel).getField();
+      RecordField field = ((EnumToggleModel)selectedModel).getField();
+      
       controller.findTextInField(findField.getText(), field);
     } else {
       controller.findTextAnywhere(findField.getText());
@@ -200,10 +206,10 @@ public class RecordUI extends JPanel implements RecordModelListener {
     JRadioButton pw = new JRadioButton("Password");
     JRadioButton notes = new JRadioButton("Notes");
     
-    setButtonModel(source, Record.FIELD.SOURCE);
-    setButtonModel(userName, Record.FIELD.USERNAME);
-    setButtonModel(pw, Record.FIELD.PASSWORD);
-    setButtonModel(notes, Record.FIELD.NOTES);
+    setButtonModel(source, RecordField.SOURCE);
+    setButtonModel(userName, RecordField.USERNAME);
+    setButtonModel(pw, RecordField.PASSWORD);
+    setButtonModel(notes, RecordField.NOTES);
 
     buttonGroup = new ButtonGroup();
     buttonGroup.add(all);
@@ -222,12 +228,13 @@ public class RecordUI extends JPanel implements RecordModelListener {
     return radioPanel;
   }
   
-  private void setButtonModel(JRadioButton button, Record.FIELD field) {
+  private void setButtonModel(JRadioButton button, RecordField field) {
     button.setModel(new EnumToggleModel(field));
   }
   
   private void loadInfoLine() {
-    int entryItem = (recordModel.getSelectedRecord().getId() == 0) ? 1 : 0;
+    final R selectedRecord = recordModel.getSelectedRecord();
+    int entryItem = (controller.getDao().getPrimaryKey(selectedRecord) == null) ? 1 : 0;
     //noinspection HardcodedFileSeparator
     String info = String.format("%d/%d of %d", 
         recordModel.getRecordIndex()+1, recordModel.getSize(), recordModel.getTotal() + entryItem);
@@ -244,19 +251,19 @@ public class RecordUI extends JPanel implements RecordModelListener {
     loadInfoLine();
   }
   
-  private ParameterizedCallable<String, Collection<Record>> createCallable() {
-    return new ParameterizedCallable<String, Collection<Record>>() {
+  private ParameterizedCallable<String, Collection<R>> createCallable() {
+    return new ParameterizedCallable<String, Collection<R>>() {
       @Override
-      public Collection<Record> call() throws InterruptedException {
+      public Collection<R> call() throws InterruptedException {
         ButtonModel selectedModel = buttonGroup.getSelection();
         try {
           if (selectedModel instanceof EnumToggleModel) {
-            Record.FIELD field = ((EnumToggleModel) selectedModel).getField();
+          RecordField field = ((EnumToggleModel) selectedModel).getField();
             return controller.findRecordsInField(findField.getText(), field);
           } else {
             return controller.findRecordsAnywhere(findField.getText());
           }
-        } catch (SQLException e) {
+        } catch(SQLException e){
           e.printStackTrace();
           return new LinkedList<>();
         }
@@ -264,7 +271,7 @@ public class RecordUI extends JPanel implements RecordModelListener {
     };
   }
   
-  private Consumer<Collection<Record>> createRecordConsumer() {
+  private Consumer<Collection<R>> createRecordConsumer() {
     return records -> SwingUtilities.invokeLater(() -> controller.setFoundRecords(records));
   }
 
@@ -273,16 +280,16 @@ public class RecordUI extends JPanel implements RecordModelListener {
     loadInfoLine();
   }
 
-  private class EnumToggleModel extends JToggleButton.ToggleButtonModel {
-    private final Record.FIELD field;
+  private static class EnumToggleModel extends JToggleButton.ToggleButtonModel {
+    private final RecordField field;
     
-    EnumToggleModel(Record.FIELD theField) {
+    EnumToggleModel(RecordField theField) {
       super();
       field = theField;
     }
 
     @SuppressWarnings("WeakerAccess")
-    public Record.FIELD getField() {
+    public RecordField getField() {
       return field;
     }
   }
