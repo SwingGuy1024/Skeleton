@@ -3,10 +3,7 @@ package com.neptunedreams.skeleton.data.derby;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,6 +13,8 @@ import com.neptunedreams.skeleton.data.Record;
 import com.neptunedreams.skeleton.data.RecordField;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+
+import static com.neptunedreams.skeleton.DataUtil.*;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -33,12 +32,13 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
       "password VARCHAR(256) NOT NULL," +
       "notes LONG VARCHAR NOT NULL" +
       ')';
-  private static final String SELECT_ALL = "SELECT * FROM record ORDER BY ";
-  private static final String FIND = "SELECT * FROM record WHERE (source LIKE ?) OR (username like ?) OR (password like ?) OR (notes like ?) ORDER BY ";
-  private static final String FIND_BY_FIELD = "SELECT * FROM record WHERE ? LIKE ? ORDER BY ";
+  private static final String SELECT_ALL = "SELECT * FROM record ";
+  private static final String FIND = "SELECT * FROM record WHERE (source LIKE ?) OR (username like ?) OR (password like ?) OR (notes like ?) ";
+  private static final String FIND_BY_FIELD = "SELECT * FROM record WHERE ? LIKE ? ";
   private static final String SAVE = "UPDATE record SET source = ?, username = ?, password = ?, notes = ? where id = ?";
   private static final String INSERT = "INSERT INTO record (source, username, password, notes) VALUES (?, ?, ?, ?)";
   private static final String DELETE = "DELETE FROM record WHERE ID = ?";
+  private static final String ORDER_BY = "ORDER BY ";
   private static final char WC = '%';
   private final Connection connection;
   
@@ -64,10 +64,25 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
     statement.execute();
   }
 
+  /**
+   * using setObject() for the orderBy value gives this error message:
+   *   "There is a ? parameter in the select list.  This is not allowed."
+   * So we set the ORDER BY value (if present) in this method.
+   * @param sql The query's sql, without the orderBy clause
+   * @param orderBy The field to order by, which may be null
+   * @return the sql String, with the orderBy clause if needed.
+   */
+  private String sqlWithOrder(String sql, @Nullable RecordField orderBy) {
+    return (orderBy == null) ? sql : (sql + ORDER_BY + orderBy);
+  }
+
 
   @Override
-  public Collection<Record> getAll(final RecordField orderBy) throws SQLException {
-    PreparedStatement statement = connection.prepareStatement(SELECT_ALL + orderBy);
+  public Collection<Record> getAll(final @Nullable RecordField orderBy) throws SQLException {
+    // using setObject() for the orderBy value gives this error message:
+    //   "There is a ? parameter in the select list.  This is not allowed."
+    final String sql = sqlWithOrder(SELECT_ALL, orderBy);
+    PreparedStatement statement = connection.prepareStatement(sql);
 //    statement.setObject(1, orderBy);
     return extractRecords(statement);
   }
@@ -91,9 +106,11 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
   }
 
   @Override
-  public Collection<Record> find(final String text, final RecordField orderBy) throws SQLException {
-    PreparedStatement statement = connection.prepareStatement(FIND + orderBy);
-//    System.out.println("Find: " + FIND + orderBy);
+  public Collection<Record> find(final String text, final @Nullable RecordField orderBy) throws SQLException {
+    // using setObject() for the orderBy value gives this error message:
+    //   "There is a ? parameter in the select list.  This is not allowed."
+    final String sql = sqlWithOrder(FIND, orderBy);
+    PreparedStatement statement = connection.prepareStatement(sql);
     //noinspection StringConcatenationMissingWhitespace
     String wildCardText = WC + text + WC;
 //    System.out.println("WC text: " + wildCardText);
@@ -105,8 +122,10 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
   }
 
   @Override
-  public Collection<Record> findInField(final String text, @NonNull final RecordField fieldName, @Nullable final RecordField orderBy) throws SQLException {
-    final String sql = FIND_BY_FIELD + orderBy;
+  public Collection<Record> findInField(final String text, final @NonNull RecordField fieldName, final @Nullable RecordField orderBy) throws SQLException {
+    // using setObject() for the orderBy value gives this error message:
+    //   "There is a ? parameter in the select list.  This is not allowed."
+    final String sql = sqlWithOrder(FIND_BY_FIELD, orderBy);
 //    System.out.println("Find By Field: " + sql);
     PreparedStatement statement = connection.prepareStatement(sql);
     //noinspection StringConcatenationMissingWhitespace
@@ -129,6 +148,7 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
 //    return false;
   }
   
+  @Override
   public void insert(final Record entity) throws SQLException {
     doInsert(entity);
     connection.commit();
@@ -260,92 +280,5 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
     resultSet = statement.executeQuery();
     printResultSet(resultSet);
     return new LinkedList<>();
-  }
-
-  private void printResultSet(final ResultSet resultSet) throws SQLException {
-    ResultSetMetaData metaData = resultSet.getMetaData();
-    int columnCount = metaData.getColumnCount();
-    List<List<String>> results = new LinkedList<>();
-    
-    // maxWidth_1 is 1-based
-    int[] maxWidth_1 = new int[columnCount+1];
-    Arrays.fill(maxWidth_1, 0);
-    
-    // Gather all the data and calculate the maximum column widths.
-    boolean hasNext = resultSet.next();
-    while (hasNext) {
-      List<String> row = new ArrayList<>();
-      for (int col=1; col<= columnCount; ++col) {
-        String value = String.valueOf(resultSet.getString(col)); // I use String.valueOf() to turn null into "null"
-        // value is definitely not null here.
-        row.add(value);
-        int width = value.length();
-        if (maxWidth_1[col] < width) {
-          maxWidth_1[col] = width;
-        }
-      }
-      results.add(row);
-      hasNext = resultSet.next();
-    }
-    
-    // Incorporate the header widths into the column widths.
-    for (int ii=1; ii<=columnCount; ++ii) {
-      String cName = metaData.getColumnName(ii);
-      int width = cName.length();
-      if (maxWidth_1[ii] < width) {
-        maxWidth_1[ii] = width;
-      }
-    }
-    
-    // Find the widest column
-    int max = max(maxWidth_1);
-    char[] maxArray = new char[max + 1]; // + 1 for space between columns
-    //noinspection MagicCharacter
-    Arrays.fill(maxArray, ' '); // Fill the array with spaces.
-    String spaces = new String(maxArray); // This is the maximum number of spaces for any column in any row.
-
-    // Pack data into an empty line from the column headers.
-    StringBuilder line = new StringBuilder();
-    for (int ii=1; ii<=columnCount; ++ii) {
-      pack(line, metaData.getColumnName(ii), maxWidth_1[ii], spaces);
-    }
-    System.out.println(line);
-    
-    // Print out the underscores
-    line = new StringBuilder();
-    for (int ii=1; ii<=columnCount; ++ii) {
-      final int width = maxWidth_1[ii];
-      char[] dashes = new char[width+1];
-      Arrays.fill(dashes, '-');
-      dashes[width] = ' ';
-      pack(line, new String(dashes), width, spaces);
-    }
-    System.out.println(line);
-    
-    // For each record, pack data into an empty line.
-    for (List<String> resultData : results) {
-      line = new StringBuilder();
-      for (int col = 0; col < columnCount; ++col) {
-        pack(line, resultData.get(col), maxWidth_1[col+1], spaces);
-      }
-      System.out.println(line);
-    }
-    System.out.println("---");
-  }
-  
-  private static int max(int[] array) {
-    int max = Integer.MIN_VALUE;
-    for (final int i : array) {
-      if (i > max) {
-        max = i;
-      }
-    }
-    return max;
-  }
-
-  private void pack(StringBuilder line, final String value, final int width, String spaces) {
-    line.append(value);
-//    line.append(spaces.substring(value.length(), width+1));
-    line.append(spaces.substring(0, (width - value.length()) + 1));
   }
 }

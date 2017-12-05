@@ -32,6 +32,7 @@ import com.neptunedreams.skeleton.data.RecordField;
 public final class RecordView<R> extends JPanel {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
+  private static final int NO_RECORD = -999;
   private JPanel labelPanel = new JPanel(new GridLayout(0, 1));
   private JPanel fieldPanel = new JPanel(new GridLayout(0, 1));
   private JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
@@ -59,6 +60,7 @@ public final class RecordView<R> extends JPanel {
   
   private RecordController<R, ?> controller;
 
+  @SuppressWarnings({"initialization.fields.uninitialized","argument.type.incompatible","method.invocation.invalid"})
   private RecordView(R record,
                      Function<R, Integer> getIdFunction, Setter<R, Integer> setIdFunction,
                      Function<R, String> getSourceFunction, Setter<R, String> setSourceFunction,
@@ -77,7 +79,7 @@ public final class RecordView<R> extends JPanel {
     passwordSetter = setPasswordFunction;
     notesGetter = getNotesFunction;
     notesSetter = setNotesFunction;
-    idSetter.setValue(currentRecord,-999);
+    idSetter.setValue(currentRecord, NO_RECORD);
     add(makeTopPanel(), BorderLayout.PAGE_START);
     currentRecord = record;
   }
@@ -90,6 +92,7 @@ public final class RecordView<R> extends JPanel {
     return topPanel;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public void setController(RecordController<R, ?> theController) {
     controller = theController;
     
@@ -125,6 +128,7 @@ public final class RecordView<R> extends JPanel {
   }
 
   private JComponent addField(final String labelText, final boolean editable, final RecordField orderField) {
+    //noinspection StringConcatenation,MagicCharacter
     JLabel label = new JLabel(labelText + ':');
     labelPanel.add(label);
     JComponent field;
@@ -243,6 +247,7 @@ public final class RecordView<R> extends JPanel {
 //      System.out.printf("Dot mov to %d to %d (requested %d)%n", getDot(), getMark(), dot);
 //    }
 //  }
+    @SuppressWarnings("initialization.fields.uninitialized")
     public static class Builder<RR> {
       private RR record;
       private Function<RR, Integer> getId;

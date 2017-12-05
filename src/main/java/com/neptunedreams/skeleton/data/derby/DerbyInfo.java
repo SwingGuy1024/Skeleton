@@ -29,9 +29,10 @@ public class DerbyInfo extends AbstractDatabaseInfo {
     this("/.skeleton");
   }
   
+  @SuppressWarnings({"initialization.fields.uninitialized","method.invocation.invalid"}) // Constructor doesn't initialize derbyDaoFactory
   DerbyInfo(@NonNull String derbyHomDir) throws SQLException, IOException {
     super(derbyHomDir);
-    System.setProperty(DERBY_SYSTEM_HOME, getHomeDir());
+    System.setProperty(DERBY_SYSTEM_HOME, getHomeDir()); // method.invocation.invalid: getHomeDir
 
 //    init();
   }
@@ -81,6 +82,7 @@ public class DerbyInfo extends AbstractDatabaseInfo {
   @Override
   public void createSchema() {
     // just temporary. We should probably be able to create this.
+    //noinspection ProhibitedExceptionThrown
     throw new RuntimeException("Can't Create Schema");
   }
 }

@@ -3,11 +3,9 @@ package com.neptunedreams.skeleton;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.File;
 import java.io.IOException;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Collection;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
@@ -16,9 +14,7 @@ import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.DatabaseInfo;
 import com.neptunedreams.skeleton.data.RecordField;
-import com.neptunedreams.skeleton.data.derby.DerbyRecordDao;
 import com.neptunedreams.skeleton.data.sqlite.SQLiteInfo;
-import com.neptunedreams.skeleton.data2.tables.Record;
 import com.neptunedreams.skeleton.data2.tables.records.RecordRecord;
 import com.neptunedreams.skeleton.ui.RecordController;
 import com.neptunedreams.skeleton.ui.RecordUI;
@@ -59,11 +55,10 @@ public final class Skeleton extends JPanel
 //  private static final String DERBY_SYSTEM_HOME = "derby.system.home";
 //  private Connection connection;
   private JPanel mainPanel;
-  private static JFrame frame;
+  //    org.jooq.util.JavaGenerator generator;
+  private static JFrame frame = new JFrame("Skeleton");
 
   public static void main(String[] args ) throws IOException {
-//    org.jooq.util.JavaGenerator generator;
-    frame = new JFrame("Skeleton");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.setLocationByPlatform(true);
     frame.add(new Skeleton().getPanel());

@@ -19,19 +19,21 @@ public class RecordController<R, PK> implements RecordModelListener {
 //  private E order = Record.FIELD.SOURCE;
   private RecordField order;
   private final Dao<R, PK> dao;
-  private final RecordView recordView;
+  // TODO: RecordController and RecordView have references to each other. Replace this with a listener system.
+  private final RecordView<R> recordView;
   private final RecordModel<R> model;
 
+  @SuppressWarnings("argument.type.incompatible")
   public RecordController(
       Class<R> recordClass, 
       Dao<R, PK> theDao, 
-      RecordView view, 
+      RecordView<R> view, 
       RecordField initialOrder
   ) {
     dao = theDao;
     recordView = view;
     model = new RecordModel<>(recordClass);
-    model.addModelListener(this);
+    model.addModelListener(this); // Type checker needs "this" to be initialized, so suppress the warning.
     order = initialOrder;
   }
 

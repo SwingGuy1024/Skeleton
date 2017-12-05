@@ -8,34 +8,23 @@ import java.util.Map;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.RecordField;
-import com.neptunedreams.skeleton.data2.DefaultSchema;
 import com.neptunedreams.skeleton.data2.tables.Record;
-import com.neptunedreams.skeleton.data2.tables.SqliteSequence;
 import com.neptunedreams.skeleton.data2.tables.records.RecordRecord;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.jooq.Constraint;
-import org.jooq.CreateSchemaFinalStep;
-import org.jooq.CreateTableAsStep;
-import org.jooq.CreateTableColumnStep;
 import org.jooq.DSLContext;
-import org.jooq.Name;
-import org.jooq.Query;
 import org.jooq.Record1;
 import org.jooq.Result;
-import org.jooq.Schema;
+import org.jooq.ResultQuery;
 import org.jooq.SelectConditionStep;
 import org.jooq.SelectSeekStep1;
 import org.jooq.SelectSelectStep;
 import org.jooq.SelectWhereStep;
 import org.jooq.TableField;
-import org.jooq.exception.DetachedException;
 import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
-import org.jooq.util.sqlite.SQLiteDSL;
 
-import static com.neptunedreams.skeleton.data2.Tables.RECORD;
-import static org.jooq.SQLDialect.SQLITE;
+import static com.neptunedreams.skeleton.data2.Tables.*;
+import static org.jooq.SQLDialect.*;
 import static org.jooq.impl.DSL.*;
 
 /**
@@ -58,8 +47,6 @@ import static org.jooq.impl.DSL.*;
 @SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "HardCodedStringLiteral"})
 public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
 
-  private static final int LENGTH = 256;
-  
   private static final Map<RecordField, TableField<RecordRecord, ?>> fieldMap = makeFieldMap();
   private final ConnectionSource connectionSource;
   private Connection connection;
@@ -106,52 +93,28 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   public boolean createTableIfNeeded() throws SQLException {
     /* All my efforts to generate the table using jOOQ failed, so I had to resort to direct SQL. */
 
+    //noinspection resource
     DSLContext dslContext = getDslContext();
-    System.out.printf("DSLContext of %s%n", dslContext.getClass());
     dslContext.execute(CREATE_TABLE);
-    DefaultSchema schema = DefaultSchema.DEFAULT_SCHEMA;
+//    DefaultSchema schema = DefaultSchema.DEFAULT_SCHEMA;
 //    dslContext.createSchemaIfNotExists("skeleton").execute();
 //    Name recordName = new 
-    Query[] queries = dslContext.ddl(schema).queries();
-    System.out.printf("Total of %d queries.%n", queries.length);
-    for (Query q: queries) {
-      System.out.printf("Query: %s%n", q);
-//      if (!q.toString().contains("sqlite_sequence")) {
-//        q.execute();
-//      }
-    }
+//    Query[] queries = dslContext.ddl(schema).queries();
+//    System.out.printf("Total of %d queries.%n", queries.length);
+//    for (Query q: queries) {
+//      System.out.printf("Query: %s%n", q);
+////      if (!q.toString().contains("sqlite_sequence")) {
+////        q.execute();
+////      }
+//    }
     
-//    dslContext.alterTable("record").add(constraint("autoincrement").).execute();
-
-//    final CreateTableAsStep<org.jooq.Record> table;
-////    dslContext.
-//    table = dslContext.createTableIfNotExists(RECORD);
-////    table.
-////    connection.commit();
-////    dslContext.
-//    
-////    try (
-////      CreateSchemaFinalStep skeleton = dslContext.createSchemaIfNotExists("skeleton")) {
-////      skeleton.execute();
-////      table = dslContext.createTableIfNotExists(RECORD);
-////    }
-//
-////    try (
-//        CreateTableColumnStep idColumn = table.column(RECORD.ID, SQLDataType.INTEGER.nullable(false).identity(true)); //) {
-//      //noinspection resource
-//      idColumn.column(RECORD.SOURCE, SQLDataType.VARCHAR(LENGTH).nullable(false))
-//          .column(RECORD.USERNAME, SQLDataType.VARCHAR(LENGTH).nullable(false))
-//          .column(RECORD.PASSWORD, SQLDataType.VARCHAR(LENGTH).nullable(false))
-//          .column(RECORD.NOTES, SQLDataType.LONGNVARCHAR.nullable(false));
-//      idColumn.execute();
-////    connection.commit();
-////    }
     return true;
   }
 
   @Override
-  public Collection<RecordRecord> getAll(final RecordField orderBy) throws SQLException {
+  public Collection<RecordRecord> getAll(final @Nullable RecordField orderBy) throws SQLException {
 
+    //noinspection resource
     DSLContext dslContext = getDslContext();
     try (
         SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD)) {
@@ -160,9 +123,11 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   }
 
   @Override
-  public Collection<RecordRecord> find(final String text, final RecordField orderBy) throws SQLException {
+  public Collection<RecordRecord> find(final String text, final @Nullable RecordField orderBy) throws SQLException {
     final String wildCardText = WC + text + WC;
+    //noinspection resource
     DSLContext dslContext = getDslContext();
+    //noinspection resource
     try (
       final SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD);
       SelectConditionStep<RecordRecord> where = recordRecords.where(
@@ -170,19 +135,20 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
           RECORD.USERNAME.like(wildCardText).or(
           RECORD.PASSWORD.like(wildCardText).or(
           RECORD.NOTES.like(wildCardText)))));
-      final SelectSeekStep1<RecordRecord, ?> step = where.orderBy(fieldMap.get(orderBy))
+      final ResultQuery<RecordRecord> query = (orderBy == null) ? where : where.orderBy(fieldMap.get(orderBy))
     ) {
-      return step.fetch();
+      return query.fetch();
     }
   }
 
   @Override
-  public Collection<RecordRecord> findInField(final String text, final @NonNull RecordField field, final @Nullable RecordField orderBy) throws SQLException {
+  public Collection<RecordRecord> findInField(final String text, final @NonNull RecordField findBy, final @Nullable RecordField orderBy) throws SQLException {
     String wildCardText = WC + text + WC;
+    //noinspection resource
     DSLContext dslContext = getDslContext();
     try (
         final SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD);
-        final SelectConditionStep<RecordRecord> where = recordRecords.where(fieldMap.get(orderBy).like(wildCardText))
+        final SelectConditionStep<RecordRecord> where = recordRecords.where(fieldMap.get(findBy).like(wildCardText))
     ) {
       if (orderBy != null) {
         //noinspection NestedTryStatement
@@ -193,14 +159,6 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
         return where.fetch();
       }
     }
-         
-//         final String sql = FIND_BY_FIELD + orderBy;
-////    System.out.println("Find By Field: " + sql);
-//    PreparedStatement statement = connection.prepareStatement(sql);
-//    //noinspection StringConcatenationMissingWhitespace
-//    statement.setObject(1, fieldName.toString());
-//    statement.setObject(2, wildCardText);
-//    return extractRecords(statement);
   }
 
   @Override
@@ -209,30 +167,33 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   }
   
   @Override
+  @SuppressWarnings("argument.type.incompatible")
   public void insert(final RecordRecord entity) throws SQLException {
+    //noinspection resource
     DSLContext dslContext = getDslContext();
 //    Record1 record1 = dslContext.select(max(Record.RECORD.ID)).from(Record.RECORD).fetchOne();
 //    System.out.printf("Max: %s%n", record1);
 //    Integer max = ((Integer)(record1.get("max")));
 //    int id = (max == null) ? 1 : (max + 1);
-//
+    //noinspection ConstantConditions
+    entity.setId(null); // argument.type.incompatible null assumed not allowed in generated code.
+    Integer id = entity.getId(); 
 //    System.out.printf("Inserting into Record using id %d%n", id);
-//    entity.setId(id);
-
-//    dslContext.attach(entity);
-    dslContext.insertInto(RECORD)
-        .set(RECORD.SOURCE, entity.getSource())
-        .set(RECORD.USERNAME, entity.getUsername())
-        .set(RECORD.PASSWORD, entity.getPassword())
-        .set(RECORD.NOTES, entity.getNotes())
-        .execute();
-    Result<?> result = dslContext.fetch("SELECT last_insert_rowId()");
-    System.out.println(result);
-    int id = (Integer) result.getValue(0, "last_insert_rowId()");
     entity.setId(id);
-    
-//    entity.insert();
-    System.out.printf("Inserted record has id %d%n", entity.getId());
+    dslContext.attach(entity);
+    entity.insert();
+//    System.out.printf("Inserted record has id %d%n", entity.getId());
+//    dslContext.insertInto(RECORD)
+//        .set(RECORD.SOURCE, entity.getSource())
+//        .set(RECORD.USERNAME, entity.getUsername())
+//        .set(RECORD.PASSWORD, entity.getPassword())
+//        .set(RECORD.NOTES, entity.getNotes())
+//        .execute();
+//    Result<?> result = dslContext.fetch("SELECT last_insert_rowId()");
+//    System.out.println(result);
+//    int id = (Integer) result.getValue(0, "last_insert_rowId()");
+//    entity.setId(id);
+//    
   }
 
   @Override
@@ -243,6 +204,7 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   @Override
   public Integer getNextId() throws SQLException {
 
+    //noinspection resource
     DSLContext dslContext = getDslContext();
     try (
         final SelectSelectStep<Record1<Integer>> select = dslContext.select(max(Record.RECORD.ID))

@@ -3,19 +3,17 @@ package com.neptunedreams.skeleton.data.sqlite;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.DatabaseInfo;
-//import com.neptunedreams.skeleton.data.Record;
 import com.neptunedreams.skeleton.data2.tables.records.RecordRecord;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.CoreMatchers.*;
+
+//import com.neptunedreams.skeleton.data.Record;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -24,6 +22,7 @@ import static org.hamcrest.CoreMatchers.*;
  *
  * @author Miguel Mu\u00f1oz
  */
+@SuppressWarnings({"HardCodedStringLiteral", "HardcodedLineSeparator"})
 public class SqLiteRecordDaoTest {
   @Test
   @SuppressWarnings({"HardCodedStringLiteral", "unused", "HardcodedLineSeparator"})
@@ -38,12 +37,12 @@ public class SqLiteRecordDaoTest {
     } finally {
       
       // cleanup even on failure.
-      Collection<RecordRecord> allRecords = showAllRecords(dao);
+      Collection<RecordRecord> allRecords = showAllRecords(dao, -1);
       int count = allRecords.size();
       for (RecordRecord recordRecord : allRecords) {
         dao.delete(recordRecord);
       }
-      allRecords = showAllRecords(dao);
+      allRecords = showAllRecords(dao, 0);
       assertEquals(0, allRecords.size());
     }
   }
@@ -59,14 +58,15 @@ public class SqLiteRecordDaoTest {
 //    }
     RecordRecord record1 = new RecordRecord(0,"TestSiteAlpha", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
 //    RecordRecord record1 = createRecord("TestSiteAlpha", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
+    //noinspection resource
     assertFalse(connectionSource.getConnection().isClosed());
 
-    Collection<RecordRecord> allRecords = showAllRecords(dao);
+    Collection<RecordRecord> allRecords = showAllRecords(dao, 0);
     assertEquals(0, allRecords.size());
 
     dao.insert(record1);
     Integer r1Id = record1.getId();
-    allRecords = showAllRecords(dao);
+    allRecords = showAllRecords(dao, 1);
     assertEquals(1, allRecords.size());
     assertEquals(allRecords.iterator().next().getId(), r1Id);
 
@@ -75,7 +75,7 @@ public class SqLiteRecordDaoTest {
     dao.insert(record2);
     Integer r2Id = record2.getId();
     assertNotEquals(r1Id, r2Id);
-    allRecords = showAllRecords(dao);
+    allRecords = showAllRecords(dao, 2);
     assertEquals(2, allRecords.size());
 //    Set<Integer> set1 = new HashSet<>();for (RecordRecord rr: allRecords) set1.add(rr.getId());
     Set<Integer> set2 = allRecords
@@ -87,7 +87,7 @@ public class SqLiteRecordDaoTest {
     allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
     System.out.printf("getAll() returned %d records, expecting 2%n", allRecords.size());
     assertEquals(2, allRecords.size());
-    showAllRecords(dao);
+    showAllRecords(dao, 2);
 
     Collection<RecordRecord> foundRecords = dao.find("alpha", com.neptunedreams.skeleton.data.RecordField.SOURCE);
     System.out.printf("find(alpha) returned %d records, expecting 1%n", foundRecords.size());
@@ -126,15 +126,20 @@ public class SqLiteRecordDaoTest {
 
   }
 
-  private Collection<RecordRecord> showAllRecords(final SQLiteRecordDao dao) throws SQLException {
+  private Collection<RecordRecord> showAllRecords(final SQLiteRecordDao dao, int expectedCount) throws SQLException {
     Collection<RecordRecord> allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
-    System.out.printf("getAll() returned %d records, expecting 2%n", allRecords.size());
+    System.out.printf("getAll() returned %d records, expecting %d%n", allRecords.size(), expectedCount);
+//    DataUtil.printRecord(allRecords, RecordRecord::getId, RecordRecord::getSource);
     for (RecordRecord rr: allRecords) {
       System.out.println(rr);
+    }
+    if (expectedCount >= 0) {
+      assertEquals(expectedCount, allRecords.size());
     }
     return allRecords;
   }
 
+  @SuppressWarnings("unused")
   private RecordRecord createRecord(String source, String userName, String password, String note) {
     RecordRecord record = new RecordRecord();
     record.setUsername(userName);

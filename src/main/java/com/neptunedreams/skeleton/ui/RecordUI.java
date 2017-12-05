@@ -26,6 +26,8 @@ import com.ErrorReport;
 import com.neptunedreams.skeleton.data.RecordField;
 import com.neptunedreams.skeleton.task.ParameterizedCallable;
 import com.neptunedreams.skeleton.task.QueuedTask;
+import org.checkerframework.checker.initialization.qual.UnknownInitialization;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Functions
@@ -43,21 +45,22 @@ import com.neptunedreams.skeleton.task.QueuedTask;
 public class RecordUI<R> extends JPanel implements RecordModelListener {
 
   private static final long DELAY = 1000L;
-  private JTextField findField;
+  private JTextField findField = new JTextField(10);
   private final RecordController<R, Integer> controller;
-  private ButtonGroup buttonGroup;
+  private ButtonGroup buttonGroup = new ButtonGroup();
   private RecordView<R> view;
-  private final RecordModel<R> recordModel;
-  private JButton prev;
-  private JButton next;
-  private JButton first;
-  private JButton last;
-  private JLabel infoLine;
+  private final @NonNull RecordModel<R> recordModel;
+  private JButton prev = new JButton(Resource.getLeftArrow());
+  private JButton next = new JButton(Resource.getRightArrow());
+  private JButton first = new JButton(Resource.getFirst());
+  private JButton last = new JButton(Resource.getLast());
+  private JLabel infoLine = new JLabel("");
   private final ParameterizedCallable<String, Collection<R>> callable = createCallable();
   private final Consumer<Collection<R>> recordConsumer = createRecordConsumer();
-  private QueuedTask<String, Collection<R>> queuedTask = new QueuedTask<>(DELAY, callable, recordConsumer);
+  private @NonNull QueuedTask<String, Collection<R>> queuedTask = new QueuedTask<>(DELAY, callable, recordConsumer);
 
-  public RecordUI(RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
+  @SuppressWarnings({"method.invocation.invalid", "argument.type.incompatible"}) // add(), setBorder(), etc not properly annotated in JDK.
+  public RecordUI(@NonNull RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
     super(new BorderLayout());
     recordModel = model;
     view = theView;
@@ -66,7 +69,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     add(createTrashPanel(), BorderLayout.PAGE_END);
     controller = theController;
     setBorder(new MatteBorder(4, 4, 4, 4, getBackground()));
-    recordModel.addModelListener(this);
+    recordModel.addModelListener(this); // argument.type.incompatible checker error suppressed
     
 //    findField.addPropertyChangeListener("text", 
 //        (evt) -> System.out.printf("Change %s from %s to %s%n", evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
@@ -90,6 +93,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
         final Document document = e.getDocument();
         try {
           final String text = document.getText(0, document.getLength());
+          assert queuedTask != null;
           queuedTask.feedData(text);
         } catch (BadLocationException e1) {
           e1.printStackTrace();
@@ -119,21 +123,28 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     return buttonPanel;
   }
 
+  @SuppressWarnings("argument.type.incompatible")
   private JPanel createTrashPanel() {
     JPanel trashPanel = new JPanel(new BorderLayout());
     JButton trashRecord = new JButton(Resource.getBin());
     trashPanel.add(trashRecord, BorderLayout.LINE_END);
     trashRecord.addActionListener((e)->delete());
 
-    infoLine = new JLabel("");
+    assert infoLine != null;
     trashPanel.add(infoLine, BorderLayout.LINE_START);
-    recordModel.addModelListener(this);
+    assert recordModel != null;
+    recordModel.addModelListener(this); // argument.type.incompatible Checker warning expects this is initialized
     return trashPanel;
   }
 
+  @SuppressWarnings("argument.type.incompatible")
   private void delete() {
-    if (JOptionPane.showConfirmDialog(this, "Are you sure?", "Delete Record", 
-        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+    if (JOptionPane.showConfirmDialog(this, // argument.type.incompatible JDK not annotated as @Nullable
+        "Are you sure?",
+        "Delete Record", 
+        JOptionPane.YES_NO_OPTION,
+        JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION
+        ) {
       R selectedRecord = recordModel.getSelectedRecord();
       try {
         controller.delete(selectedRecord); // Removes from database
@@ -148,10 +159,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JPanel getButtons() {
     JPanel buttons = new JPanel(new GridLayout(1, 0));
     JButton add = new JButton(Resource.getAdd());
-    prev = new JButton(Resource.getLeftArrow());
-    next = new JButton(Resource.getRightArrow());
-    first = new JButton(Resource.getFirst());
-    last = new JButton(Resource.getLast());
 //    final JButton importBtn = new JButton("Imp");
     buttons.add(add);
     buttons.add(first);
@@ -160,6 +167,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     buttons.add(last);
 //    buttons.add(importBtn);
     
+    assert controller != null;
     add.addActionListener((e)->controller.addBlankRecord());
     prev.addActionListener((e)->recordModel.goPrev());
     next.addActionListener((e)->recordModel.goNext());
@@ -176,9 +184,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
 //    importDialog.setVisible(true);
 //  }
 
+  @SuppressWarnings("method.invocation.invalid")
   private JPanel getSearchField() {
     JLabel findIcon = Resource.getMagnifierLabel();
-    findField = new JTextField(10);
     RecordView.installStandardCaret(findField);
     JPanel searchPanel = new JPanel(new BorderLayout());
     searchPanel.add(findIcon, BorderLayout.LINE_START);
@@ -199,19 +207,19 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   }
   
   @SuppressWarnings("HardCodedStringLiteral")
-  private JPanel createSearchRadioPanel() {
+  private JPanel createSearchRadioPanel(@UnknownInitialization RecordUI<R>this) {
     JRadioButton all = new JRadioButton("All");
     JRadioButton source = new JRadioButton("Source");
     JRadioButton userName = new JRadioButton("User Name");
     JRadioButton pw = new JRadioButton("Password");
     JRadioButton notes = new JRadioButton("Notes");
     
-    setButtonModel(source, RecordField.SOURCE);
+    setButtonModel(source, RecordField.SOURCE); // method.invocation.invalid on setButtonModel, 
     setButtonModel(userName, RecordField.USERNAME);
     setButtonModel(pw, RecordField.PASSWORD);
     setButtonModel(notes, RecordField.NOTES);
 
-    buttonGroup = new ButtonGroup();
+    assert buttonGroup != null;
     buttonGroup.add(all);
     buttonGroup.add(source);
     buttonGroup.add(userName);
@@ -228,7 +236,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     return radioPanel;
   }
   
-  private void setButtonModel(JRadioButton button, RecordField field) {
+  private void setButtonModel(@UnknownInitialization RecordUI<R> this, JRadioButton button, RecordField field) {
     button.setModel(new EnumToggleModel(field));
   }
   
@@ -251,14 +259,17 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     loadInfoLine();
   }
   
-  private ParameterizedCallable<String, Collection<R>> createCallable() {
+  private ParameterizedCallable<String, Collection<R>> createCallable(@UnknownInitialization RecordUI<R> this) {
     return new ParameterizedCallable<String, Collection<R>>() {
       @Override
       public Collection<R> call() throws InterruptedException {
+        assert buttonGroup != null;
         ButtonModel selectedModel = buttonGroup.getSelection();
         try {
+          assert controller != null;
+          assert findField != null;
           if (selectedModel instanceof EnumToggleModel) {
-          RecordField field = ((EnumToggleModel) selectedModel).getField();
+            RecordField field = ((EnumToggleModel) selectedModel).getField();
             return controller.findRecordsInField(findField.getText(), field);
           } else {
             return controller.findRecordsAnywhere(findField.getText());
@@ -270,8 +281,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       }
     };
   }
-  
-  private Consumer<Collection<R>> createRecordConsumer() {
+
+  private Consumer<Collection<R>> createRecordConsumer(@UnknownInitialization RecordUI<R>this) {
+    assert controller != null;
     return records -> SwingUtilities.invokeLater(() -> controller.setFoundRecords(records));
   }
 

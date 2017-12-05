@@ -11,6 +11,7 @@ import javax.swing.JMenuItem;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.text.JTextComponent;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -26,7 +27,7 @@ public enum UIMenus implements CaretListener {
 //  private JTextComponent selectedComponent;
   private final FocusManager focusManager = FocusManager.getCurrentManager();
   @SuppressWarnings("NonFinalFieldInEnum")
-  private JTextComponent caretOwner = null;
+  private @Nullable JTextComponent caretOwner = null;
   @SuppressWarnings({"HardCodedStringLiteral", "MagicCharacter"})
   private final MenuAction cutAction = new ClipboardAction("Cut", 'X', JTextComponent::cut);
   @SuppressWarnings({"HardCodedStringLiteral", "MagicCharacter"})

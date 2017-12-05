@@ -15,6 +15,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Miguel Mu\u00f1oz
  */
 abstract class MenuAction extends AbstractAction {
+  @SuppressWarnings({"argument.type.incompatible", "method.invocation.invalid"})
   MenuAction(@NonNull String name, @Nullable Icon icon, Character acceleratorKey) {
     super(name, icon);
     KeyStroke keyStroke = KeyStroke.getKeyStroke(acceleratorKey, java.awt.event.InputEvent.META_DOWN_MASK);

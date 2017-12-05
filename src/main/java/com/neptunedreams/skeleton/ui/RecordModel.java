@@ -22,7 +22,8 @@ public class RecordModel<R> {
 //    Thread.dumpStack();
 //  }
 //
-  private List<R> foundItems;
+  // foundItems should be a RandomAccess list
+  private List<R> foundItems = new ArrayList<>();
   private int recordIndex = 0;
   private int total = 0;
   private Class<R> recordClass;

@@ -19,7 +19,7 @@ public interface Dao<E, PK> {
   
   Collection<E> find(String text, @Nullable RecordField orderBy) throws SQLException;
   
-  Collection<E> findInField(String text, @NonNull RecordField fieldName, @Nullable RecordField orderBy) throws SQLException;
+  Collection<E> findInField(String text, @NonNull RecordField findBy, RecordField orderBy) throws SQLException;
   
 //  E newEmptyRecord();
 

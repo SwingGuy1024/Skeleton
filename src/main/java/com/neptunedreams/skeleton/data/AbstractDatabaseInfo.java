@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -14,7 +16,7 @@ import java.sql.SQLException;
  * @author Miguel Mu\u00f1oz
  */
 public abstract class AbstractDatabaseInfo implements DatabaseInfo {
-  private ConnectionSource connectionSource;
+  private @Nullable ConnectionSource connectionSource;
   private final String homeDirectory;
   
   protected AbstractDatabaseInfo(String homeDir) throws IOException {
@@ -36,10 +38,11 @@ public abstract class AbstractDatabaseInfo implements DatabaseInfo {
     String connectionUrl = getUrl();
     //noinspection UseOfSystemOutOrSystemErr
     System.out.printf("URL: %s%n", connectionUrl);
-      //noinspection CallToDriverManagerGetConnection
+    //noinspection CallToDriverManagerGetConnection,JDBCResourceOpenedButNotSafelyClosed
     Connection connection = DriverManager.getConnection(connectionUrl);
-    Connection wrapped = new ConnectionWrapper(connection);
-      return () -> wrapped;
+    return () -> connection;
+//    Connection wrapped = new ConnectionWrapper(connection);
+//      return () -> wrapped;
   }
 
   @Override
@@ -52,14 +55,14 @@ public abstract class AbstractDatabaseInfo implements DatabaseInfo {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  private void ensureHomeExists(String databaseHome) throws IOException {
+  private void ensureHomeExists(@UnderInitialization AbstractDatabaseInfo this, String databaseHome) throws IOException {
 //    System.setProperty(DERBY_SYSTEM_HOME, databaseHome);
 //    final String databaseHome = System.getProperty("derby.system.home");
 //    final String databaseHome = props.getProperty(DERBY_SYSTEM_HOME);
 //    System.out.printf("databaseHome: %s%n", databaseHome);
     @SuppressWarnings("HardcodedFileSeparator")
     File dataDir = new File("/", databaseHome);
-    System.out.printf("DataDir: %s%n", dataDir.getAbsolutePath());
+//    System.out.printf("DataDir: %s%n", dataDir.getAbsolutePath());
     if (!dataDir.exists()) {
       //noinspection BooleanVariableAlwaysNegated
       boolean success = dataDir.mkdir();

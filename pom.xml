@@ -8,7 +8,7 @@
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
-  <packaging>pom</packaging>
+  <packaging>jar</packaging>
 
   <name>skeleton</name>
   <url>http://maven.apache.org</url>
@@ -19,7 +19,7 @@
     <!-- These properties will be set by the Maven Dependency plugin -->
     <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
     <!-- Uncomment to use the Type Annotations compiler. -->
-    <typeAnnotationsJavac>${org.checkerframework:compiler:jar}</typeAnnotationsJavac> 
+    <!--<typeAnnotationsJavac>${org.checkerframework:compiler:jar}</typeAnnotationsJavac> -->
   </properties>
 
   <dependencies>
@@ -63,7 +63,9 @@
     <dependency>
       <groupId>org.jooq</groupId>
       <artifactId>jooq</artifactId>
-      <version>3.10.0</version>
+      <version>3.10.1</version>
+      <!--The following version will have a fix to the derby code-generation bug.-->
+      <!--<version>3.10.2</version>-->
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
@@ -123,10 +125,12 @@
           </compilerArguments>
           <compilerArgs>
             <arg>-AprintErrorStack</arg>
+            <!--NullChecker needs this turned on-->
+            <arg>-AassumeAssertionsAreEnabled</arg>
             <!-- location of the annotated JDK, which comes from a Maven dependency -->
             <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
             <!-- Uncomment the following line to use the type annotations compiler. -->
-            <!-- <arg>-J-Xbootclasspath/p:${typeAnnotationsJavac}</arg> -->
+             <!--<arg>-J-Xbootclasspath/p:${typeAnnotationsJavac}</arg> -->
             <!-- Uncomment the following line to turn type-checking warnings into errors. -->
             <!-- <arg>-Awarns</arg> -->
           </compilerArgs>
@@ -304,7 +308,7 @@
             <!--<driver>org.apache.derby.jdbc.EmbeddedDriver</driver>-->
             <!--<url>jdbc:derby:skeleton;create=true;collation=TERRITORY_BASED:PRIMARY</url>-->
             <driver>org.sqlite.JDBC</driver>
-            <url>jdbc:sqlite:/Users/miguelmunoz/.sqlLite.skeleton/skeleton.db</url>
+            <url>jdbc:sqlite:/Users/miguelmunoz/.sqlite.master.skeleton/skeleton.db</url>
             <!--<user>postgres</user>-->
             <!--<password>test</password>-->
           </jdbc>

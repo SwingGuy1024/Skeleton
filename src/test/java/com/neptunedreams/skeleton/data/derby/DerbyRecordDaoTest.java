@@ -7,13 +7,10 @@ import java.util.Collection;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.DatabaseInfo;
 import com.neptunedreams.skeleton.data.Record;
-import com.neptunedreams.skeleton.data.sqlite.SQLiteInfo;
-import com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao;
-import com.neptunedreams.skeleton.data2.tables.records.RecordRecord;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-import static org.hamcrest.Matchers.*;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -27,25 +24,42 @@ public class DerbyRecordDaoTest {
   @Test
   @SuppressWarnings({"HardCodedStringLiteral", "unused", "HardcodedLineSeparator"})
   public void testDao() throws SQLException, IOException {
+    //noinspection HardcodedFileSeparator
     DatabaseInfo info = new DerbyInfo("/.derby.skeletonTest");
-//    ensureHomeExists(info.getHomeDir());
     info.init();
     final ConnectionSource connectionSource = info.getConnectionSource();
     DerbyRecordDao dao = (DerbyRecordDao) info.<Record, Integer>getDao(Record.class, connectionSource);
+    try {
+      doTestDao(dao);
+    } finally {
+      // cleanup even on failure.
+      Collection<Record> allRecords = showAllRecords(dao);
+      int count = allRecords.size();
+      for (Record record : allRecords) {
+        dao.delete(record);
+      }
+      allRecords = showAllRecords(dao);
+      assertEquals(0, allRecords.size());
+    }
+  }
+  
+  private void doTestDao(DerbyRecordDao dao) throws IOException, SQLException {
+//    ensureHomeExists(info.getHomeDir());
     dao.createTableIfNeeded();
 //    SQLiteRecordDao dao = (SQLiteRecordDao) info.<RecordRecord, Integer>getDao(Record.class, connectionSource);
+    //noinspection HardcodedLineSeparator
     Record record1 = new Record("TestSite", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
-    dao.save(record1);
+    dao.insert(record1);
     Record record2 = new Record("t2Site", "t2User", "t2Pw", "t2Note");
-    dao.save(record2);
+    dao.insert(record2);
 
     Collection<Record> allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
     System.out.printf("getAll() returned %d records, expecting 2%n", allRecords.size());
 
     //noinspection UnusedAssignment
     Collection<Record> foundRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
-    foundRecords = dao.find("line", com.neptunedreams.skeleton.data.RecordField.SOURCE);
-    System.out.printf("find(line) returned %d records, expecting 1%n", foundRecords.size());
+    foundRecords = dao.find("t2site", com.neptunedreams.skeleton.data.RecordField.SOURCE);
+    System.out.printf("find(t2site) returned %d records, expecting 1%n", foundRecords.size());
     record1 = foundRecords.iterator().next();
 
     // Test update
@@ -68,11 +82,12 @@ public class DerbyRecordDaoTest {
     allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
     System.out.printf("Total of %d records after deleting 1%n", allRecords.size());
 
+    //noinspection HardcodedLineSeparator
     Record record1b = new Record("TestSite a", "testName a", "testPw a", "testNotes\nNote line 2\nNoteLine 3");
     dao.insert(record1b);
-    Collection<?> tInfo = dao.getTableInfo();
+    Collection<@NonNull ?> tInfo = dao.getTableInfo();
     System.out.printf("Total of %d objects%n", tInfo.size());
-    for (Object o : tInfo) {
+    for (@NonNull Object o : tInfo) {
       System.out.println(o);
     }
   }
@@ -88,6 +103,15 @@ public class DerbyRecordDaoTest {
     DatabaseInfo info = new DerbyInfo();
 //    ensureHomeExists(info.getHomeDir());
     assertTrue("Home Dir doesn't exist!:" + info.getHomeDir(), new File(info.getHomeDir()).exists());
+  }
+
+  private Collection<Record> showAllRecords(final DerbyRecordDao dao) throws SQLException {
+    Collection<Record> allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
+    System.out.printf("getAll() returned %d records, expecting 2%n", allRecords.size());
+    for (Record rr : allRecords) {
+      System.out.println(rr);
+    }
+    return allRecords;
   }
 
 //  @SuppressWarnings("HardCodedStringLiteral")
