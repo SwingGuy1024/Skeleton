@@ -3,6 +3,7 @@ package com.neptunedreams.skeleton.data.sqlite;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Objects;
 import com.neptunedreams.skeleton.data.AbstractDatabaseInfo;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
@@ -96,7 +97,7 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
         try {
           q.execute();
         } catch (DataAccessException e) {
-          if (!e.getMessage().contains("table record already exists")) {
+          if (!Objects.toString(e.getMessage()).contains("table record already exists")) {
             throw e;
           }
         }

@@ -59,7 +59,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private final Consumer<Collection<R>> recordConsumer = createRecordConsumer();
   private @NonNull QueuedTask<String, Collection<R>> queuedTask = new QueuedTask<>(DELAY, callable, recordConsumer);
 
-  @SuppressWarnings({"method.invocation.invalid", "argument.type.incompatible"}) // add(), setBorder(), etc not properly annotated in JDK.
+  @SuppressWarnings({"method.invocation.invalid","argument.type.incompatible"}) // add(), setBorder(), etc not properly annotated in JDK.
   public RecordUI(@NonNull RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
     super(new BorderLayout());
     recordModel = model;
@@ -100,12 +100,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
         }
       }
     });
-
-//    try {
-//      Collection<String> data = controller.getDao().getTableInfo();
-//    } catch (SQLException e) {
-//      e.printStackTrace();
-//    }
   }
 
   private JPanel createControlPanel() {
@@ -123,7 +117,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     return buttonPanel;
   }
 
-  @SuppressWarnings("argument.type.incompatible")
   private JPanel createTrashPanel() {
     JPanel trashPanel = new JPanel(new BorderLayout());
     JButton trashRecord = new JButton(Resource.getBin());
@@ -133,13 +126,12 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     assert infoLine != null;
     trashPanel.add(infoLine, BorderLayout.LINE_START);
     assert recordModel != null;
-    recordModel.addModelListener(this); // argument.type.incompatible Checker warning expects this is initialized
+    recordModel.addModelListener(this);
     return trashPanel;
   }
 
-  @SuppressWarnings("argument.type.incompatible")
   private void delete() {
-    if (JOptionPane.showConfirmDialog(this, // argument.type.incompatible JDK not annotated as @Nullable
+    if (JOptionPane.showConfirmDialog(this,
         "Are you sure?",
         "Delete Record", 
         JOptionPane.YES_NO_OPTION,

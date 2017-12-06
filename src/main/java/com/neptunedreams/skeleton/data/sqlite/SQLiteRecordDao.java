@@ -13,6 +13,7 @@ import com.neptunedreams.skeleton.data2.tables.records.RecordRecord;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jooq.DSLContext;
+import org.jooq.OrderField;
 import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.ResultQuery;
@@ -47,12 +48,12 @@ import static org.jooq.impl.DSL.*;
 @SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "HardCodedStringLiteral"})
 public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
 
-  private static final Map<RecordField, TableField<RecordRecord, ?>> fieldMap = makeFieldMap();
+  private static final Map<RecordField, @NonNull TableField<RecordRecord, ?>> fieldMap = makeFieldMap();
   private final ConnectionSource connectionSource;
   private Connection connection;
 
-  private static Map<RecordField, TableField<RecordRecord, ?>> makeFieldMap() {
-    final Map<RecordField, TableField<RecordRecord, ?>> fieldMap = new EnumMap<>(RecordField.class);
+  private static Map<RecordField, @NonNull TableField<RecordRecord, ?>> makeFieldMap() {
+    final EnumMap<RecordField, @NonNull TableField<RecordRecord, ?>> fieldMap = new EnumMap<>(RecordField.class);
     fieldMap.put(RecordField.ID,       Record.RECORD.ID);
     fieldMap.put(RecordField.SOURCE,   Record.RECORD.SOURCE);
     fieldMap.put(RecordField.USERNAME, Record.RECORD.USERNAME);
@@ -112,17 +113,24 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   }
 
   @Override
+  @SuppressWarnings("cast.unsafe")
   public Collection<RecordRecord> getAll(final @Nullable RecordField orderBy) throws SQLException {
 
     //noinspection resource
     DSLContext dslContext = getDslContext();
     try (
         SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD)) {
-      return recordRecords.fetch();
+      if (orderBy == null) {
+        return recordRecords.fetch();
+      } else {
+        //noinspection resource
+        return recordRecords.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy)).fetch();
+      }
     }
   }
 
   @Override
+  @SuppressWarnings("cast.unsafe")
   public Collection<RecordRecord> find(final String text, final @Nullable RecordField orderBy) throws SQLException {
     final String wildCardText = WC + text + WC;
     //noinspection resource
@@ -135,24 +143,30 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
           RECORD.USERNAME.like(wildCardText).or(
           RECORD.PASSWORD.like(wildCardText).or(
           RECORD.NOTES.like(wildCardText)))));
-      final ResultQuery<RecordRecord> query = (orderBy == null) ? where : where.orderBy(fieldMap.get(orderBy))
+      final ResultQuery<RecordRecord> query = (orderBy == null) ? 
+          where : 
+          where.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy)) // unsafe cast
     ) {
       return query.fetch();
     }
   }
 
   @Override
+  @SuppressWarnings({"assignment.type.incompatible", "cast.unsafe"})
   public Collection<RecordRecord> findInField(final String text, final @NonNull RecordField findBy, final @Nullable RecordField orderBy) throws SQLException {
     String wildCardText = WC + text + WC;
     //noinspection resource
     DSLContext dslContext = getDslContext();
+
+    // type incompatible error. It complains that the field isn't "@UnknownInitialization". I don't know why.
+    final @NonNull TableField<RecordRecord, ?> findByField = fieldMap.get(findBy);
     try (
         final SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD);
-        final SelectConditionStep<RecordRecord> where = recordRecords.where(fieldMap.get(findBy).like(wildCardText))
+        final SelectConditionStep<RecordRecord> where = recordRecords.where((findByField.like(wildCardText)))
     ) {
       if (orderBy != null) {
-        //noinspection NestedTryStatement
-        try (SelectSeekStep1<RecordRecord, ?> step = where.orderBy(fieldMap.get(orderBy))) {
+        //noinspection NestedTryStatement, cast.unsafe
+        try (SelectSeekStep1<RecordRecord, ?> step = where.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy))) {
           return step.fetch();
         }
       } else {

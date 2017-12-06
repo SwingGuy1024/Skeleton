@@ -6,6 +6,7 @@ import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Objects;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
@@ -167,7 +168,7 @@ public final class Skeleton extends JPanel
       //noinspection CallToDriverManagerGetConnection,JDBCResourceOpenedButNotSafelyClosed,resource
       DriverManager.getConnection("jdbc:derby:;shutdown=true");
     } catch (SQLException e1) {
-      if (!e1.getMessage().contains("Derby system shutdown.")) {
+      if (!Objects.toString(e1.getMessage()).contains("Derby system shutdown.")) {
         e1.printStackTrace();
       }
     }

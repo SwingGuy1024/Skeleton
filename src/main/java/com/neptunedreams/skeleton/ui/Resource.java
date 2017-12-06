@@ -1,6 +1,7 @@
 package com.neptunedreams.skeleton.ui;
 
 import java.net.URL;
+import java.util.Objects;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -24,7 +25,7 @@ enum Resource {
   private static final String ARROW_LAST_PNG = "arrow_last.png";
 
   private static Icon getIcon(String name) {
-    URL resource = Resource.class.getResource(name);
+    URL resource = Objects.requireNonNull(Resource.class.getResource(name));
 //    if (resource == null) {
 //      resource = Resource.class.getResource("/com/skeleton/ui/" + name);
 //    }

@@ -71,26 +71,29 @@ public class QueuedTask<I, R> {
     } catch (InterruptedException ignored) { }
   }
 
+  @SuppressWarnings("methodref.inference.unimplemented")
   private Runnable createLaunchTask(@UnderInitialization QueuedTask<I, R>this) {
-    return () -> {
-      //noinspection InfiniteLoopStatement
-      while (true) {
-        try {
-//            System.out.println("... Awaiting... " + System.currentTimeMillis());
-          assert door != null;
-          door.await();      // throws InterruptedException
-//            System.out.println(".. reOpening... " + System.currentTimeMillis());
-          door.reset(1);
-//            System.out.println("... Sleeping... " + System.currentTimeMillis());
-          QueuedTask.this.sleep(delayMilliSeconds);
-//            System.out.println(".. Launching... " + System.currentTimeMillis());
-          QueuedTask.this.launchCallable();
-        } catch (InterruptedException ignored) {
-//            System.out.println("--- Interrupted " + System.currentTimeMillis());
-        }
+    return this::launchTaskLoop; // Doesn't type check this, but it's only used after initialization, so we're okay.
+  }
 
+  private void launchTaskLoop() {
+    //noinspection InfiniteLoopStatement
+    while (true) {
+      try {
+//            System.out.println("... Awaiting... " + System.currentTimeMillis());
+        assert door != null;
+        door.await();      // throws InterruptedException
+//            System.out.println(".. reOpening... " + System.currentTimeMillis());
+        door.reset(1);
+//            System.out.println("... Sleeping... " + System.currentTimeMillis());
+        QueuedTask.this.sleep(delayMilliSeconds);
+//            System.out.println(".. Launching... " + System.currentTimeMillis());
+        QueuedTask.this.launchCallable();
+      } catch (InterruptedException ignored) {
+//            System.out.println("--- Interrupted " + System.currentTimeMillis());
       }
-    };
+
+    }
   }
 
   private void launchCallable() {

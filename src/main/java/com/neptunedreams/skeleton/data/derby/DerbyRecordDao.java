@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.Record;
@@ -51,7 +52,7 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
     try {
       connection.prepareStatement(SELECT_ALL + "id");
     } catch (SQLException e) {
-      if (e.getMessage().contains("does not exist.")) {
+      if (Objects.toString(e.getMessage()).contains("does not exist.")) {
         createTable();
       }
       return false;
@@ -94,10 +95,10 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
       while (rowIsValid) {
         Record aRecord = new Record();
         aRecord.setId(resultSet.getInt(1));
-        aRecord.setSource(resultSet.getString(2));
-        aRecord.setUserName(resultSet.getString(3));
-        aRecord.setPassword(resultSet.getString(4));
-        aRecord.setNotes(resultSet.getString(5));
+        aRecord.setSource(Objects.toString(resultSet.getString(2), ""));
+        aRecord.setUserName(Objects.toString(resultSet.getString(3), ""));
+        aRecord.setPassword(Objects.toString(resultSet.getString(4), ""));
+        aRecord.setNotes(Objects.toString(resultSet.getString(5), ""));
         rowIsValid = resultSet.next();
         recordList.add(aRecord);
       }

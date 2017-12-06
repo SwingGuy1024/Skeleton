@@ -2,6 +2,7 @@ package com.neptunedreams.skeleton.data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 
 /**
@@ -13,12 +14,12 @@ import org.checkerframework.checker.initialization.qual.UnderInitialization;
  */
 public class AbstractDaoFactory {
   private final Map<Class<?>, Dao<?, ?>> daoMap = new HashMap<>();
-  protected final <T> void addDao(@UnderInitialization AbstractDaoFactory this, Class<T> tClass, Dao<T, ?> tDao) {
+  protected final <T, PK> void addDao(@UnderInitialization AbstractDaoFactory this, Class<T> tClass, Dao<T, PK> tDao) {
     daoMap.put(tClass, tDao);
   }
   
   public <T, PK> Dao<T, PK> getDao(Class<T> tClass) {
     //noinspection unchecked
-    return (Dao<T, PK>) daoMap.get(tClass);
+    return Objects.requireNonNull((Dao<T, PK>) daoMap.get(tClass));
   } 
 }
