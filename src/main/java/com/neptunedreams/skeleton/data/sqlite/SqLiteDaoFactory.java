@@ -2,7 +2,7 @@ package com.neptunedreams.skeleton.data.sqlite;
 
 import com.neptunedreams.skeleton.data.AbstractDaoFactory;
 import com.neptunedreams.skeleton.data.ConnectionSource;
-import com.neptunedreams.skeleton.data2.tables.records.RecordRecord;
+import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
 
 /**
  * <p>Created by IntelliJ IDEA.

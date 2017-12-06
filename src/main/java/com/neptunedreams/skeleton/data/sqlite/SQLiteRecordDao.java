@@ -8,8 +8,8 @@ import java.util.Map;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.RecordField;
-import com.neptunedreams.skeleton.data2.tables.Record;
-import com.neptunedreams.skeleton.data2.tables.records.RecordRecord;
+import com.neptunedreams.skeleton.gen.tables.Record;
+import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jooq.DSLContext;
@@ -24,7 +24,7 @@ import org.jooq.SelectWhereStep;
 import org.jooq.TableField;
 import org.jooq.impl.DSL;
 
-import static com.neptunedreams.skeleton.data2.Tables.*;
+import static com.neptunedreams.skeleton.gen.Tables.*;
 import static org.jooq.SQLDialect.*;
 import static org.jooq.impl.DSL.*;
 

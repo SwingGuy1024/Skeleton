@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.DatabaseInfo;
-import com.neptunedreams.skeleton.data2.tables.records.RecordRecord;
+import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 

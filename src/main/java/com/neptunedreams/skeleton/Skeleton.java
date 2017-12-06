@@ -16,7 +16,7 @@ import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.DatabaseInfo;
 import com.neptunedreams.skeleton.data.RecordField;
 import com.neptunedreams.skeleton.data.sqlite.SQLiteInfo;
-import com.neptunedreams.skeleton.data2.tables.records.RecordRecord;
+import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
 import com.neptunedreams.skeleton.ui.RecordController;
 import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
@@ -46,6 +46,9 @@ public final class Skeleton extends JPanel
   // Done: Add a getTotal method for info line.
   // TODO: Figure out a better way to get the ID of a new record. Can we ask the sequencer?
   // Todo  For accessing a sequencer, see https://stackoverflow.com/questions/5729063/how-to-use-sequence-in-apache-derby
+  // TODO: BUG: Search that produces no results gives the user a data-entry screen to doesn't get saved.
+  // TODO: BUG: Search that produces one result gives the user an entry screen that gets treated as a new record 
+  // TODO: BUG: Key Queue never reads the keys it saves. Can we get rid of it?
   
   // https://db.apache.org/ojb/docu/howtos/howto-use-db-sequences.html
   // https://db.apache.org/derby/docs/10.8/ref/rrefsqljcreatesequence.html 
