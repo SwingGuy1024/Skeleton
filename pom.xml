@@ -329,7 +329,7 @@
               <!--<inputSchema>public</inputSchema>-->
             </database>
             <target>
-              <packageName>com.neptunedreams.skeleton.data2</packageName>
+              <packageName>com.neptunedreams.skeleton.gen</packageName>
               <directory>/Users/miguelmunoz/Documents/Skeleton2/src/main/java</directory>
             </target>
           </generator>
