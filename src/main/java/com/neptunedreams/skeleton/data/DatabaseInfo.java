@@ -23,5 +23,6 @@ public interface DatabaseInfo {
   void createSchema();
 
   ConnectionSource getConnectionSource();
+  void shutdown();
 
 }

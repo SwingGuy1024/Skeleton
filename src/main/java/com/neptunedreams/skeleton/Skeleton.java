@@ -4,9 +4,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Objects;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
@@ -20,6 +18,8 @@ import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
 import com.neptunedreams.skeleton.ui.RecordController;
 import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
+import org.checkerframework.checker.initialization.qual.UnknownInitialization;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Hello world!
@@ -61,13 +61,15 @@ public final class Skeleton extends JPanel
   private JPanel mainPanel;
   //    org.jooq.util.JavaGenerator generator;
   private static JFrame frame = new JFrame("Skeleton");
+  private final @NonNull DatabaseInfo info;
 
   public static void main(String[] args ) throws IOException {
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.setLocationByPlatform(true);
-    frame.add(new Skeleton().getPanel());
+    final Skeleton skeleton = new Skeleton();
+    frame.add(skeleton.getPanel());
     frame.pack();
-    frame.addWindowListener(shutdownListener());
+    frame.addWindowListener(skeleton.shutdownListener());
 //    UIMenus.Menu.installMenu(frame);
     frame.setVisible(true);
   }
@@ -93,12 +95,12 @@ public final class Skeleton extends JPanel
 //    init(derbySystemHome);
 
     try {
-      DatabaseInfo info = new SQLiteInfo();
+      info = new SQLiteInfo();
       info.init();
       final ConnectionSource connectionSource = info.getConnectionSource();
       Dao<RecordRecord, Integer> dao = info.getDao(RecordRecord.class, connectionSource);
       RecordRecord dummyRecord = new RecordRecord(DUMMY_ID, "D", "D", "D", "D");
-      final RecordView<RecordRecord> view = new RecordView.Builder<>(dummyRecord)
+      final RecordView<RecordRecord> view = new RecordView.Builder<>(dummyRecord, RecordField.SOURCE)
           .source  (RecordRecord::getSource,   RecordRecord::setSource)
           .id      (RecordRecord::getId,       RecordRecord::setId)
           .userName(RecordRecord::getUsername, RecordRecord::setUsername)
@@ -106,7 +108,12 @@ public final class Skeleton extends JPanel
           .notes   (RecordRecord::getNotes,    RecordRecord::setNotes)
           .build();
       @SuppressWarnings("unchecked") 
-      RecordController<RecordRecord, Integer> controller = new RecordController<>(RecordRecord.class, dao, view, RecordField.SOURCE);
+      RecordController<RecordRecord, Integer> controller = new RecordController<>(
+          dao, 
+          view, 
+          RecordField.SOURCE,
+          this::recordConstructor
+      );
       view.setController(controller);
       mainPanel = new RecordUI<>(controller.getModel(), view, controller);
       controller.findTextAnywhere("");
@@ -117,7 +124,10 @@ public final class Skeleton extends JPanel
         @Override
         public void windowClosing(final WindowEvent e) {
           try {
-            view.saveOnExit();
+            // TODO: Fix this. We save twice, once in saveOnExit(), once here!
+            if (view.saveOnExit()) {
+              controller.getDao().save(view.getCurrentRecord());
+            }
           } catch (SQLException e1) {
             ErrorReport.reportException("Saving last change", e1);
           }
@@ -128,6 +138,12 @@ public final class Skeleton extends JPanel
       shutDownDatabase();
       throw new IOException(e); // don't even open the window!
     }
+  }
+
+  @SuppressWarnings("unused")
+  private RecordRecord recordConstructor(@UnknownInitialization Skeleton this, Void ignored) {
+    //noinspection ConstantConditions
+    return new RecordRecord(0, "", "", "", "");
   }
   
   private JPanel getPanel() { return mainPanel; }
@@ -156,7 +172,7 @@ public final class Skeleton extends JPanel
 //    }
 //  }
 
-  private static WindowListener shutdownListener() {
+  private WindowListener shutdownListener() {
     return new WindowAdapter() {
       @Override
       public void windowClosed(final WindowEvent e) {
@@ -165,16 +181,9 @@ public final class Skeleton extends JPanel
     };
   }
 
-  private static void shutDownDatabase() {
-    try {
-      // NO need to safely close. We're shutting down!
-      //noinspection CallToDriverManagerGetConnection,JDBCResourceOpenedButNotSafelyClosed,resource
-      DriverManager.getConnection("jdbc:derby:;shutdown=true");
-    } catch (SQLException e1) {
-      if (!Objects.toString(e1.getMessage()).contains("Derby system shutdown.")) {
-        e1.printStackTrace();
-      }
-    }
+  private void shutDownDatabase(@UnknownInitialization Skeleton this) {
+    assert info != null;
+    info.shutdown();
   }
 }
 

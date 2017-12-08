@@ -73,4 +73,8 @@ public abstract class AbstractDatabaseInfo implements DatabaseInfo {
 
 //    String connectionUrl = String.format("jdbc:derby:%s:skeleton", dataDir.getAbsolutePath());
   }
+
+  @SuppressWarnings("NoopMethodInAbstractClass")
+  @Override
+  public void shutdown() { }
 }

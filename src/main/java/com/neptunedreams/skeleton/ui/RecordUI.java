@@ -137,11 +137,11 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
         JOptionPane.YES_NO_OPTION,
         JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION
         ) {
-      R selectedRecord = recordModel.getSelectedRecord();
+      R selectedRecord = recordModel.getFoundRecord();
       try {
         controller.delete(selectedRecord); // Removes from database
         recordModel.deleteSelected(true, recordModel.getRecordIndex());
-        view.setCurrentRecord(recordModel.getSelectedRecord());
+        view.setCurrentRecord(recordModel.getFoundRecord());
       } catch (SQLException e) {
         ErrorReport.reportException("delete current record", e);
       }
@@ -159,7 +159,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     buttons.add(last);
 //    buttons.add(importBtn);
     
-    assert controller != null;
     add.addActionListener((e)->controller.addBlankRecord());
     prev.addActionListener((e)->recordModel.goPrev());
     next.addActionListener((e)->recordModel.goNext());
@@ -233,7 +232,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   }
   
   private void loadInfoLine() {
-    final R selectedRecord = recordModel.getSelectedRecord();
+    final R selectedRecord = recordModel.getFoundRecord();
     int entryItem = (controller.getDao().getPrimaryKey(selectedRecord) == null) ? 1 : 0;
     //noinspection HardcodedFileSeparator
     String info = String.format("%d/%d of %d", 
@@ -274,8 +273,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     };
   }
 
+  @SuppressWarnings("dereference.of.nullable") // controller is null when we call this, but not when we call the lambda.
   private Consumer<Collection<R>> createRecordConsumer(@UnknownInitialization RecordUI<R>this) {
-    assert controller != null;
+//    assert controller != null;
     return records -> SwingUtilities.invokeLater(() -> controller.setFoundRecords(records));
   }
 

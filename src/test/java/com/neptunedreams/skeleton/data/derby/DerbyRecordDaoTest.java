@@ -45,7 +45,7 @@ public class DerbyRecordDaoTest {
   
   private void doTestDao(DerbyRecordDao dao) throws IOException, SQLException {
 //    ensureHomeExists(info.getHomeDir());
-    dao.createTableIfNeeded();
+//    dao.createTableIfNeeded();
 //    SQLiteRecordDao dao = (SQLiteRecordDao) info.<RecordRecord, Integer>getDao(Record.class, connectionSource);
     //noinspection HardcodedLineSeparator
     Record record1 = new Record("TestSite", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");

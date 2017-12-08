@@ -52,7 +52,7 @@ public class SqLiteRecordDaoTest {
 //    ensureHomeExists(info.getHomeDir());
     assertNotNull(dao);
     // todo: fix CreateTableIfNeeded when the whole schema was created.
-    dao.createTableIfNeeded();
+//    dao.createTableIfNeeded();
 //    if (info.isCreateSchemaAllowed()) {
 //      info.createSchema();
 //    }

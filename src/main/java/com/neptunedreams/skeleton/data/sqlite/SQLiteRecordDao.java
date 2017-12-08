@@ -10,6 +10,8 @@ import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.RecordField;
 import com.neptunedreams.skeleton.gen.tables.Record;
 import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jooq.DSLContext;
@@ -50,7 +52,7 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
 
   private static final Map<RecordField, @NonNull TableField<RecordRecord, ?>> fieldMap = makeFieldMap();
   private final ConnectionSource connectionSource;
-  private Connection connection;
+  private @NonNull Connection connection;
 
   private static Map<RecordField, @NonNull TableField<RecordRecord, ?>> makeFieldMap() {
     final EnumMap<RecordField, @NonNull TableField<RecordRecord, ?>> fieldMap = new EnumMap<>(RecordField.class);
@@ -77,7 +79,9 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
 //  private static final String DELETE = "DELETE FROM record WHERE ID = ?";
   private static final char WC = '%';
 //  private final DSLContext dslContext;
-  private DSLContext getDslContext() throws SQLException {
+  private DSLContext getDslContext(@UnknownInitialization SQLiteRecordDao this) throws SQLException {
+    assert connection != null;
+    assert connectionSource != null;
     if (connection.isClosed()) {
       connection = connectionSource.getConnection();
     }
@@ -88,10 +92,15 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
     connectionSource = source;
     connection = source.getConnection();
 //    dslContext = DSL.using(connection, SQLITE);
+    try {
+      createTableIfNeeded();
+    } catch (SQLException e) {
+      throw new IllegalStateException(e);
+    }
   }
-  
+
   @Override
-  public boolean createTableIfNeeded() throws SQLException {
+  public boolean createTableIfNeeded(@UnderInitialization SQLiteRecordDao this) throws SQLException {
     /* All my efforts to generate the table using jOOQ failed, so I had to resort to direct SQL. */
 
     //noinspection resource

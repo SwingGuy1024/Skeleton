@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-//import com.neptunedreams.skeleton.data.Record;
+import java.util.function.Function;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -26,10 +26,10 @@ public class RecordModel<R> {
   private List<R> foundItems = new ArrayList<>();
   private int recordIndex = 0;
   private int total = 0;
-  private Class<R> recordClass;
+  private final Function<Void, R> constructor;
   
-  RecordModel(Class<R> theRecordClass) {
-    recordClass = theRecordClass;
+  RecordModel(Function<Void, R> theConstructor) {
+    constructor = theConstructor;
   }
 
   public int getRecordIndex() {
@@ -71,13 +71,7 @@ public class RecordModel<R> {
   }
 
   public R createNewEmptyRecord() {
-    final R record;
-    try {
-      record = recordClass.getConstructor().newInstance();
-    } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-      throw new IllegalArgumentException("Record type needs no-argument constructor", e);
-    }
-    return record;
+    return constructor.apply(null);
   }
 
   public void goNext() {
@@ -126,7 +120,7 @@ public class RecordModel<R> {
     fireModelListChanged();
   }
 
-  public R getSelectedRecord() {
+  public R getFoundRecord() {
     if (!foundItems.isEmpty()) {
       return foundItems.get(recordIndex);
     }

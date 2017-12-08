@@ -2,6 +2,7 @@ package com.neptunedreams.skeleton.ui;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.function.Function;
 import com.ErrorReport;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.RecordField;
@@ -25,14 +26,14 @@ public class RecordController<R, PK> implements RecordModelListener {
 
   @SuppressWarnings("argument.type.incompatible")
   public RecordController(
-      Class<R> recordClass, 
       Dao<R, PK> theDao, 
       RecordView<R> view, 
-      RecordField initialOrder
+      RecordField initialOrder,
+      Function<Void, R> recordConstructor
   ) {
     dao = theDao;
     recordView = view;
-    model = new RecordModel<>(recordClass);
+    model = new RecordModel<>(recordConstructor);
     model.addModelListener(this); // Type checker needs "this" to be initialized, so suppress the warning.
     order = initialOrder;
   }
@@ -51,13 +52,13 @@ public class RecordController<R, PK> implements RecordModelListener {
     return order;
   }
 
-  public void loadNewRecord(R record, int prior) {
+  private void loadNewRecord(R record, int prior) {
     if ((prior >= 0) && (prior < model.getSize())) {
       R currentRecord = model.getRecordAt(prior);
       if (recordView.recordHasChanged()) {
         try {
-          recordView.loadNewData(currentRecord);
-          dao.setPrimaryKey(currentRecord, dao.getNextId());
+          recordView.loadUIData(currentRecord);
+//          dao.setPrimaryKey(currentRecord, dao.getNextId());
 //          currentRecord.setId(dao.getNextId());
           dao.insert(currentRecord);
           model.incrementTotal();
@@ -69,8 +70,7 @@ public class RecordController<R, PK> implements RecordModelListener {
         model.deleteSelected(false, prior);
       }
     }
-    recordView.setCurrentRecord(record); // Should this be done by a listener in the view? If so, how do we make sure
-    // it happens at the end of this method?
+    recordView.setCurrentRecord(record);
   }
 
   public void addBlankRecord() {
@@ -81,11 +81,8 @@ public class RecordController<R, PK> implements RecordModelListener {
 
   public void setFoundRecords(final Collection<R> theFoundItems) {
     model.setNewList(theFoundItems);
-//    model.goFirst();
-    if (theFoundItems.isEmpty()) {
-      addBlankRecord();
-    } else {
-      final R selectedRecord = model.getSelectedRecord();
+    if (!theFoundItems.isEmpty()) {
+      final R selectedRecord = model.getFoundRecord();
       assert selectedRecord != null;
       loadNewRecord(selectedRecord, -1);
     }
@@ -142,7 +139,7 @@ public class RecordController<R, PK> implements RecordModelListener {
 
   @Override
   public void indexChanged(final int index, int prior) {
-    loadNewRecord(model.getSelectedRecord(), prior);
+    loadNewRecord(model.getFoundRecord(), prior);
   }
 
   public void delete(final R selectedRecord) throws SQLException {

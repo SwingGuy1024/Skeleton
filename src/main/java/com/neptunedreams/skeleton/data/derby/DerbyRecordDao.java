@@ -12,6 +12,7 @@ import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.Record;
 import com.neptunedreams.skeleton.data.RecordField;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -41,27 +42,33 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
   private static final String DELETE = "DELETE FROM record WHERE ID = ?";
   private static final String ORDER_BY = "ORDER BY ";
   private static final char WC = '%';
-  private final Connection connection;
+  private final @NonNull Connection connection;
   
   public DerbyRecordDao(ConnectionSource source) {
     connection = source.getConnection();
+    try {
+      createTableIfNeeded();
+    } catch (SQLException e) {
+      throw new IllegalStateException(e);
+    }
   }
   
   @Override
-  public boolean createTableIfNeeded() throws SQLException {
+  public boolean createTableIfNeeded(@UnderInitialization DerbyRecordDao this) throws SQLException {
+    assert connection != null;
     try {
       connection.prepareStatement(SELECT_ALL + "id");
     } catch (SQLException e) {
       if (Objects.toString(e.getMessage()).contains("does not exist.")) {
-        createTable();
+        createTable(connection);
       }
       return false;
     }
     return true;
   }
 
-  private void createTable() throws SQLException {
-    PreparedStatement statement = connection.prepareStatement(CREATE_TABLE);
+  private void createTable(@UnderInitialization DerbyRecordDao this, Connection c) throws SQLException {
+    PreparedStatement statement = c.prepareStatement(CREATE_TABLE);
     statement.execute();
   }
 

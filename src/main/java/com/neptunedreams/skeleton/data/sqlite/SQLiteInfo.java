@@ -29,7 +29,7 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
   private static final Class<RecordRecord> RECORD_RECORD_CLASS = RecordRecord.class;
 
   public SQLiteInfo() throws SQLException, IOException {
-    this("/.sqlLite.skeleton");
+    this("/.sqlite.skeleton");
   }
   
   public SQLiteInfo(String homeDir) throws IOException, SQLException {

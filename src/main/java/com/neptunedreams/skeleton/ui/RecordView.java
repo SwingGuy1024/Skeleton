@@ -5,7 +5,10 @@ import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
+import java.io.Serializable;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
@@ -19,7 +22,9 @@ import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.JTextComponent;
 import com.neptunedreams.Setter;
+import com.neptunedreams.framework.ui.FieldBinding;
 import com.neptunedreams.skeleton.data.RecordField;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -38,30 +43,16 @@ public final class RecordView<R> extends JPanel {
   private JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
   private ButtonGroup buttonGroup = new ButtonGroup();
 
-  private Function<R, Integer> idGetter;
-  private Setter<R, Integer> idSetter;
-  private Function<R, String> sourceGetter;
-  private Setter<R, String> sourceSetter;
-  private Function<R, String> userNameGetter;
-  private Setter<R, String> userNameSetter;
-  private Function<R, String> passwordGetter;
-  private Setter<R, String> passwordSetter;
-  private Function<R, String> notesGetter;
-  private Setter<R, String> notesSetter;
-
-  private JLabel idField;
-  private JTextComponent sourceField;
-  private JTextComponent usernameField;
-  private JTextComponent pwField;
-  private JTextComponent notesField;
-
   @SuppressWarnings("HardCodedStringLiteral")
   private R currentRecord; // = new Record("D", "D", "D", "D");
   
   private RecordController<R, ?> controller;
+  private final FieldBinding.IntegerBinding<R> idBinding;
+  private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
 
   @SuppressWarnings({"initialization.fields.uninitialized","argument.type.incompatible","method.invocation.invalid"})
   private RecordView(R record,
+                     RecordField initialSort,
                      Function<R, Integer> getIdFunction, Setter<R, Integer> setIdFunction,
                      Function<R, String> getSourceFunction, Setter<R, String> setSourceFunction,
                      Function<R, String> getUserNameFunction, Setter<R, String> setUserNameFunction,
@@ -69,19 +60,44 @@ public final class RecordView<R> extends JPanel {
                      Function<R, String> getNotesFunction, Setter<R, String> setNotesFunction
    ) {
     super(new BorderLayout());
-    idGetter = getIdFunction;
-    idSetter = setIdFunction;
-    sourceGetter = getSourceFunction;
-    sourceSetter = setSourceFunction;
-    userNameGetter = getUserNameFunction;
-    userNameSetter = setUserNameFunction;
-    passwordGetter = getPasswordFunction;
-    passwordSetter = setPasswordFunction;
-    notesGetter = getNotesFunction;
-    notesSetter = setNotesFunction;
-    idSetter.setValue(currentRecord, NO_RECORD);
-    add(makeTopPanel(), BorderLayout.PAGE_START);
     currentRecord = record;
+    final JLabel idField = (JLabel) addField("ID", false, RecordField.ID, initialSort);
+    final JTextComponent sourceField = (JTextComponent) addField("Source", true, RecordField.SOURCE, initialSort);
+    final JTextComponent usernameField = (JTextComponent) addField("User Name", true, RecordField.USERNAME, initialSort);
+    final JTextComponent pwField = (JTextComponent) addField("Password", true, RecordField.PASSWORD, initialSort);
+    final JTextComponent notesField = addNotesField();
+    assert getIdFunction != null : "Null id getter";
+    assert setIdFunction != null : "Null id Setter";
+    idBinding = FieldBinding.bindInteger(getIdFunction, setIdFunction, idField);
+    final FieldBinding.StringEditableBinding<R> sourceBinding = FieldBinding.bindEditableString(getSourceFunction, setSourceFunction, sourceField);
+    final FieldBinding.StringEditableBinding<R> userNameBinding = FieldBinding.bindEditableString(getUserNameFunction, setUserNameFunction, usernameField);
+    final FieldBinding.StringEditableBinding<R> passwordBinding = FieldBinding.bindEditableString(getPasswordFunction, setPasswordFunction, pwField);
+    final FieldBinding.StringEditableBinding<R> notesBinding = FieldBinding.bindEditableString(getNotesFunction, setNotesFunction, notesField);
+    allBindings = Arrays.asList(idBinding, sourceBinding, userNameBinding, passwordBinding, notesBinding);
+    
+    // currentRecord has null values for lots of non-null fields. This should clean those fields up.
+    for (FieldBinding<R, ?, ?> b : allBindings) {
+      cleanValue(b, currentRecord);
+    }
+    idBinding.setValue(currentRecord, NO_RECORD);
+    add(makeTopPanel(), BorderLayout.PAGE_START);
+
+    installStandardCaret(sourceField);
+    installStandardCaret(usernameField);
+    installStandardCaret(pwField);
+    installStandardCaret(notesField);
+  }
+
+  /**
+   * Clean the value during initialization. This needs to be a separate method because there's no way to infer the 
+   * type of T if I put this code in the original loop. Without T, there's no way for the compiler to know that the 
+   * value returned by binding.getValue() is the same type as the one we need to pass to setValue().
+   * @param binding The FieldBinding
+   * @param record The record to clean
+   * @param <T> The type of the record.
+   */
+  private <T> void cleanValue(@UnderInitialization RecordView<R> this, FieldBinding<R, T, ?> binding, R record) {
+    binding.setValue(record, binding.getValue(record));
   }
 
   private JPanel makeTopPanel() {
@@ -95,17 +111,6 @@ public final class RecordView<R> extends JPanel {
   @SuppressWarnings("HardCodedStringLiteral")
   public void setController(RecordController<R, ?> theController) {
     controller = theController;
-    
-    // This is safe because setController is only called once.
-    idField = (JLabel) addField("ID", false, RecordField.ID);
-    sourceField = (JTextComponent) addField("Source", true, RecordField.SOURCE);
-    usernameField = (JTextComponent) addField("User Name", true, RecordField.USERNAME);
-    pwField = (JTextComponent) addField("Password", true, RecordField.PASSWORD);
-    notesField = addNotesField();
-    installStandardCaret(sourceField);
-    installStandardCaret(usernameField);
-    installStandardCaret(pwField);
-    installStandardCaret(notesField);
   }
 
   /**
@@ -127,7 +132,7 @@ public final class RecordView<R> extends JPanel {
     caret.setBlinkRate(blinkRate);
   }
 
-  private JComponent addField(final String labelText, final boolean editable, final RecordField orderField) {
+  private JComponent addField(final String labelText, final boolean editable, final RecordField orderField, RecordField initialSort) {
     //noinspection StringConcatenation,MagicCharacter
     JLabel label = new JLabel(labelText + ':');
     labelPanel.add(label);
@@ -140,7 +145,7 @@ public final class RecordView<R> extends JPanel {
     fieldPanel.add(field);
     JRadioButton orderBy = new JRadioButton("");
     buttonGroup.add(orderBy);
-    if (orderField == controller.getOrder()) {
+    if (orderField == initialSort) {
       orderBy.setSelected(true);
     }
     checkBoxPanel.add(orderBy);
@@ -173,11 +178,14 @@ public final class RecordView<R> extends JPanel {
 //      pwField.setText("");
 //      notesField.setText("");
 //    } else {
-      idField.setText(String.valueOf(idGetter.apply(currentRecord)));
-      sourceField.setText(sourceGetter.apply(currentRecord));
-      usernameField.setText(userNameGetter.apply(currentRecord));
-      pwField.setText(passwordGetter.apply(currentRecord));
-      notesField.setText(notesGetter.apply(currentRecord));
+    for (FieldBinding<R, ?, ?> binding: allBindings) {
+      binding.prepareEditor(newRecord);
+    }
+//      idField.setText(String.valueOf(idGetter.apply(currentRecord)));
+//      sourceField.setText(sourceGetter.apply(currentRecord));
+//      usernameField.setText(userNameGetter.apply(currentRecord));
+//      pwField.setText(passwordGetter.apply(currentRecord));
+//      notesField.setText(notesGetter.apply(currentRecord));
 //    }
   }
   
@@ -190,18 +198,37 @@ public final class RecordView<R> extends JPanel {
 //          !notesField.getText().trim().isEmpty();
 //    }
     //noinspection EqualsReplaceableByObjectsCall
-    return !userNameGetter.apply(currentRecord).trim().equals(usernameField.getText().trim()) ||
-        !passwordGetter.apply(currentRecord).trim().equals(pwField.getText().trim()) ||
-        !sourceGetter.apply(currentRecord).trim().equals(sourceField.getText().trim()) ||
-        !notesGetter.apply(currentRecord).trim().equals(notesField.getText().trim());
+    for (FieldBinding<R, ?, ?> binding: allBindings) {
+      if (binding.isEditable() && binding.propertyHasChanged(currentRecord)) {
+        return true;
+      }
+    }
+    return false;
+//    return !userNameGetter.apply(currentRecord).trim().equals(usernameField.getText().trim()) ||
+//        !passwordGetter.apply(currentRecord).trim().equals(pwField.getText().trim()) ||
+//        !sourceGetter.apply(currentRecord).trim().equals(sourceField.getText().trim()) ||
+//        !notesGetter.apply(currentRecord).trim().equals(notesField.getText().trim());
   }
   
-  public void saveOnExit() throws SQLException {
+  public boolean saveOnExit() throws SQLException {
     final R current = getCurrentRecord();
-    if ((idGetter.apply(current) == 0) && recordHasChanged()) {
-      loadNewData(current);
-      controller.getDao().save(current);
+    // TODO: Is this right? This only saves new records. Don't we want to save changes to existing records?
+    // Test four cases:
+    // 1. New Record with data
+    // 2. New Record with no data
+    // 3. Existing record with changes
+    // 4. Existing record with no changes
+//    final Integer currentId = idGetter.apply(current);
+    final Integer currentId = idBinding.getValue(current);
+    final boolean hasChanged = recordHasChanged();
+    System.out.printf("if %d == 0 && recordHasChanged = %b ...%n", currentId, hasChanged);
+    if ((currentId == 0) && hasChanged) {
+      loadUIData(current);
+      System.out.printf("Saving%n");
+      return true;
     }
+    System.out.println("Not Saving");
+    return false;
   }
 
   public R getCurrentRecord() {
@@ -217,16 +244,26 @@ public final class RecordView<R> extends JPanel {
 //    }
     return currentRecord;
   }
-  
-  public void loadNewData(R theRecord) {
-    final int id = (currentRecord == null) ? 0 : idGetter.apply(currentRecord);
-    idSetter.setValue(theRecord, id);
-    sourceSetter.setValue(theRecord, sourceField.getText().trim());
-    userNameSetter.setValue(theRecord, usernameField.getText().trim());
-    passwordSetter.setValue(theRecord, pwField.getText().trim());
-    notesSetter.setValue(theRecord, notesField.getText().trim());
+
+  /**
+   * Reads the data from the editor fields and loads it into the current record's 
+   * @param theRecord
+   */
+  public void loadUIData(R theRecord) {
+    final int id = (currentRecord == null) ? 0 : idBinding.getValue(currentRecord);
+    for (FieldBinding<R, ?, ?> binding : allBindings) {
+      // TODO: This differs from the previous code, because it skips the id field. Test this.
+      if (binding.isEditable()) {
+        binding.saveEdit(currentRecord);
+      }
+    }
+//    idSetter.setValue(theRecord, id);
+//    sourceSetter.setValue(theRecord, sourceField.getText().trim());
+//    userNameSetter.setValue(theRecord, usernameField.getText().trim());
+//    passwordSetter.setValue(theRecord, pwField.getText().trim());
+//    notesSetter.setValue(theRecord, notesField.getText().trim());
   }
-  
+
 //  public void setButtonState(boolean nextEnabled, boolean prevEnabled) {
 //    
 //  }
@@ -250,6 +287,7 @@ public final class RecordView<R> extends JPanel {
     @SuppressWarnings("initialization.fields.uninitialized")
     public static class Builder<RR> {
       private RR record;
+      private RecordField initialSort;
       private Function<RR, Integer> getId;
       private Setter<RR, Integer> setId;
       private Function<RR, String> getSource;
@@ -260,8 +298,9 @@ public final class RecordView<R> extends JPanel {
       private Setter<RR, String> setPassword;
       private Function<RR, String> getNotes;
       private Setter<RR, String> setNotes;
-      public Builder(RR record) {
+      public Builder(RR record, RecordField initialSort) {
         this.record = record;
+        this.initialSort = initialSort;
       }
   
     public Builder<RR> id(Function<RR, Integer> getter, Setter<RR, Integer> setter) {
@@ -297,6 +336,7 @@ public final class RecordView<R> extends JPanel {
     public RecordView<RR> build() {
       return new RecordView<>(
           record, 
+          initialSort,
           getId, setId, 
           getSource, setSource, 
           getUserName, setUserName, 
@@ -304,6 +344,5 @@ public final class RecordView<R> extends JPanel {
           getNotes, setNotes
       );
     }
-  
   }
 }

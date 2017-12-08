@@ -3,7 +3,9 @@ package com.neptunedreams.skeleton.data.derby;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.Properties;
 import com.neptunedreams.skeleton.data.AbstractDatabaseInfo;
 import com.neptunedreams.skeleton.data.ConnectionSource;
@@ -84,5 +86,18 @@ public class DerbyInfo extends AbstractDatabaseInfo {
     // just temporary. We should probably be able to create this.
     //noinspection ProhibitedExceptionThrown
     throw new RuntimeException("Can't Create Schema");
+  }
+
+  @Override
+  public void shutdown() {
+    try {
+      // NO need to safely close. We're shutting down!
+      //noinspection CallToDriverManagerGetConnection,JDBCResourceOpenedButNotSafelyClosed,resource
+      DriverManager.getConnection("jdbc:derby:;shutdown=true");
+    } catch (SQLException e1) {
+      if (!Objects.toString(e1.getMessage()).contains("Derby system shutdown.")) {
+        e1.printStackTrace();
+      }
+    }
   }
 }

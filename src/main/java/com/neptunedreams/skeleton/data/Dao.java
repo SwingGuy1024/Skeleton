@@ -2,6 +2,7 @@ package com.neptunedreams.skeleton.data;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -13,7 +14,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Miguel Mu\u00f1oz
  */
 public interface Dao<E, PK> {
-  boolean createTableIfNeeded() throws SQLException;
+  boolean createTableIfNeeded(@UnderInitialization Dao<E, PK> this) throws SQLException;
   
   Collection<E> getAll(@Nullable RecordField orderBy) throws SQLException;
   
