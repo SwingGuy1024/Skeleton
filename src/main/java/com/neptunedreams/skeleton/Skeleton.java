@@ -41,14 +41,14 @@ public final class Skeleton extends JPanel
   // Done: QUESTION: Are we properly setting currentRecord after a find? for each find type? Before updating the screen?
   // Done: BUG: New database. Inserting and saving changed records is still buggy. (see prev note for hypothesis)
   // Done: Test boundary issues on insertion index.
-  // Todo: enable buttons on new record. ??
-  // Todo: Convert to jOOQ
+  // Xxxx: enable buttons on new record. ??
+  // Done: Convert to jOOQ
   // Done: Add a getTotal method for info line.
-  // TODO: Figure out a better way to get the ID of a new record. Can we ask the sequencer?
-  // Todo  For accessing a sequencer, see https://stackoverflow.com/questions/5729063/how-to-use-sequence-in-apache-derby
-  // TODO: BUG: Search that produces no results gives the user a data-entry screen to doesn't get saved.
-  // TODO: BUG: Search that produces one result gives the user an entry screen that gets treated as a new record 
-  // TODO: BUG: Key Queue never reads the keys it saves. Can we get rid of it?
+  // Done: Figure out a better way to get the ID of a new record. Can we ask the sequencer?
+  //       For accessing a sequencer, see https://stackoverflow.com/questions/5729063/how-to-use-sequence-in-apache-derby
+  // Done: BUG: Search that produces no results gives the user a data-entry screen to doesn't get saved.
+  // Done: BUG: Search that produces one result gives the user an entry screen that gets treated as a new record 
+  // TODO: BUG: Key Queue in QueuedTask never reads the keys it saves. Can we get rid of it?
   
   // https://db.apache.org/ojb/docu/howtos/howto-use-db-sequences.html
   // https://db.apache.org/derby/docs/10.8/ref/rrefsqljcreatesequence.html 
@@ -124,7 +124,6 @@ public final class Skeleton extends JPanel
         @Override
         public void windowClosing(final WindowEvent e) {
           try {
-            // TODO: Fix this. We save twice, once in saveOnExit(), once here!
             if (view.saveOnExit()) {
               controller.getDao().insertOrUpdate(view.getCurrentRecord());
             }
@@ -133,6 +132,19 @@ public final class Skeleton extends JPanel
           }
         }
       });
+
+//      // Import from Derby
+//      ObjectMapper objectMapper = new ObjectMapper();
+//      final File file = new File(System.getProperty("user.home"), "skeletonRecords.json");
+//      
+//      FileInputStream inputStream = new FileInputStream(file);
+//      InputStreamReader reader = new InputStreamReader(inputStream, "UTF-8");
+//      List<RecordRecord> recordList = objectMapper.readValue(reader, new TypeReference<List<RecordRecord>>() {});
+//      for (RecordRecord recordRecord: recordList) {
+////        System.out.println(recordRecord);
+////        objectMapper.writeValueAsString(recordRecord); // Didn't work.
+//        dao.insert(recordRecord);
+//      }
     } catch (SQLException e) {
       e.printStackTrace();
       shutDownDatabase();
