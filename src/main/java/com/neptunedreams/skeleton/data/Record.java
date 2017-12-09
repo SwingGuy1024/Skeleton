@@ -1,6 +1,8 @@
 package com.neptunedreams.skeleton.data;
 
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,10 +15,12 @@ import org.jetbrains.annotations.NotNull;
 //@Entity
 public class Record {
 //  @Column(name="ID")
+  @JsonIgnore
   private int id = 0;
 //  @Column(name="SOURCE")
   private String source="";
 //  @Column(name = "USERNAME")
+  @JsonProperty("username")
   private String userName="";
 //  @Column(name = "PASSWORD")
   private String password="";

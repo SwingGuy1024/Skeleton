@@ -95,6 +95,24 @@ public final class Skeleton extends JPanel
           }
         }
       });
+      
+//      // Export to JSON
+//      List<Record> fullList = new LinkedList<>();
+//      
+//      ObjectMapper objectMapper = new ObjectMapper();
+//      int size = controller.getModel().getSize();
+//      for (int ii=0; ii<size; ++ii) {
+//        fullList.add(controller.getModel().getRecordAt(ii));
+//      }
+//      String jsonString = objectMapper.writeValueAsString(fullList);
+//      FileOutputStream fs = new FileOutputStream(new File(System.getProperty("user.home"), "skeletonRecords.json"));
+//      OutputStreamWriter writer = new OutputStreamWriter(fs, "UTF-8");
+////      FileWriter writer = new FileWriter(new File(System.getProperty("user.home"), "skeletonRecords.json"));
+////      Writer w = new 
+//      writer.write(jsonString);
+//      writer.close();
+//      System.out.println(jsonString);
+      
     } catch (SQLException e) {
       e.printStackTrace();
       shutDownDatabase();
