@@ -4,7 +4,10 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.1-SNAPSHOT</version>
+  <version>0.2-SNAPSHOT</version>
+  <!--<modules>-->
+    <!--<module>skeleton-derby</module>-->
+  <!--</modules>-->
   <packaging>jar</packaging>
 
   <name>skeleton</name>
@@ -12,21 +15,36 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- These properties will be set by the Maven Dependency plugin -->
+    <!--<annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>-->
+	  <!--The above line seems to be of the form groupId:artifactId:jar, but it doesn't find anything there-->
+    <annotatedJdk>/Users/miguelmunoz/.m2/repository/org/checkerframework/jdk8/2.2.2/jdk8-2.2.2.jar</annotatedJdk>
+    <!-- Uncomment to use the Type Annotations compiler. -->
+    <!--<typeAnnotationsJavac>${org.checkerframework:compiler:jar}</typeAnnotationsJavac> -->
   </properties>
 
   <dependencies>
-    <!--<dependency>-->
-      <!--<groupId>junit</groupId>-->
-      <!--<artifactId>junit</artifactId>-->
-      <!--<version>3.8.1</version>-->
-      <!--<scope>test</scope>-->
-    <!--</dependency>-->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.derby/derby -->
     <dependency>
       <groupId>org.apache.derby</groupId>
       <artifactId>derby</artifactId>
       <version>10.14.1.0</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
+    <dependency>
+      <groupId>org.xerial</groupId>
+      <artifactId>sqlite-jdbc</artifactId>
+      <version>3.20.1</version>
+      <!--<scope>test</scope>-->
     </dependency>
 
     <!--&lt;!&ndash; https://mvnrepository.com/artifact/javax.persistence/persistence-api &ndash;&gt;-->
@@ -42,21 +60,56 @@
       <artifactId>annotations</artifactId>
       <version>13.0</version>
     </dependency>
-
-    <!-- https://mvnrepository.com/artifact/javax.json/javax.json-api -->
+    
+    <!--jOOQ-->
+    <dependency>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq</artifactId>
+      <version>3.10.1</version>
+      <!--The following version will have a fix to the derby code-generation bug.-->
+      <!--<version>3.10.2</version>-->
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-library</artifactId>
+      <version>1.1</version>
+      <scope>test</scope>
+    </dependency>
     <!--<dependency>-->
-      <!--<groupId>javax.json</groupId>-->
-      <!--<artifactId>javax.json-api</artifactId>-->
-      <!--<version>1.1.2</version>-->
+      <!--<groupId>org.jooq</groupId>-->
+      <!--<artifactId>jooq-meta</artifactId>-->
+      <!--<version>3.10.0</version>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+      <!--<groupId>org.jooq</groupId>-->
+      <!--<artifactId>jooq-codegen</artifactId>-->
+      <!--<version>3.10.0</version>-->
     <!--</dependency>-->
 
-    <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.codehaus.jackson/jackson-mapper-asl &ndash;&gt;-->
-    <!--<dependency>-->
-      <!--<groupId>org.codehaus.jackson</groupId>-->
-      <!--<artifactId>jackson-mapper-asl</artifactId>-->
-      <!--<version>1.9.13</version>-->
-    <!--</dependency>-->
-
+    <!-- Annotations from the Checker Framework: nullness, interning, locking, ... -->
+    <dependency>
+      <groupId>org.checkerframework</groupId>
+      <artifactId>checker-qual</artifactId>
+      <!-- Use checker-qual7 if targeting Java 7 -->
+      <!-- <artifactId>checker-qual7</artifactId> -->
+      <version>2.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.checkerframework</groupId>
+      <artifactId>checker</artifactId>
+      <version>2.2.2</version>
+    </dependency>
+    <!-- The Type Annotations compiler. Uncomment if using annotations in comments. -->
+    <!-- <dependency>
+      <groupId>org.checkerframework</groupId>
+      <artifactId>compiler</artifactId>
+      <version>2.2.2</version>
+    </dependency> -->
+    <dependency>
+      <groupId>org.checkerframework</groupId>
+      <artifactId>jdk8</artifactId>
+      <version>2.2.2</version>
+    </dependency>
   </dependencies>
   
   <build>
@@ -68,20 +121,71 @@
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
+          <compilerArguments>
+            <Xmaxerrs>10000</Xmaxerrs>
+            <Xmaxwarns>10000</Xmaxwarns>
+          </compilerArguments>
+          <compilerArgs>
+            <arg>-AprintErrorStack</arg>
+            <!--NullChecker needs this turned on-->
+            <arg>-AassumeAssertionsAreEnabled</arg>
+            <!-- location of the annotated JDK, which comes from a Maven dependency -->
+            <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
+            <!-- Uncomment the following line to use the type annotations compiler. -->
+             <!--<arg>-J-Xbootclasspath/p:${typeAnnotationsJavac}</arg> -->
+            <!-- Uncomment the following line to turn type-checking warnings into errors. -->
+            <!-- <arg>-Awarns</arg> -->
+          </compilerArgs>
+          <annotationProcessors>
+            <!-- Add all the checkers you want to enable here -->
+
+            <!-- Invoke the NullnessChecker at org.checkerframework.checker.nullness.NullnessChecker -->
+            <!-- There are probably other checkers we should invoke. -->
+            <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
+          </annotationProcessors>
         </configuration>
         <version>3.7.0</version>
       </plugin>
+
+      <!--&lt;!&ndash; Invoke the NullnessChecker at org.checkerframework.checker.nullness.NullnessChecker &ndash;&gt;-->
+      <!--&lt;!&ndash; There are probably other checkers we should invoke. &ndash;&gt;-->
       <!--<plugin>-->
-        <!--<groupId>org.apache.maven.plugins</groupId>-->
-        <!--<artifactId>maven-surefire-plugin</artifactId>-->
-        <!--<version>2.5</version>-->
+        <!--<artifactId>maven-compiler-plugin</artifactId>-->
         <!--<configuration>-->
-          <!--<systemPropertyVariables>-->
-            <!--<derby.system.home>${user.home}/.skeleton}</derby.system.home>-->
-            <!--<buildDirectory>${project.build.directory}</buildDirectory>-->
-          <!--</systemPropertyVariables>-->
+          <!--&lt;!&ndash; Change source and target to 1.7 to create .class files that can be run on a Java 7 JVM &ndash;&gt;-->
+          <!--&lt;!&ndash; Uncomment the following line to use the type annotations compiler. &ndash;&gt;-->
+          <!--&lt;!&ndash; <fork>true</fork> &ndash;&gt;-->
+          <!--<compilerArguments>-->
+            <!--<Xmaxerrs>10000</Xmaxerrs>-->
+            <!--<Xmaxwarns>10000</Xmaxwarns>-->
+          <!--</compilerArguments>-->
+          <!--<annotationProcessors>-->
+            <!--&lt;!&ndash; Add all the checkers you want to enable here &ndash;&gt;-->
+            <!--<annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>-->
+          <!--</annotationProcessors>-->
+          <!--<compilerArgs>-->
+            <!--<arg>-AprintErrorStack</arg>-->
+            <!--&lt;!&ndash; location of the annotated JDK, which comes from a Maven dependency &ndash;&gt;-->
+            <!--<arg>-Xbootclasspath/p:${annotatedJdk}</arg>-->
+            <!--&lt;!&ndash; Uncomment the following line to use the type annotations compiler. &ndash;&gt;-->
+            <!--&lt;!&ndash; <arg>-J-Xbootclasspath/p:${typeAnnotationsJavac}</arg> &ndash;&gt;-->
+            <!--&lt;!&ndash; Uncomment the following line to turn type-checking warnings into errors. &ndash;&gt;-->
+            <!--&lt;!&ndash; <arg>-Awarns</arg> &ndash;&gt;-->
+          <!--</compilerArgs>-->
         <!--</configuration>-->
       <!--</plugin>-->
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.5</version>
+        <configuration>
+          <systemPropertyVariables>
+            <derby.system.home>${user.home}/.skeleton}</derby.system.home>
+            <buildDirectory>${project.build.directory}</buildDirectory>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
 
       <!--This packs all the classes into a single jar-->
       <!--<plugin>-->
@@ -100,25 +204,26 @@
         <!--</configuration>-->
       <!--</plugin>-->
 
-      <!--I don't remember what this does. I may not need it. But it make assist the assembly plugin-->
-      <!--<plugin>-->
-        <!--<groupId>org.apache.maven.plugins</groupId>-->
-        <!--<artifactId>maven-dependency-plugin</artifactId>-->
-        <!--<executions>-->
-          <!--<execution>-->
-            <!--<id>copy-dependencies</id>-->
-            <!--<phase>prepare-package</phase>-->
-            <!--<goals>-->
-              <!--<goal>copy-dependencies</goal>-->
-            <!--</goals>-->
-            <!--<configuration>-->
-              <!--<outputDirectory>-->
-                <!--${project.build.directory}/libs-->
-              <!--</outputDirectory>-->
-            <!--</configuration>-->
-          <!--</execution>-->
-        <!--</executions>-->
-      <!--</plugin>-->
+      <!--This is the Maven dependency plugin. I don't know what it does but it's apparently needed.-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+              <goal>properties</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>
+                ${project.build.directory}/libs
+              </outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
       <!--This creates an executable jar file.-->
       <!--<plugin>-->
@@ -159,6 +264,78 @@
           </execution>
         </executions>
       </plugin>
+
+      <!--This is the jooq code generation plugin-->
+      <plugin>
+
+        <!-- Specify the maven code generator plugin -->
+        <!-- Use org.jooq            for the Open Source Edition
+								 org.jooq.pro        for commercial editions, 
+								 org.jooq.pro-java-6 for commercial editions with Java 6 support,
+								 org.jooq.trial      for the free trial edition 
+							 
+						 Note: Only the Open Source Edition is hosted on Maven Central. 
+									 Import the others manually from your distribution -->
+        <groupId>org.jooq</groupId>
+        <artifactId>jooq-codegen-maven</artifactId>
+        <version>3.10.0</version>
+
+        <!-- The plugin should hook into the generate goal -->
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+
+        <!-- Manage the plugin's dependency. In this example, we'll use a PostgreSQL database -->
+        <dependencies>
+          <dependency>
+            <!--<groupId>org.apache.derby</groupId>-->
+            <!--<artifactId>derby</artifactId>-->
+            <!--<version>10.14.1.0</version>-->
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.20.1</version>
+          </dependency>
+        </dependencies>
+
+        <!-- Specify the plugin configuration.
+						 The configuration format is the same as for the standalone code generator -->
+        <configuration>
+
+          <!-- JDBC connection parameters -->
+          <jdbc>
+            <!--<driver>org.apache.derby.jdbc.EmbeddedDriver</driver>-->
+            <!--<url>jdbc:derby:skeleton;create=true;collation=TERRITORY_BASED:PRIMARY</url>-->
+            <driver>org.sqlite.JDBC</driver>
+            <url>jdbc:sqlite:/Users/miguelmunoz/.sqlite.master.skeleton/skeleton.db</url>
+            <!--<user>postgres</user>-->
+            <!--<password>test</password>-->
+          </jdbc>
+
+          <!-- Generator parameters -->
+          <generator>
+            <database>
+              <!--<name>org.jooq.util.derby.DerbyDatabase</name>-->
+              <name>org.jooq.util.sqlite.SQLiteDatabase</name>
+              <includes>.*</includes>
+              <!--<excludes></excludes>-->
+              <!-- In case your database supports catalogs, e.g. SQL Server:
+							<inputCatalog>public</inputCatalog>
+								-->
+              <!--<inputSchema>skeleton</inputSchema>-->
+              <!--<inputSchema>public</inputSchema>-->
+            </database>
+            <target>
+              <packageName>com.neptunedreams.skeleton.gen</packageName>
+              <directory>/Users/miguelmunoz/Documents/Skeleton2/src/main/java</directory>
+            </target>
+          </generator>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 </project>

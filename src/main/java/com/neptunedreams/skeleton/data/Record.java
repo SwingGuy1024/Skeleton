@@ -1,9 +1,9 @@
 package com.neptunedreams.skeleton.data;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -27,11 +27,9 @@ public class Record {
 //  @Column(name = "NOTES", length = 2048)
   private String notes="";
 
-  public enum FIELD { ID, SOURCE, USERNAME, PASSWORD, NOTES }
-
   public Record() { }
 
-  public Record(@NotNull String s, @NotNull String un, @NotNull String pw, @NotNull String nts) {
+  public Record(@NonNull String s, @NonNull String un, @NonNull String pw, @NonNull String nts) {
     source = s;
     userName = un;
     password = pw;
@@ -46,39 +44,35 @@ public class Record {
     this.id = id;
   }
 
-  @NotNull
-  public String getSource() {
+  public @NonNull String getSource() {
     return source;
   }
 
-  public void setSource(@NotNull final String source) {
+  public void setSource(final @NonNull String source) {
     this.source = source;
   }
 
-  @NotNull
-  public String getUserName() {
+  public @NonNull String getUserName() {
     return userName;
   }
 
-  public void setUserName(@NotNull final String userName) {
+  public void setUserName(final @NonNull String userName) {
     this.userName = userName;
   }
 
-  @NotNull
-  public String getPassword() {
+  public @NonNull String getPassword() {
     return password;
   }
 
-  public void setPassword(@NotNull final String password) {
+  public void setPassword(final @NonNull String password) {
     this.password = password;
   }
 
-  @NotNull
-  public String getNotes() {
+  public @NonNull String getNotes() {
     return notes;
   }
 
-  public void setNotes(@NotNull final String notes) {
+  public void setNotes(final @NonNull String notes) {
     this.notes = notes;
   }
 

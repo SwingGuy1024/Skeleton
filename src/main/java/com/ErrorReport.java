@@ -9,12 +9,15 @@ import javax.swing.JOptionPane;
  *
  * @author Miguel Mu\u00f1oz
  */
-public class ErrorReport {
-  private ErrorReport() { }
-  
+public enum ErrorReport {
+  ;
+
+  @SuppressWarnings("argument.type.incompatible")
   public static void reportException(String operation, Throwable t) {
+    //noinspection HardCodedStringLiteral
     String message = String.format("Error during %s:%n%s", operation, t.getMessage());
     t.printStackTrace();
-    JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+    //noinspection HardCodedStringLiteral
+    JOptionPane.showMessageDialog( null, message, "Error", JOptionPane.ERROR_MESSAGE);
   }
 }

@@ -20,12 +20,21 @@ import com.neptunedreams.skeleton.data.Record;
  *
  * @author Miguel Mu\u00f1oz
  */
-class ImportDialog extends JDialog {
-  private final Dao<Record> recordDao;
-  ImportDialog(Window parent, Dao<Record> dao) {
+final class ImportDialog extends JDialog {
+  private final Dao<Record, ?> recordDao;
+  private ImportDialog(Window parent, Dao<Record, ?> dao) {
     super(parent, ModalityType.DOCUMENT_MODAL);
     recordDao = dao;
+//    build();
+  }
+  
+  static ImportDialog build(Window parent, Dao<Record, ?> dao) {
+    ImportDialog importDialog = new ImportDialog(parent, dao);
+    importDialog.build();
+    return importDialog;
+  }
 
+  private void build(ImportDialog this) {
     //noinspection MagicNumber
     JTextArea importArea = new JTextArea(40, 60);
     JScrollPane scrollPane = new JScrollPane(importArea, 
@@ -49,7 +58,7 @@ class ImportDialog extends JDialog {
         if (line.trim().isEmpty()) {
           fieldNumber = 0;
           if (record != null) {
-            recordDao.save(record);
+            recordDao.update(record);
           }
           record = new Record();
         } else {
@@ -60,7 +69,7 @@ class ImportDialog extends JDialog {
         line = reader.readLine();
       }
       if (record != null) {
-        recordDao.save(record);
+        recordDao.update(record);
       }
     } catch (IOException | SQLException e) {
       e.printStackTrace();

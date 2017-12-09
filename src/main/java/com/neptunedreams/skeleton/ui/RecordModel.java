@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import com.neptunedreams.skeleton.data.Record;
+import java.util.function.Function;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -13,16 +13,23 @@ import com.neptunedreams.skeleton.data.Record;
  *
  * @author Miguel Mu\u00f1oz
  */
-public class RecordModel {
-  final private List<RecordModelListener> listenerList = new LinkedList<>();
+@SuppressWarnings("WeakerAccess")
+public class RecordModel<R> {
+  private final List<RecordModelListener> listenerList = new LinkedList<>();
   
 //  RecordModel() {
 //    Thread.dumpStack();
 //  }
 //
-  private List<Record> foundItems;
+  // foundItems should be a RandomAccess list
+  private List<R> foundItems = new ArrayList<>();
   private int recordIndex = 0;
   private int total = 0;
+  private final Function<Void, R> constructor;
+  
+  RecordModel(Function<Void, R> theConstructor) {
+    constructor = theConstructor;
+  }
 
   public int getRecordIndex() {
     return recordIndex;
@@ -46,17 +53,24 @@ public class RecordModel {
     listenerList.add(listener);
   }
   
+  @SuppressWarnings("unused")
   public void removeModelListener(RecordModelListener listener) {
     listenerList.remove(listener);
   }
  
-  public void setNewList(Collection<Record> records) {
+  public void setNewList(Collection<R> records) {
     foundItems = new ArrayList<>(records);
-    recordIndex = 0;
     if (foundItems.isEmpty()) {
-      foundItems.add(new Record());
+      final R record;
+      record = createNewEmptyRecord();
+      foundItems.add(record);
     }
+    setRecordIndex(0);
     fireModelListChanged();
+  }
+
+  public R createNewEmptyRecord() {
+    return constructor.apply(null);
   }
 
   public void goNext() {
@@ -66,7 +80,7 @@ public class RecordModel {
     if (nextRecord >= size) {
       nextRecord = 0;
     }
-    setRecordIndex(nextRecord, recordIndex);
+    setRecordIndex(nextRecord);
   }
 
   public void goPrev() {
@@ -75,22 +89,25 @@ public class RecordModel {
     if (nextRecord < 0) {
       nextRecord = foundItems.size() - 1;
     }
-    setRecordIndex(nextRecord, recordIndex);
+    setRecordIndex(nextRecord);
   }
   
   public void goFirst() {
     assert !foundItems.isEmpty();
-    setRecordIndex(0, recordIndex);
+    setRecordIndex(0);
   }
 
   public void goLast() {
     assert !foundItems.isEmpty();
-    setRecordIndex(foundItems.size()-1, recordIndex);
+    setRecordIndex(foundItems.size()-1);
   }
 
-  private void setRecordIndex(final int i, int prior) {
-    recordIndex = i;
-    fireIndexChanged(i, prior);
+  private void setRecordIndex(final int i) {
+    if (i != recordIndex) {
+      int prior = recordIndex;
+      recordIndex = i;
+      fireIndexChanged(i, prior);
+    }
   }
 
   private void fireIndexChanged(final int i, int prior) {
@@ -99,28 +116,29 @@ public class RecordModel {
     }
   }
 
-  public void append(Record insertedRecord) {
-    foundItems.add(recordIndex, insertedRecord);
-//    recordIndex++; // Should we call setRecordIndex() here?
+  public void append(R insertedRecord) {
+    final int newIndex = foundItems.size();
+    foundItems.add(insertedRecord);
+    setRecordIndex(newIndex);
     fireModelListChanged();
   }
 
-  public Record getSelectedRecord() {
+  public R getFoundRecord() {
     if (!foundItems.isEmpty()) {
       return foundItems.get(recordIndex);
     }
-    Record emptyRecord = new Record();
+    R emptyRecord = createNewEmptyRecord();
     foundItems.add(emptyRecord);
     fireModelListChanged(); // Is it dangerous to fire the listener before returning the record?
     return emptyRecord;
   }
   
-  public Record getRecordAt(int index) {
+  public R getRecordAt(int index) {
     return foundItems.get(index);
   }
 
   /**
-   * delete the selected item, conditionally.
+   * Delete the selected item, conditionally, from the model only. This doesn't delete anything from the database.
    * @param notify Fire appropriate listeners after deleting
    * @param index The index of the record to delete. This method does nothing if index is < 0,
    */
@@ -128,7 +146,7 @@ public class RecordModel {
     if (index >= 0) {
       foundItems.remove(index);
       if (foundItems.isEmpty()) {
-        foundItems.add(new Record());
+        foundItems.add(createNewEmptyRecord());
       }
       if (recordIndex >= foundItems.size()) {
         recordIndex--; // Should we call setRecordIndex() here?

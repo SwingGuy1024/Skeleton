@@ -1,6 +1,7 @@
 package com.neptunedreams.skeleton.ui;
 
 import java.net.URL;
+import java.util.Objects;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -12,7 +13,8 @@ import javax.swing.JLabel;
  *
  * @author Miguel Mu\u00f1oz
  */
-public class Resource {
+enum Resource {
+  ;
 
   private static final String ARROW_RIGHT_PNG = "arrow_right.png";
   private static final String ARROW_LEFT_PNG = "arrow_left.png";
@@ -22,10 +24,8 @@ public class Resource {
   private static final String ARROW_FIRST_PNG = "arrow_first.png";
   private static final String ARROW_LAST_PNG = "arrow_last.png";
 
-  private Resource() { }
-  
-  public static Icon getIcon(String name) {
-    URL resource = Resource.class.getResource(name);
+  private static Icon getIcon(String name) {
+    URL resource = Objects.requireNonNull(Resource.class.getResource(name));
 //    if (resource == null) {
 //      resource = Resource.class.getResource("/com/skeleton/ui/" + name);
 //    }
@@ -36,32 +36,32 @@ public class Resource {
     return new ImageIcon(resource);
   }
 
-  public static Icon getRightArrow() {
+  static Icon getRightArrow() {
     return getIcon(ARROW_RIGHT_PNG);
   }
 
-  public static Icon getLeftArrow() {
+  static Icon getLeftArrow() {
     return getIcon(ARROW_LEFT_PNG);
   }
   
-  public static Icon getBin() {
+  static Icon getBin() {
     return getIcon(BIN_EMPTY_PNG);
   }
   
-  public static JLabel getMagnifierLabel() {
+  static JLabel getMagnifierLabel() {
     final Icon icon = getIcon(MAGNIFIER_16_PNG);
     return new JLabel(icon);
   }
   
-  public static Icon getAdd() {
+  static Icon getAdd() {
     return getIcon(BULLET_ADD_PNG);
   }
   
-  public static Icon getFirst() {
+  static Icon getFirst() {
     return getIcon(ARROW_FIRST_PNG);
   }
   
-  public static Icon getLast() {
+  static Icon getLast() {
     return getIcon(ARROW_LAST_PNG);
   }
 }
