@@ -30,9 +30,11 @@ public interface Dao<E, PK> {
 //   * @return True if the entity was new and was inserted, false if it updated an existing entry.
    * @throws SQLException Yeah, you know.
    */
-  void save(E entity) throws SQLException;
+  void update(E entity) throws SQLException;
 
   void insert(E entity) throws SQLException;
+  
+  void insertOrUpdate(E entity) throws SQLException;
 
   void delete(E entity) throws SQLException;
   

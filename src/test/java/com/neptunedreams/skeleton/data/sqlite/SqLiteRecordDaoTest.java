@@ -99,7 +99,7 @@ public class SqLiteRecordDaoTest {
     String originalName = record1.getUsername();
     record1.setUsername(revisedName);
     System.out.printf("Changing the Name from %s to %s%n", originalName, revisedName);
-    dao.save(record1);
+    dao.update(record1);
     foundRecords = dao.find("alpha", com.neptunedreams.skeleton.data.RecordField.SOURCE);
     System.out.printf("Found %d records%n", foundRecords.size());
     assertEquals(1, foundRecords.size());

@@ -50,7 +50,7 @@ public final class RecordView<R> extends JPanel {
   private final FieldBinding.IntegerBinding<R> idBinding;
   private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
 
-  @SuppressWarnings({"initialization.fields.uninitialized","argument.type.incompatible","method.invocation.invalid"})
+  @SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible", "method.invocation.invalid", "HardCodedStringLiteral"})
   private RecordView(R record,
                      RecordField initialSort,
                      Function<R, Integer> getIdFunction, Setter<R, Integer> setIdFunction,
@@ -116,8 +116,9 @@ public final class RecordView<R> extends JPanel {
   /**
    * On the Mac, the AquaCaret will get installed. This caret has an annoying feature of selecting all the text on a
    * focus-gained event. If this isn't bad enough, it also fails to check temporary vs permanent focus gain, so it 
-   * gets triggered on a focused JTextComponent whenever a menu is released!
-   * @param component The component to repair.
+   * gets triggered on a focused JTextComponent whenever a menu is released! This removes the Aqua Caret and installs
+   * a standard caret. It's safe to use on any platform.
+   * @param component The component to repair. This is usually a JTextField or JTextArea.
    */
   public static void installStandardCaret(JTextComponent component) {
     final Caret priorCaret = component.getCaret();
@@ -129,7 +130,7 @@ public final class RecordView<R> extends JPanel {
     }
     DefaultCaret caret = new DefaultCaret();
     component.setCaret(caret);
-    caret.setBlinkRate(blinkRate);
+    caret.setBlinkRate(blinkRate); // Starts the new caret blinking.
   }
 
   private JComponent addField(final String labelText, final boolean editable, final RecordField orderField, RecordField initialSort) {
@@ -171,97 +172,54 @@ public final class RecordView<R> extends JPanel {
   
   void setCurrentRecord(R newRecord) {
     currentRecord = newRecord;
-//    if (currentRecord == null) {
-//      idField.setText("");
-//      sourceField.setText("");
-//      usernameField.setText("");
-//      pwField.setText("");
-//      notesField.setText("");
-//    } else {
     for (FieldBinding<R, ?, ?> binding: allBindings) {
       binding.prepareEditor(newRecord);
     }
-//      idField.setText(String.valueOf(idGetter.apply(currentRecord)));
-//      sourceField.setText(sourceGetter.apply(currentRecord));
-//      usernameField.setText(userNameGetter.apply(currentRecord));
-//      pwField.setText(passwordGetter.apply(currentRecord));
-//      notesField.setText(notesGetter.apply(currentRecord));
-//    }
   }
   
   boolean recordHasChanged() {
-//    if (currentRecord.getId() == 0) {
-//      return
-//          !usernameField.getText().trim().isEmpty() || 
-//          !pwField.getText().trim().isEmpty() ||
-//          !sourceField.getText().trim().isEmpty() ||
-//          !notesField.getText().trim().isEmpty();
-//    }
-    //noinspection EqualsReplaceableByObjectsCall
     for (FieldBinding<R, ?, ?> binding: allBindings) {
       if (binding.isEditable() && binding.propertyHasChanged(currentRecord)) {
         return true;
       }
     }
     return false;
-//    return !userNameGetter.apply(currentRecord).trim().equals(usernameField.getText().trim()) ||
-//        !passwordGetter.apply(currentRecord).trim().equals(pwField.getText().trim()) ||
-//        !sourceGetter.apply(currentRecord).trim().equals(sourceField.getText().trim()) ||
-//        !notesGetter.apply(currentRecord).trim().equals(notesField.getText().trim());
   }
   
   public boolean saveOnExit() throws SQLException {
     final R current = getCurrentRecord();
-    // TODO: Is this right? This only saves new records. Don't we want to save changes to existing records?
     // Test four cases:
     // 1. New Record with data
     // 2. New Record with no data
     // 3. Existing record with changes
     // 4. Existing record with no changes
-//    final Integer currentId = idGetter.apply(current);
-    final Integer currentId = idBinding.getValue(current);
+//    final Integer currentId = idBinding.getValue(current);
     final boolean hasChanged = recordHasChanged();
-    System.out.printf("if %d == 0 && recordHasChanged = %b ...%n", currentId, hasChanged);
-    if ((currentId == 0) && hasChanged) {
+//    System.out.printf("if %d == 0 && recordHasChanged = %b ...%n", currentId, hasChanged);
+    if (hasChanged) {
       loadUIData(current);
-      System.out.printf("Saving%n");
+//      System.out.printf("Saving%n");
       return true;
     }
-    System.out.println("Not Saving");
+//    System.out.println("Not Saving");
     return false;
   }
 
   public R getCurrentRecord() {
-//    if (recordHasChanged()) {
-//      Record newRecord = new Record();
-//      final int id = (currentRecord == null) ? 0 : currentRecord.getId();
-//      newRecord.setId(id);
-//      newRecord.setSource(sourceField.getText().trim());
-//      newRecord.setUserName(usernameField.getText().trim());
-//      newRecord.setPassword(pwField.getText().trim());
-//      newRecord.setNotes(notesField.getText().trim());
-//      return newRecord;
-//    }
     return currentRecord;
   }
 
   /**
    * Reads the data from the editor fields and loads it into the current record's 
-   * @param theRecord
+   * @param theRecord Unused. I'm still not entirely convinced that I'll never need it, so I'm keeping it around for now.
    */
-  public void loadUIData(R theRecord) {
+  public void loadUIData(@SuppressWarnings("unused") R theRecord) {
     final int id = (currentRecord == null) ? 0 : idBinding.getValue(currentRecord);
     for (FieldBinding<R, ?, ?> binding : allBindings) {
-      // TODO: This differs from the previous code, because it skips the id field. Test this.
       if (binding.isEditable()) {
         binding.saveEdit(currentRecord);
       }
     }
-//    idSetter.setValue(theRecord, id);
-//    sourceSetter.setValue(theRecord, sourceField.getText().trim());
-//    userNameSetter.setValue(theRecord, usernameField.getText().trim());
-//    passwordSetter.setValue(theRecord, pwField.getText().trim());
-//    notesSetter.setValue(theRecord, notesField.getText().trim());
   }
 
 //  public void setButtonState(boolean nextEnabled, boolean prevEnabled) {

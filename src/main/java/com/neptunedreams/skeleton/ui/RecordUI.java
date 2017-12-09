@@ -56,6 +56,8 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JButton last = new JButton(Resource.getLast());
   private JLabel infoLine = new JLabel("");
   private final ParameterizedCallable<String, Collection<R>> callable = createCallable();
+  
+  // recordConsumer is how the QueuedTask communicates with the application code.
   private final Consumer<Collection<R>> recordConsumer = createRecordConsumer();
   private @NonNull QueuedTask<String, Collection<R>> queuedTask = new QueuedTask<>(DELAY, callable, recordConsumer);
 

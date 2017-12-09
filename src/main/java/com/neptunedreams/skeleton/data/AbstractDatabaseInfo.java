@@ -37,7 +37,7 @@ public abstract class AbstractDatabaseInfo implements DatabaseInfo {
   private ConnectionSource connect() throws SQLException {
     String connectionUrl = getUrl();
     //noinspection UseOfSystemOutOrSystemErr
-    System.out.printf("URL: %s%n", connectionUrl);
+//    System.out.printf("URL: %s%n", connectionUrl);
     //noinspection CallToDriverManagerGetConnection,JDBCResourceOpenedButNotSafelyClosed
     Connection connection = DriverManager.getConnection(connectionUrl);
     return () -> connection;

@@ -2,10 +2,12 @@ package com.neptunedreams.skeleton.ui;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Function;
 import com.ErrorReport;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -16,6 +18,7 @@ import com.neptunedreams.skeleton.data.RecordField;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "WeakerAccess", "HardCodedStringLiteral"})
 public class RecordController<R, PK> implements RecordModelListener {
+  private static final Integer ZERO = 0;
   // For DerbyRecordDao, E was Record.FIELD
 //  private E order = Record.FIELD.SOURCE;
   private RecordField order;
@@ -23,6 +26,7 @@ public class RecordController<R, PK> implements RecordModelListener {
   // TODO: RecordController and RecordView have references to each other. Replace this with a listener system.
   private final RecordView<R> recordView;
   private final RecordModel<R> model;
+  private boolean initializeComplete = false;
 
   @SuppressWarnings("argument.type.incompatible")
   public RecordController(
@@ -52,39 +56,63 @@ public class RecordController<R, PK> implements RecordModelListener {
     return order;
   }
 
-  private void loadNewRecord(R record, int prior) {
-    if ((prior >= 0) && (prior < model.getSize())) {
-      R currentRecord = model.getRecordAt(prior);
+  private void loadNewRecord(R record) {
+//    Thread.dumpStack();
+    R currentRecord = recordView.getCurrentRecord(); // Move this back to where the comment is
+//    System.err.printf("Loading record with id %s while current id is %s%n (size=%d)",
+//        dao.getPrimaryKey(record),
+//        dao.getPrimaryKey(currentRecord),
+//        model.getSize()
+//    ); // NON-NLS
+    
+    // Don't save the existing record on the initial search.
+    if (initializeComplete) {
+//      R currentRecord = model.getRecordAt(prior);
+      assert currentRecord != null;
+      final PK primaryKey = dao.getPrimaryKey(currentRecord);
+      assert Objects.equals(primaryKey, ((RecordRecord) currentRecord).getId()); // Debug only. Don't check in.
       if (recordView.recordHasChanged()) {
+//        System.out.printf("  Record (id=%s) has changed. Saving data with insertOrUpdate()%n", primaryKey);
         try {
           recordView.loadUIData(currentRecord);
-//          dao.setPrimaryKey(currentRecord, dao.getNextId());
-//          currentRecord.setId(dao.getNextId());
-          dao.insert(currentRecord);
+          dao.insertOrUpdate(currentRecord);
           model.incrementTotal();
         } catch (SQLException e) {
           ErrorReport.reportException("Insert", e);
         }
-      } else if (dao.getPrimaryKey(currentRecord) == null) {
-        // remove currentRecord. It hasn't changed so it's empty.
-        model.deleteSelected(false, prior);
       }
     }
     recordView.setCurrentRecord(record);
+    initializeComplete = true;
   }
 
   public void addBlankRecord() {
-    R emptyRecord = model.createNewEmptyRecord();
-    model.append(emptyRecord);
-    loadNewRecord(emptyRecord, model.getRecordIndex()+1);
+    // If the last record is already blank, just go to it
+    final int lastIndex = model.getSize() - 1;
+    R lastRecord = model.getRecordAt(lastIndex);
+    final PK lastRecordKey = dao.getPrimaryKey(lastRecord);
+    
+    // If we are already showing an unchanged blank record...
+    if ((model.getRecordIndex() == lastIndex) && ((lastRecordKey == null) || (lastRecordKey == ZERO)) && !recordView.recordHasChanged()) {
+      // ... we don't bother to create a new one.
+//      System.out.printf("Not creating blank record at index %d%n", lastIndex);
+      loadNewRecord(lastRecord);
+    } else {
+//      System.out.println("Adding blank record");
+      R emptyRecord = model.createNewEmptyRecord();
+      model.append(emptyRecord);
+      loadNewRecord(emptyRecord);
+    }
   }
 
   public void setFoundRecords(final Collection<R> theFoundItems) {
     model.setNewList(theFoundItems);
-    if (!theFoundItems.isEmpty()) {
+    if (theFoundItems.isEmpty()) {
+      addBlankRecord();
+    } else {
       final R selectedRecord = model.getFoundRecord();
       assert selectedRecord != null;
-      loadNewRecord(selectedRecord, -1);
+      loadNewRecord(selectedRecord);
     }
   }
 
@@ -109,6 +137,10 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
 
+  /**
+   * Find text in any field of the database.
+   * @param dirtyText The text to find, without cleaning or wildcards
+   */
   public void findTextAnywhere(String dirtyText) {
     //noinspection TooBroadScope
     String text = dirtyText.trim();
@@ -127,7 +159,7 @@ public class RecordController<R, PK> implements RecordModelListener {
       foundItems = dao.getAll(getOrder());
     } else {
       foundItems = dao.find(text, getOrder());
-      System.out.printf("Found %d items.%n", foundItems.size());
+//      System.out.printf("Found %d items.%n", foundItems.size());
     }
     return foundItems;
   }
@@ -139,7 +171,7 @@ public class RecordController<R, PK> implements RecordModelListener {
 
   @Override
   public void indexChanged(final int index, int prior) {
-    loadNewRecord(model.getFoundRecord(), prior);
+    loadNewRecord(model.getFoundRecord());
   }
 
   public void delete(final R selectedRecord) throws SQLException {

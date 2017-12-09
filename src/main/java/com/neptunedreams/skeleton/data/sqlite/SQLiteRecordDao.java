@@ -185,10 +185,22 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   }
 
   @Override
-  public void save(final RecordRecord entity) throws SQLException {
+  public void update(final RecordRecord entity) throws SQLException {
     entity.store();
   }
-  
+
+  @Override
+  public void insertOrUpdate(final RecordRecord entity) throws SQLException {
+    final Integer id = entity.getId();
+    if ((id == null) || (id == 0)) {
+//      System.out.printf("Saving entity (id=%s) with insert%n", id);
+      insert(entity);
+    } else {
+//      System.out.printf("Saving entity (id=%s) with UPDATE%n", id);
+      update(entity);
+    }
+  }
+
   @Override
   @SuppressWarnings("argument.type.incompatible")
   public void insert(final RecordRecord entity) throws SQLException {

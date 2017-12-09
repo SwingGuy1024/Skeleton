@@ -67,7 +67,7 @@ public class DerbyRecordDaoTest {
     String originalName = record1.getUserName();
     record1.setUserName(revisedName);
     System.out.printf("Changing the Name from %s to %s%n", originalName, revisedName);
-    dao.save(record1);
+    dao.update(record1);
     foundRecords = dao.find("line", com.neptunedreams.skeleton.data.RecordField.SOURCE);
     System.out.printf("Found %d records%n", foundRecords.size());
     Record revisedRecord = foundRecords.iterator().next();

@@ -25,7 +25,7 @@ import static com.neptunedreams.skeleton.DataUtil.*;
  *
  * @author Miguel Mu\u00f1oz
  */
-@SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace"})
+@SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "SqlNoDataSourceInspection"})
 public class DerbyRecordDao implements Dao<Record, Integer> {
   private static final String CREATE_TABLE = "CREATE TABLE record (" +
       "id INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY," +
@@ -42,6 +42,7 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
   private static final String DELETE = "DELETE FROM record WHERE ID = ?";
   private static final String ORDER_BY = "ORDER BY ";
   private static final char WC = '%';
+  private static final String SELECT_MAX = "SELECT MAX(ID) FROM RECORD";
   private final @NonNull Connection connection;
   
   public DerbyRecordDao(ConnectionSource source) {
@@ -144,7 +145,7 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
   }
 
   @Override
-  public void save(final Record entity) throws SQLException {
+  public void update(final Record entity) throws SQLException {
 //    boolean isInsert = false;
 //    if (entity.getId() == 0) {
 //      doInsert(entity);
@@ -160,6 +161,16 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
   public void insert(final Record entity) throws SQLException {
     doInsert(entity);
     connection.commit();
+  }
+
+  @Override
+  public void insertOrUpdate(final Record entity) throws SQLException {
+    int id = entity.getId();
+    if (id == 0) {
+      insert(entity);
+    } else {
+      update(entity);
+    }
   }
 
   private void doSave(final Record entity) throws SQLException {
@@ -196,8 +207,7 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
   
   @Override
   public Integer getNextId() throws SQLException {
-    String sql = "SELECT MAX(ID) FROM RECORD";
-    PreparedStatement statement = connection.prepareStatement(sql);
+    PreparedStatement statement = connection.prepareStatement(SELECT_MAX);
     try (ResultSet resultSet = statement.executeQuery()) {
       resultSet.next();
       return resultSet.getInt(1) + 1;
@@ -237,12 +247,13 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
 //
   /**
    * This is an attempt (ultimately successful) to fix the sql statement that fails during code generation.
-   * @param <T>
-   * @return
-   * @throws SQLException
+   * @param <T> I don't know
+   * @return The table info, as a collection of something
+   * @throws SQLException duh
    */
 //  @Override
-  public <T> Collection<T> getTableInfo() throws SQLException {
+  @SuppressWarnings({"HardCodedStringLiteral", "resource", "JDBCResourceOpenedButNotSafelyClosed"})
+  <T> Collection<T> getTableInfo() throws SQLException {
     String sql1 = "select * from \"SYS\".\"SYSSCHEMAS\"";
     PreparedStatement statement = connection.prepareStatement(sql1);
     ResultSet resultSet = statement.executeQuery();
@@ -267,6 +278,7 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
         "in (cast(? as varchar(32672)), cast(? as varchar(32672)), cast(? as varchar(32672)), cast(? as varchar(32672)), cast(? as varchar(32672)), cast(? as varchar(32672)), cast(? as varchar(32672)), cast(? as varchar(32672)), cast(? as varchar(32672)), cast(? as varchar(32672)), cast(? as varchar(32672))) " +
         "order by " +
         "\"SYS\".\"SYSSCHEMAS\".\"SCHEMANAME\", \"SYS\".\"SYSTABLES\".\"TABLENAME\"";
+    //noinspection UseOfSystemOutOrSystemErr
     System.out.println(sql);
     statement = connection.prepareStatement(sql);
     String[] params = { 

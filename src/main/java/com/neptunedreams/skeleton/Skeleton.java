@@ -126,7 +126,7 @@ public final class Skeleton extends JPanel
           try {
             // TODO: Fix this. We save twice, once in saveOnExit(), once here!
             if (view.saveOnExit()) {
-              controller.getDao().save(view.getCurrentRecord());
+              controller.getDao().insertOrUpdate(view.getCurrentRecord());
             }
           } catch (SQLException e1) {
             ErrorReport.reportException("Saving last change", e1);

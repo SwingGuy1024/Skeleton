@@ -58,7 +58,7 @@ final class ImportDialog extends JDialog {
         if (line.trim().isEmpty()) {
           fieldNumber = 0;
           if (record != null) {
-            recordDao.save(record);
+            recordDao.update(record);
           }
           record = new Record();
         } else {
@@ -69,7 +69,7 @@ final class ImportDialog extends JDialog {
         line = reader.readLine();
       }
       if (record != null) {
-        recordDao.save(record);
+        recordDao.update(record);
       }
     } catch (IOException | SQLException e) {
       e.printStackTrace();

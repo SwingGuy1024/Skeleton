@@ -1,6 +1,5 @@
 package com.neptunedreams.skeleton.ui;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -61,12 +60,12 @@ public class RecordModel<R> {
  
   public void setNewList(Collection<R> records) {
     foundItems = new ArrayList<>(records);
-    recordIndex = 0;
     if (foundItems.isEmpty()) {
-    final R record;
+      final R record;
       record = createNewEmptyRecord();
       foundItems.add(record);
     }
+    setRecordIndex(0);
     fireModelListChanged();
   }
 
@@ -81,7 +80,7 @@ public class RecordModel<R> {
     if (nextRecord >= size) {
       nextRecord = 0;
     }
-    setRecordIndex(nextRecord, recordIndex);
+    setRecordIndex(nextRecord);
   }
 
   public void goPrev() {
@@ -90,22 +89,25 @@ public class RecordModel<R> {
     if (nextRecord < 0) {
       nextRecord = foundItems.size() - 1;
     }
-    setRecordIndex(nextRecord, recordIndex);
+    setRecordIndex(nextRecord);
   }
   
   public void goFirst() {
     assert !foundItems.isEmpty();
-    setRecordIndex(0, recordIndex);
+    setRecordIndex(0);
   }
 
   public void goLast() {
     assert !foundItems.isEmpty();
-    setRecordIndex(foundItems.size()-1, recordIndex);
+    setRecordIndex(foundItems.size()-1);
   }
 
-  private void setRecordIndex(final int i, int prior) {
-    recordIndex = i;
-    fireIndexChanged(i, prior);
+  private void setRecordIndex(final int i) {
+    if (i != recordIndex) {
+      int prior = recordIndex;
+      recordIndex = i;
+      fireIndexChanged(i, prior);
+    }
   }
 
   private void fireIndexChanged(final int i, int prior) {
@@ -115,8 +117,9 @@ public class RecordModel<R> {
   }
 
   public void append(R insertedRecord) {
-    foundItems.add(recordIndex, insertedRecord);
-//    recordIndex++; // Should we call setRecordIndex() here?
+    final int newIndex = foundItems.size();
+    foundItems.add(insertedRecord);
+    setRecordIndex(newIndex);
     fireModelListChanged();
   }
 
@@ -135,7 +138,7 @@ public class RecordModel<R> {
   }
 
   /**
-   * delete the selected item, conditionally.
+   * Delete the selected item, conditionally, from the model only. This doesn't delete anything from the database.
    * @param notify Fire appropriate listeners after deleting
    * @param index The index of the record to delete. This method does nothing if index is < 0,
    */
