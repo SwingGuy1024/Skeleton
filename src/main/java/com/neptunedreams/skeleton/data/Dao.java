@@ -19,9 +19,13 @@ public interface Dao<E, PK> {
   Collection<E> getAll(@Nullable RecordField orderBy) throws SQLException;
   
   Collection<E> find(String text, @Nullable RecordField orderBy) throws SQLException;
-  
-  Collection<E> findInField(String text, @NonNull RecordField findBy, RecordField orderBy) throws SQLException;
-  
+  Collection<E> findAny(@Nullable RecordField orderBy, String... text) throws SQLException;
+  Collection<E> findAll(@Nullable RecordField orderBy, String... text) throws SQLException;
+
+  Collection<E> findInField(String text, @NonNull RecordField findBy, @Nullable RecordField orderBy) throws SQLException;
+  Collection<E> findAnyInField(@NonNull RecordField findBy, @Nullable RecordField orderBy, String... text) throws SQLException;
+  Collection<E> findAllInField(@NonNull RecordField findBy, @Nullable RecordField orderBy, String... text) throws SQLException;
+
 //  E newEmptyRecord();
 
   /**

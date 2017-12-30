@@ -3,11 +3,13 @@ package com.neptunedreams.skeleton.ui;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.StringTokenizer;
 import java.util.function.Function;
 import com.ErrorReport;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.RecordField;
 import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -116,36 +118,56 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
 
-  public void findTextInField(String dirtyText, final RecordField field) {
+  public void findTextInField(String dirtyText, final RecordField field, SearchOption searchOption) {
     //noinspection TooBroadScope
     String text = dirtyText.trim();
     try {
-      Collection<R> foundItems = findRecordsInField(text, field);
+      Collection<R> foundItems = findRecordsInField(text, field, searchOption);
       setFoundRecords(foundItems);
       model.goFirst();
     } catch (SQLException e) {
-      //noinspection StringConcatenation
-      ErrorReport.reportException("Find Text in Field " + field, e);
+      ErrorReport.reportException(String.format("Find Text in Field %s with %s", field, searchOption), e);
     }
   }
 
-  Collection<R> findRecordsInField(final String text, final RecordField field) throws SQLException {
+  Collection<R> findRecordsInField(final String text, final RecordField field, SearchOption searchOption) throws SQLException {
     if (text.trim().isEmpty()) {
       return dao.getAll(getOrder());
     } else {
-      return dao.findInField(text, field, getOrder());
+      switch (searchOption) {
+        case findExact:
+          return dao.findInField(text, field, getOrder());
+        case findAll:
+          return dao.findAllInField(field, getOrder(), parseText(text));
+        case findAny:
+          return dao.findAnyInField(field, getOrder(), parseText(text));
+        default:
+          throw new AssertionError(String.format("Unhandled case: %s", searchOption));
+      }
     }
+  }
+
+  String[] parseText(@NonNull String text) {
+    //noinspection EqualsReplaceableByObjectsCall
+    assert text.trim().equals(text); // text should already be trimmed
+    StringTokenizer tokenizer = new StringTokenizer(text, " ");
+    String[] tokens = new String[tokenizer.countTokens()];
+    int i = 0;
+    while (tokenizer.hasMoreTokens()) {
+      tokens[i++] = tokenizer.nextToken();
+    }
+    return tokens;
   }
 
   /**
    * Find text in any field of the database.
    * @param dirtyText The text to find, without cleaning or wildcards
    */
-  public void findTextAnywhere(String dirtyText) {
+  public void findTextAnywhere(String dirtyText, SearchOption searchOption) {
     //noinspection TooBroadScope
     String text = dirtyText.trim();
     try {
-      Collection<R> foundItems = findRecordsAnywhere(text);
+      Collection<R> foundItems = findRecordsAnywhere(text, searchOption);
       setFoundRecords(foundItems);
       model.goFirst();
     } catch (SQLException e) {
@@ -153,15 +175,21 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
 
-  Collection<R> findRecordsAnywhere(final String text) throws SQLException {
-    Collection<R> foundItems;
+  Collection<R> findRecordsAnywhere(final String text, SearchOption searchOption) throws SQLException {
     if (text.isEmpty()) {
-      foundItems = dao.getAll(getOrder());
+      return dao.getAll(getOrder());
     } else {
-      foundItems = dao.find(text, getOrder());
-//      System.out.printf("Found %d items.%n", foundItems.size());
+      switch (searchOption) {
+        case findExact:
+          return dao.find(text, getOrder());
+        case findAll:
+          return dao.findAll(getOrder(), parseText(text));
+        case findAny:
+          return dao.findAny(getOrder(), parseText(text));
+        default:
+          throw new AssertionError(String.format("Unhandled case: %s", searchOption));  
+      }
     }
-    return foundItems;
   }
 
   @Override

@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.3-SNAPSHOT</version>
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -261,7 +261,7 @@
           <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
           <!--<dictionaryFile>YourCustomInfo.plist</dictionaryFile>-->
           <iconFile>Earth_Neptune.icns</iconFile>
-          <jrePath>/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk</jrePath>
+          <jrePath>/Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk</jrePath>
         </configuration>
         <executions>
           <execution>

@@ -23,10 +23,14 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import com.ErrorReport;
+import com.neptunedreams.framework.ui.EnumGroup;
+import com.neptunedreams.framework.ui.HidingPanel;
 import com.neptunedreams.skeleton.data.RecordField;
 import com.neptunedreams.skeleton.task.ParameterizedCallable;
 import com.neptunedreams.skeleton.task.QueuedTask;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -38,6 +42,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  * <p>Created by IntelliJ IDEA.
  * <p>Date: 10/29/17
  * <p>Time: 12:50 PM
+ * TODO: Implement the three find modes. 
  *
  * @author Miguel Mu\u00f1oz
  */
@@ -47,7 +52,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private static final long DELAY = 1000L;
   private JTextField findField = new JTextField(10);
   private final RecordController<R, Integer> controller;
-  private ButtonGroup buttonGroup = new ButtonGroup();
+  private final ButtonGroup buttonGroup = new ButtonGroup();
   private RecordView<R> view;
   private final @NonNull RecordModel<R> recordModel;
   private JButton prev = new JButton(Resource.getLeftArrow());
@@ -55,11 +60,28 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JButton first = new JButton(Resource.getFirst());
   private JButton last = new JButton(Resource.getLast());
   private JLabel infoLine = new JLabel("");
-  private final ParameterizedCallable<String, Collection<R>> callable = createCallable();
-  
+//  private final ButtonGroup optionsGroup = new ButtonGroup();
+  private final EnumGroup<SearchOption> optionsGroup = new EnumGroup<>();
+
+  private final HidingPanel searchOptionsPanel = makeSearchOptionsPanel(optionsGroup);
+
+//  private final ParameterizedCallable<String, Collection<R>> callable = createCallable();
+
   // recordConsumer is how the QueuedTask communicates with the application code.
   private final Consumer<Collection<R>> recordConsumer = createRecordConsumer();
-  private @NonNull QueuedTask<String, Collection<R>> queuedTask = new QueuedTask<>(DELAY, callable, recordConsumer);
+  private @MonotonicNonNull QueuedTask<String, Collection<R>> queuedTask;
+
+  private HidingPanel makeSearchOptionsPanel(@UnderInitialization RecordUI<R> this, EnumGroup<SearchOption> optionsGroup) {
+    JPanel optionsPanel = new JPanel(new GridLayout(0, 1));
+    JRadioButton findExact = optionsGroup.add(SearchOption.findExact);
+    JRadioButton findAll = optionsGroup.add(SearchOption.findAll);
+    JRadioButton findAny = optionsGroup.add(SearchOption.findAny);
+    optionsPanel.add(findExact);
+    optionsPanel.add(findAll);
+    optionsPanel.add(findAny);
+
+    return HidingPanel.create(optionsPanel);
+  }
 
   @SuppressWarnings({"method.invocation.invalid","argument.type.incompatible"}) // add(), setBorder(), etc not properly annotated in JDK.
   public RecordUI(@NonNull RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
@@ -91,17 +113,35 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
         process(e);
       }
       
-      private void process(DocumentEvent e) {
-        final Document document = e.getDocument();
-        try {
-          final String text = document.getText(0, document.getLength());
-          assert queuedTask != null;
-          queuedTask.feedData(text);
-        } catch (BadLocationException e1) {
-          e1.printStackTrace();
-        }
-      }
     });
+  }
+
+  private void process(DocumentEvent e) {
+    final Document document = e.getDocument();
+    try {
+      final String text = document.getText(0, document.getLength());
+      QueuedTask<String, Collection<R>> qTask = getQueuedTask();
+      qTask.feedData(text);
+      // I'm assuming here that text can't contain \n, \r, \f, or \t, or even nbsp. If this turns out to be false,
+      // I should probably filter them out in the process method.
+
+      // TODO: Do I need to default to findExact when I hide the options?
+      final boolean vis = text.trim().contains(" ");
+      searchOptionsPanel.setContentVisible(vis);
+      if (!vis) {
+        // This might not be a good idea.
+        optionsGroup.setSelected(SearchOption.findExact);
+      }
+    } catch (BadLocationException e1) {
+      e1.printStackTrace();
+    }
+  }
+
+  private QueuedTask<String, Collection<R>> getQueuedTask() {
+    if (queuedTask == null) {
+      queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
+    }
+   return queuedTask;
   }
 
   private JPanel createControlPanel() {
@@ -114,6 +154,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JPanel createButtonPanel() {
     JPanel buttonPanel = new JPanel(new BorderLayout());
     buttonPanel.add(getSearchField(), BorderLayout.PAGE_START);
+    buttonPanel.add(searchOptionsPanel, BorderLayout.CENTER);
     buttonPanel.add(getButtons(), BorderLayout.PAGE_END);
 //    buttonPanel.add(createTrashPanel(), BorderLayout.PAGE_END);
     return buttonPanel;
@@ -190,12 +231,13 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   
   private void findText() {
     ButtonModel selectedModel = buttonGroup.getSelection();
+    final SearchOption searchOption = getSearchOption();
     if (selectedModel instanceof EnumToggleModel) {
       RecordField field = ((EnumToggleModel)selectedModel).getField();
       
-      controller.findTextInField(findField.getText(), field);
+      controller.findTextInField(findField.getText(), field, searchOption);
     } else {
-      controller.findTextAnywhere(findField.getText());
+      controller.findTextAnywhere(findField.getText(), searchOption);
     }
   }
   
@@ -252,20 +294,32 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     loadInfoLine();
   }
   
-  private ParameterizedCallable<String, Collection<R>> createCallable(@UnknownInitialization RecordUI<R> this) {
+  /*
+    NullnessChecker notes:
+    This used to be called during construction. It specified an implicit parameter. But this created a compiler
+    error when I called getSearchOption. This is due to the nullness checker bug where it doesn't know that a
+    lambda or anonymous class only gets called after initialization is complete. 
+    
+    I fixed this by lazily instantiating the QueueTask that used the return value of this method. That way, I could
+    remove the @UnderInitialization annotation of the implicit this parameter. This method is now called after
+    construction completes, so it works fine. Very annoying that I need to do this, but it's a relatively clean
+    solution.  
+   */
+  private ParameterizedCallable<String, Collection<R>> createCallable() {
     return new ParameterizedCallable<String, Collection<R>>() {
       @Override
       public Collection<R> call() throws InterruptedException {
         assert buttonGroup != null;
         ButtonModel selectedModel = buttonGroup.getSelection();
+        SearchOption searchOption = getSearchOption();
         try {
           assert controller != null;
           assert findField != null;
           if (selectedModel instanceof EnumToggleModel) {
             RecordField field = ((EnumToggleModel) selectedModel).getField();
-            return controller.findRecordsInField(findField.getText(), field);
+            return controller.findRecordsInField(findField.getText(), field, searchOption);
           } else {
-            return controller.findRecordsAnywhere(findField.getText());
+            return controller.findRecordsAnywhere(findField.getText(), searchOption);
           }
         } catch(SQLException e){
           e.printStackTrace();
@@ -273,6 +327,10 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
         }
       }
     };
+  }
+
+  private SearchOption getSearchOption() {
+    return searchOptionsPanel.isContentVisible() ? optionsGroup.getSelected() : SearchOption.findExact;
   }
 
   @SuppressWarnings("dereference.of.nullable") // controller is null when we call this, but not when we call the lambda.
@@ -299,4 +357,5 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       return field;
     }
   }
+
 }

@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Objects;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.RecordField;
@@ -14,13 +15,13 @@ import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.OrderField;
 import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.ResultQuery;
 import org.jooq.SelectConditionStep;
-import org.jooq.SelectSeekStep1;
 import org.jooq.SelectSelectStep;
 import org.jooq.SelectWhereStep;
 import org.jooq.TableField;
@@ -141,7 +142,7 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   @Override
   @SuppressWarnings("cast.unsafe")
   public Collection<RecordRecord> find(final String text, final @Nullable RecordField orderBy) throws SQLException {
-    final String wildCardText = WC + text + WC;
+    final String wildCardText = wrapWithWildCards(text);
     //noinspection resource
     DSLContext dslContext = getDslContext();
     //noinspection resource
@@ -160,28 +161,116 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
     }
   }
 
+  private @NonNull String wrapWithWildCards(final String text) {
+    return WC + text + WC;
+  }
+
   @Override
-  @SuppressWarnings({"assignment.type.incompatible", "cast.unsafe"})
-  public Collection<RecordRecord> findInField(final String text, final @NonNull RecordField findBy, final @Nullable RecordField orderBy) throws SQLException {
-    String wildCardText = WC + text + WC;
+  public Collection<RecordRecord> findAny(final @Nullable RecordField orderBy, final String... text) throws SQLException {
+    //noinspection resource
+    DSLContext dslContext = getDslContext();
+    Condition condition = RECORD.SOURCE.lt(""); // Should always be false
+    //noinspection resource
+    try (final SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD))
+    {
+      for (String txt : text) {
+        String wildCardText = wrapWithWildCards(txt);
+          condition = condition.or(
+            RECORD.SOURCE.like(wildCardText)).or(
+            RECORD.USERNAME.like(wildCardText)).or(
+            RECORD.PASSWORD.like(wildCardText)).or(
+            RECORD.NOTES.like(wildCardText));
+      }
+      return getFromQuery(orderBy, recordRecords, condition);
+    }
+  }
+
+  @Override
+  public Collection<RecordRecord> findAll(final @Nullable RecordField orderBy, final String... text) throws SQLException {
+    //noinspection resource
+    DSLContext dslContext = getDslContext();
+    Condition condition = RECORD.SOURCE.ge(""); // Should always be true
+    try (final SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD)) {
+      for (String txt : text) {
+        String wildCardText = wrapWithWildCards(txt);
+        condition = condition.and(
+            RECORD.SOURCE.like(wildCardText).or(
+            RECORD.USERNAME.like(wildCardText)).or(
+            RECORD.PASSWORD.like(wildCardText)).or(
+            RECORD.NOTES.like(wildCardText)));
+      }
+      return getFromQuery(orderBy, recordRecords, condition);
+    }
+  }
+
+  @Override
+  @SuppressWarnings("cast.unsafe")
+  public Collection<RecordRecord> findInField(
+      final String text, 
+      final @NonNull RecordField findBy, 
+      final @Nullable RecordField orderBy
+  ) throws SQLException {
+    String wildCardText = wrapWithWildCards(text);
     //noinspection resource
     DSLContext dslContext = getDslContext();
 
-    // type incompatible error. It complains that the field isn't "@UnknownInitialization". I don't know why.
-    final @NonNull TableField<RecordRecord, ?> findByField = fieldMap.get(findBy);
+    final @NonNull TableField<RecordRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
     try (
         final SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD);
         final SelectConditionStep<RecordRecord> where = recordRecords.where((findByField.like(wildCardText)))
     ) {
-      if (orderBy != null) {
-        //noinspection NestedTryStatement, cast.unsafe
-        try (SelectSeekStep1<RecordRecord, ?> step = where.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy))) {
-          return step.fetch();
-        }
-      } else {
-        return where.fetch();
-      }
+      final ResultQuery<RecordRecord> query;
+      query = (orderBy == null) ?
+        where :
+        where.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy));
+      return query.fetch();
     }
+  }
+
+  @Override
+  public Collection<RecordRecord> findAnyInField(final @NonNull RecordField findBy, final @Nullable RecordField orderBy, final String... text) throws SQLException {
+    //noinspection resource
+    DSLContext dslContext = getDslContext();
+
+    final @NonNull TableField<RecordRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
+    Condition condition = RECORD.SOURCE.lt(""); // Should always be false
+    try (SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD)) {
+      for (String txt : text) {
+        String wildCardText = wrapWithWildCards(txt);
+        condition = condition.or(findByField.like(wildCardText));
+      }
+      return getFromQuery(orderBy, recordRecords, condition);
+    }
+  }
+
+  @Override
+  public Collection<RecordRecord> findAllInField(final @NonNull RecordField findBy, final @Nullable RecordField orderBy, final String... text) throws SQLException {
+    //noinspection resource
+    DSLContext dslContext = getDslContext();
+
+    final @NonNull TableField<RecordRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
+    Condition condition = RECORD.SOURCE.ge(""); // Should always be true
+    try (SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD)) {
+      for (String txt : text) {
+        String wildCardText = wrapWithWildCards(txt);
+        condition = condition.and(findByField.like(wildCardText));
+      }
+      return getFromQuery(orderBy, recordRecords, condition);
+    }
+  }
+
+  private Collection<RecordRecord> getFromQuery(
+      final @Nullable RecordField orderBy,
+      final SelectWhereStep<RecordRecord> recordRecords,
+      final Condition condition
+  ) {
+    final ResultQuery<RecordRecord> query;
+    try (SelectConditionStep<RecordRecord> where = recordRecords.where(condition)) {
+      query = (orderBy == null) ?
+          where :
+          where.orderBy(Objects.requireNonNull(fieldMap.get(orderBy)));
+    }
+    return query.fetch();
   }
 
   @Override

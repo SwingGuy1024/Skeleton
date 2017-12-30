@@ -18,6 +18,7 @@ import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
 import com.neptunedreams.skeleton.ui.RecordController;
 import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
+import com.neptunedreams.skeleton.ui.SearchOption;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -116,7 +117,7 @@ public final class Skeleton extends JPanel
       );
       view.setController(controller);
       mainPanel = new RecordUI<>(controller.getModel(), view, controller);
-      controller.findTextAnywhere("");
+      controller.findTextAnywhere("", SearchOption.findExact);
       controller.getModel().setTotalFromSize();
 
       // Make sure you save the last change before shutting down.

@@ -25,7 +25,7 @@ import static com.neptunedreams.skeleton.DataUtil.*;
  *
  * @author Miguel Mu\u00f1oz
  */
-@SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "SqlNoDataSourceInspection"})
+@SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "SqlNoDataSourceInspection", "resource", "HardCodedStringLiteral"})
 public class DerbyRecordDao implements Dao<Record, Integer> {
   private static final String CREATE_TABLE = "CREATE TABLE record (" +
       "id INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY," +
@@ -142,6 +142,26 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
     statement.setObject(1, fieldName.toString());
     statement.setObject(2, wildCardText);
     return extractRecords(statement);
+  }
+
+  @Override
+  public Collection<Record> findAny(final @Nullable RecordField orderBy, final String... text) throws SQLException {
+    throw new AssertionError("Not yet written");
+  }
+
+  @Override
+  public Collection<Record> findAll(final @Nullable RecordField orderBy, final String... text) throws SQLException {
+    throw new AssertionError("Not yet written");
+  }
+
+  @Override
+  public Collection<Record> findAnyInField(final @NonNull RecordField findBy, final @Nullable RecordField orderBy, final String... text) throws SQLException {
+    throw new AssertionError("Not yet written");
+  }
+
+  @Override
+  public Collection<Record> findAllInField(final @NonNull RecordField findBy, final @Nullable RecordField orderBy, final String... text) throws SQLException {
+    throw new AssertionError("Not yet written");
   }
 
   @Override
