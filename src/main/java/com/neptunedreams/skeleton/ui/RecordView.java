@@ -161,6 +161,8 @@ public final class RecordView<R> extends JPanel {
   
   private JTextComponent addNotesField() {
     final JTextArea wrappedField = new JTextArea(TEXT_ROWS, TEXT_COLUMNS);
+    wrappedField.setWrapStyleWord(true);
+    wrappedField.setLineWrap(true);
     JComponent scrollPane = wrap(wrappedField);
     add(BorderLayout.CENTER, scrollPane);
     return wrappedField;
