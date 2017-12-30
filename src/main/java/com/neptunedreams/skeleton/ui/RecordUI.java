@@ -18,6 +18,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.border.MatteBorder;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
@@ -42,8 +43,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  * <p>Created by IntelliJ IDEA.
  * <p>Date: 10/29/17
  * <p>Time: 12:50 PM
- * TODO: Implement the three find modes. 
- *
+ * 
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings("HardCodedStringLiteral")
@@ -72,13 +72,18 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private @MonotonicNonNull QueuedTask<String, Collection<R>> queuedTask;
 
   private HidingPanel makeSearchOptionsPanel(@UnderInitialization RecordUI<R> this, EnumGroup<SearchOption> optionsGroup) {
-    JPanel optionsPanel = new JPanel(new GridLayout(0, 1));
+    JPanel optionsPanel = new JPanel(new GridLayout(1, 0));
     JRadioButton findExact = optionsGroup.add(SearchOption.findExact);
     JRadioButton findAll = optionsGroup.add(SearchOption.findAll);
     JRadioButton findAny = optionsGroup.add(SearchOption.findAny);
     optionsPanel.add(findExact);
     optionsPanel.add(findAll);
     optionsPanel.add(findAny);
+    
+    optionsGroup.addButtonGroupListener(selectedButtonModel -> {
+      assert queuedTask != null;
+      queuedTask.launchCallable();
+    });
 
     return HidingPanel.create(optionsPanel);
   }
@@ -125,13 +130,8 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       // I'm assuming here that text can't contain \n, \r, \f, or \t, or even nbsp. If this turns out to be false,
       // I should probably filter them out in the process method.
 
-      // TODO: Do I need to default to findExact when I hide the options?
       final boolean vis = text.trim().contains(" ");
       searchOptionsPanel.setContentVisible(vis);
-      if (!vis) {
-        // This might not be a good idea.
-        optionsGroup.setSelected(SearchOption.findExact);
-      }
     } catch (BadLocationException e1) {
       e1.printStackTrace();
     }
@@ -261,6 +261,17 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     buttonGroup.add(pw);
     buttonGroup.add(notes);
     all.setSelected(true);
+    
+    ChangeListener changeListener = e -> {
+      assert queuedTask != null;
+      queuedTask.launchCallable();
+    };
+
+    all.getModel().addChangeListener(changeListener);
+    source.getModel().addChangeListener(changeListener);
+    userName.getModel().addChangeListener(changeListener);
+    pw.getModel().addChangeListener(changeListener);
+    notes.getModel().addChangeListener(changeListener);
 
     JPanel radioPanel = new JPanel(new GridLayout(0, 1));
     radioPanel.add(all);

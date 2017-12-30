@@ -96,7 +96,10 @@ public class QueuedTask<I, R> {
     }
   }
 
-  private void launchCallable() {
+  /**
+   * Skip the queuing and waiting and just launch the task immediately.
+   */
+  public void launchCallable() {
     try {
       R result = callable.call(); // throws InterruptedException
       consumer.accept(result);
