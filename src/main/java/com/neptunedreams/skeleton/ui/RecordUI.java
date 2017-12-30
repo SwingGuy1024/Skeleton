@@ -7,23 +7,20 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.function.Consumer;
-import javax.swing.ButtonGroup;
-import javax.swing.ButtonModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.border.MatteBorder;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import com.ErrorReport;
+import com.neptunedreams.framework.ui.ButtonGroupListener;
 import com.neptunedreams.framework.ui.EnumGroup;
 import com.neptunedreams.framework.ui.HidingPanel;
 import com.neptunedreams.skeleton.data.RecordField;
@@ -49,10 +46,18 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @SuppressWarnings("HardCodedStringLiteral")
 public class RecordUI<R> extends JPanel implements RecordModelListener {
 
+  // TODO:  The QueuedTask is terrific, but it doesn't belong in this class. It belongs in the Controller. That way,
+  // todo   it can be accessed by other UI classes like RecordView. To do this, I also need to move the SearchOption
+  // todo   to the controller, as well as the searchField. (Maybe I should just write an API so the Controller can just
+  // todo   query the RecordUI for the selected state.) It will be a bit of work, but it will be a cleaner UI, which
+  // todo   is easier to maintain. This will also allow me to implement instant response to changing the sort order.
+  // todo   Maybe the way to do this would be to create a UIModel class that keeps track of all the UI state. Maybe 
+  // todo   that way, the controller won't need to keep an instance of RecordView.
+  
   private static final long DELAY = 1000L;
   private JTextField findField = new JTextField(10);
   private final RecordController<R, Integer> controller;
-  private final ButtonGroup buttonGroup = new ButtonGroup();
+  private EnumGroup<RecordField> buttonGroup = new EnumGroup<>();
   private RecordView<R> view;
   private final @NonNull RecordModel<R> recordModel;
   private JButton prev = new JButton(Resource.getLeftArrow());
@@ -79,11 +84,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     optionsPanel.add(findExact);
     optionsPanel.add(findAll);
     optionsPanel.add(findAny);
+    optionsGroup.setSelected(SearchOption.findExact);
     
-    optionsGroup.addButtonGroupListener(selectedButtonModel -> {
-      assert queuedTask != null;
-      queuedTask.launchCallable();
-    });
+    optionsGroup.addButtonGroupListener(selectedButtonModel -> searchNow());
 
     return HidingPanel.create(optionsPanel);
   }
@@ -230,60 +233,29 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   }
   
   private void findText() {
-    ButtonModel selectedModel = buttonGroup.getSelection();
+    RecordField field = buttonGroup.getSelected();
     final SearchOption searchOption = getSearchOption();
-    if (selectedModel instanceof EnumToggleModel) {
-      RecordField field = ((EnumToggleModel)selectedModel).getField();
-      
+    if (field.isField()) {
       controller.findTextInField(findField.getText(), field, searchOption);
     } else {
       controller.findTextAnywhere(findField.getText(), searchOption);
     }
   }
   
-  @SuppressWarnings("HardCodedStringLiteral")
   private JPanel createSearchRadioPanel(@UnknownInitialization RecordUI<R>this) {
-    JRadioButton all = new JRadioButton("All");
-    JRadioButton source = new JRadioButton("Source");
-    JRadioButton userName = new JRadioButton("User Name");
-    JRadioButton pw = new JRadioButton("Password");
-    JRadioButton notes = new JRadioButton("Notes");
-    
-    setButtonModel(source, RecordField.SOURCE); // method.invocation.invalid on setButtonModel, 
-    setButtonModel(userName, RecordField.USERNAME);
-    setButtonModel(pw, RecordField.PASSWORD);
-    setButtonModel(notes, RecordField.NOTES);
-
-    assert buttonGroup != null;
-    buttonGroup.add(all);
-    buttonGroup.add(source);
-    buttonGroup.add(userName);
-    buttonGroup.add(pw);
-    buttonGroup.add(notes);
-    all.setSelected(true);
-    
-    ChangeListener changeListener = e -> {
-      assert queuedTask != null;
-      queuedTask.launchCallable();
-    };
-
-    all.getModel().addChangeListener(changeListener);
-    source.getModel().addChangeListener(changeListener);
-    userName.getModel().addChangeListener(changeListener);
-    pw.getModel().addChangeListener(changeListener);
-    notes.getModel().addChangeListener(changeListener);
-
     JPanel radioPanel = new JPanel(new GridLayout(0, 1));
-    radioPanel.add(all);
-    radioPanel.add(source);
-    radioPanel.add(userName);
-    radioPanel.add(pw);
-    radioPanel.add(notes);
+    assert buttonGroup != null;
+    buttonGroup.add(RecordField.All, radioPanel);
+    buttonGroup.add(RecordField.Source, radioPanel);
+    buttonGroup.add(RecordField.Username, radioPanel);
+    buttonGroup.add(RecordField.Password, radioPanel);
+    buttonGroup.add(RecordField.Notes, radioPanel);
+    buttonGroup.setSelected(RecordField.All);
+
+    ButtonGroupListener changeListener = e -> searchNow();
+    buttonGroup.addButtonGroupListener(changeListener);
+
     return radioPanel;
-  }
-  
-  private void setButtonModel(@UnknownInitialization RecordUI<R> this, JRadioButton button, RecordField field) {
-    button.setModel(new EnumToggleModel(field));
   }
   
   private void loadInfoLine() {
@@ -320,27 +292,36 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     return new ParameterizedCallable<String, Collection<R>>() {
       @Override
       public Collection<R> call() throws InterruptedException {
-        assert buttonGroup != null;
-        ButtonModel selectedModel = buttonGroup.getSelection();
-        SearchOption searchOption = getSearchOption();
-        try {
-          assert controller != null;
-          assert findField != null;
-          if (selectedModel instanceof EnumToggleModel) {
-            RecordField field = ((EnumToggleModel) selectedModel).getField();
-            return controller.findRecordsInField(findField.getText(), field, searchOption);
-          } else {
-            return controller.findRecordsAnywhere(findField.getText(), searchOption);
-          }
-        } catch(SQLException e){
-          e.printStackTrace();
-          return new LinkedList<>();
-        }
+        return retrieveNow();
       }
     };
   }
 
-  private SearchOption getSearchOption() {
+  private Collection<R> retrieveNow(@UnknownInitialization RecordUI<R> this) {
+    assert buttonGroup != null;
+    RecordField field = buttonGroup.getSelected();
+    SearchOption searchOption = getSearchOption();
+    try {
+      assert controller != null;
+      assert findField != null;
+      if (field.isField()) {
+        return controller.findRecordsInField(findField.getText(), field, searchOption);
+      } else {
+        return controller.findRecordsAnywhere(findField.getText(), searchOption);
+      }
+    } catch(SQLException e){
+      e.printStackTrace();
+      return new LinkedList<>();
+    }
+  }
+  
+  // This is public because I expect other classes to use it in the future. 
+  @SuppressWarnings("WeakerAccess")
+  public void searchNow(@UnknownInitialization RecordUI<R> this) {
+    recordConsumer.accept(retrieveNow());
+  }
+
+  private SearchOption getSearchOption(@UnknownInitialization RecordUI<R> this) {
     return searchOptionsPanel.isContentVisible() ? optionsGroup.getSelected() : SearchOption.findExact;
   }
 
@@ -354,19 +335,4 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   public void indexChanged(final int index, int prior) {
     loadInfoLine();
   }
-
-  private static class EnumToggleModel extends JToggleButton.ToggleButtonModel {
-    private final RecordField field;
-    
-    EnumToggleModel(RecordField theField) {
-      super();
-      field = theField;
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    public RecordField getField() {
-      return field;
-    }
-  }
-
 }

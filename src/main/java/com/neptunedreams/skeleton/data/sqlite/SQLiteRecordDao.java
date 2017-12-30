@@ -17,7 +17,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.OrderField;
+import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.ResultQuery;
@@ -58,19 +58,19 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   private static Map<RecordField, @NonNull TableField<RecordRecord, ?>> makeFieldMap() {
     final EnumMap<RecordField, @NonNull TableField<RecordRecord, ?>> fieldMap = new EnumMap<>(RecordField.class);
     fieldMap.put(RecordField.ID,       Record.RECORD.ID);
-    fieldMap.put(RecordField.SOURCE,   Record.RECORD.SOURCE);
-    fieldMap.put(RecordField.USERNAME, Record.RECORD.USERNAME);
-    fieldMap.put(RecordField.PASSWORD, Record.RECORD.PASSWORD);
-    fieldMap.put(RecordField.NOTES,    Record.RECORD.NOTES);
+    fieldMap.put(RecordField.Source,   Record.RECORD.SOURCE);
+    fieldMap.put(RecordField.Username, Record.RECORD.USERNAME);
+    fieldMap.put(RecordField.Password, Record.RECORD.PASSWORD);
+    fieldMap.put(RecordField.Notes,    Record.RECORD.NOTES);
     return fieldMap;
   }
 
   private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS record (" +
       "id INTEGER NOT NULL PRIMARY KEY," + // AUTOINCREMENT," +
-      "source VARCHAR(256) NOT NULL," +
-      "username VARCHAR(256) NOT NULL," +
-      "password VARCHAR(256) NOT NULL," +
-      "notes LONG VARCHAR NOT NULL" +
+      "source VARCHAR(256) NOT NULL collate noCase," +
+      "username VARCHAR(256) NOT NULL collate noCase," +
+      "password VARCHAR(256) NOT NULL collate noCase," +
+      "notes LONG VARCHAR NOT NULL collate noCase" +
       ')';
 //  private static final String SELECT_ALL = "SELECT * FROM record ORDER BY ";
 //  private static final String FIND = "SELECT * FROM record WHERE (source LIKE ?) OR (username like ?) OR (password like ?) OR (notes like ?) ORDER BY ";
@@ -123,7 +123,6 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   }
 
   @Override
-  @SuppressWarnings("cast.unsafe")
   public Collection<RecordRecord> getAll(final @Nullable RecordField orderBy) throws SQLException {
 
     //noinspection resource
@@ -134,7 +133,7 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
         return recordRecords.fetch();
       } else {
         //noinspection resource
-        return recordRecords.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy)).fetch();
+        return recordRecords.orderBy(castOrderToUpper(orderBy)).fetch();
       }
     }
   }
@@ -147,18 +146,32 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
     DSLContext dslContext = getDslContext();
     //noinspection resource
     try (
-      final SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD);
-      SelectConditionStep<RecordRecord> where = recordRecords.where(
+        final SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD);
+        SelectConditionStep<RecordRecord> where = recordRecords.where(
           RECORD.SOURCE.like(wildCardText).or(
           RECORD.USERNAME.like(wildCardText).or(
           RECORD.PASSWORD.like(wildCardText).or(
           RECORD.NOTES.like(wildCardText)))));
-      final ResultQuery<RecordRecord> query = (orderBy == null) ? 
+        final ResultQuery<RecordRecord> query = (orderBy == null) ? 
           where : 
-          where.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy)) // unsafe cast
+          where.orderBy(castOrderToUpper(orderBy)) // unsafe cast
     ) {
       return query.fetch();
     }
+  }
+
+  /**
+   * The proper way to do a cast-insensitive sort is by saying "ORDER BY xxx COLLATE NOCASE", but there's no method
+   * call to do this in jOOQ. So instead, we cast the order to upper case, which is probably slower, but it works.
+   * However, I may be able to do this by adding COLLATE NOCASE to the initial table create statement, which will allow
+   * me to remove the upper() call from this method after rebuilding the table.
+   * @param orderBy The orderBy field
+   * @return A Field{@literal <String>} to pass to the orderBy() method to support case insensitive ordering.
+   */
+  @SuppressWarnings("unchecked")
+  private @NonNull Field<String> castOrderToUpper(final @Nullable RecordField orderBy) {
+    // cast to Field<String> is safe because all the orderBy values are for text fields
+    return upper((Field<String>) Objects.requireNonNull(fieldMap.get(orderBy)));
   }
 
   private @NonNull String wrapWithWildCards(final String text) {
@@ -222,7 +235,7 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
       final ResultQuery<RecordRecord> query;
       query = (orderBy == null) ?
         where :
-        where.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy));
+        where.orderBy(castOrderToUpper(orderBy));
       return query.fetch();
     }
   }
@@ -268,7 +281,7 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
     try (SelectConditionStep<RecordRecord> where = recordRecords.where(condition)) {
       query = (orderBy == null) ?
           where :
-          where.orderBy(Objects.requireNonNull(fieldMap.get(orderBy)));
+          where.orderBy(castOrderToUpper(orderBy));
     }
     return query.fetch();
   }

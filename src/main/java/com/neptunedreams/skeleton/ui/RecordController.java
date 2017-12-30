@@ -25,7 +25,8 @@ public class RecordController<R, PK> implements RecordModelListener {
 //  private E order = Record.FIELD.SOURCE;
   private RecordField order;
   private final Dao<R, PK> dao;
-  // TODO: RecordController and RecordView have references to each other. Replace this with a listener system.
+  // TODO:  RecordController and RecordView have references to each other. Replace this with a listener system
+  // todo   This shouldn't be too hard. There are very few calls made to the RecordView.
   private final RecordView<R> recordView;
   private final RecordModel<R> model;
   private boolean initializeComplete = false;

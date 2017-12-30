@@ -101,7 +101,7 @@ public final class Skeleton extends JPanel
       final ConnectionSource connectionSource = info.getConnectionSource();
       Dao<RecordRecord, Integer> dao = info.getDao(RecordRecord.class, connectionSource);
       RecordRecord dummyRecord = new RecordRecord(DUMMY_ID, "D", "D", "D", "D");
-      final RecordView<RecordRecord> view = new RecordView.Builder<>(dummyRecord, RecordField.SOURCE)
+      final RecordView<RecordRecord> view = new RecordView.Builder<>(dummyRecord, RecordField.Source)
           .source  (RecordRecord::getSource,   RecordRecord::setSource)
           .id      (RecordRecord::getId,       RecordRecord::setId)
           .userName(RecordRecord::getUsername, RecordRecord::setUsername)
@@ -112,7 +112,7 @@ public final class Skeleton extends JPanel
       RecordController<RecordRecord, Integer> controller = new RecordController<>(
           dao, 
           view, 
-          RecordField.SOURCE,
+          RecordField.Source,
           this::recordConstructor
       );
       view.setController(controller);

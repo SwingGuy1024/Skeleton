@@ -62,9 +62,9 @@ public final class RecordView<R> extends JPanel {
     super(new BorderLayout());
     currentRecord = record;
     final JLabel idField = (JLabel) addField("ID", false, RecordField.ID, initialSort);
-    final JTextComponent sourceField = (JTextComponent) addField("Source", true, RecordField.SOURCE, initialSort);
-    final JTextComponent usernameField = (JTextComponent) addField("User Name", true, RecordField.USERNAME, initialSort);
-    final JTextComponent pwField = (JTextComponent) addField("Password", true, RecordField.PASSWORD, initialSort);
+    final JTextComponent sourceField = (JTextComponent) addField("Source", true, RecordField.Source, initialSort);
+    final JTextComponent usernameField = (JTextComponent) addField("User Name", true, RecordField.Username, initialSort);
+    final JTextComponent pwField = (JTextComponent) addField("Password", true, RecordField.Password, initialSort);
     final JTextComponent notesField = addNotesField();
     assert getIdFunction != null : "Null id getter";
     assert setIdFunction != null : "Null id Setter";
@@ -153,6 +153,7 @@ public final class RecordView<R> extends JPanel {
     ItemListener checkBoxListener = (itemEvent) -> {
       if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
         controller.specifyOrder(orderField);
+        // Here's where I want to call RecordUI.searchNow(). The code needs to be restructured before I can do that.
       }
     };
     orderBy.addItemListener(checkBoxListener);

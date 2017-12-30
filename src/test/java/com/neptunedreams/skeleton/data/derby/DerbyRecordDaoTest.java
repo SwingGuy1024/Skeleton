@@ -53,12 +53,12 @@ public class DerbyRecordDaoTest {
     Record record2 = new Record("t2Site", "t2User", "t2Pw", "t2Note");
     dao.insert(record2);
 
-    Collection<Record> allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
+    Collection<Record> allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.Source);
     System.out.printf("getAll() returned %d records, expecting 2%n", allRecords.size());
 
     //noinspection UnusedAssignment
-    Collection<Record> foundRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
-    foundRecords = dao.find("t2site", com.neptunedreams.skeleton.data.RecordField.SOURCE);
+    Collection<Record> foundRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.Source);
+    foundRecords = dao.find("t2site", com.neptunedreams.skeleton.data.RecordField.Source);
     System.out.printf("find(t2site) returned %d records, expecting 1%n", foundRecords.size());
     record1 = foundRecords.iterator().next();
 
@@ -68,18 +68,18 @@ public class DerbyRecordDaoTest {
     record1.setUserName(revisedName);
     System.out.printf("Changing the Name from %s to %s%n", originalName, revisedName);
     dao.update(record1);
-    foundRecords = dao.find("line", com.neptunedreams.skeleton.data.RecordField.SOURCE);
+    foundRecords = dao.find("line", com.neptunedreams.skeleton.data.RecordField.Source);
     System.out.printf("Found %d records%n", foundRecords.size());
     Record revisedRecord = foundRecords.iterator().next();
     testShowRecord(revisedRecord);
 
     int deletedId = revisedRecord.getId();
     dao.delete(revisedRecord);
-    allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
+    allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.Source);
     System.out.printf("Total of %d records after deleting id %d%n", allRecords.size(), deletedId);
     Record remainingRecord = allRecords.iterator().next();
     dao.delete(remainingRecord);
-    allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
+    allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.Source);
     System.out.printf("Total of %d records after deleting 1%n", allRecords.size());
 
     //noinspection HardcodedLineSeparator
@@ -106,7 +106,7 @@ public class DerbyRecordDaoTest {
   }
 
   private Collection<Record> showAllRecords(final DerbyRecordDao dao) throws SQLException {
-    Collection<Record> allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
+    Collection<Record> allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.Source);
     System.out.printf("getAll() returned %d records, expecting 2%n", allRecords.size());
     for (Record rr : allRecords) {
       System.out.println(rr);
