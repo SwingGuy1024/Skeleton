@@ -21,6 +21,7 @@ import javax.swing.JTextField;
 import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.JTextComponent;
+import com.google.common.eventbus.Subscribe;
 import com.neptunedreams.Setter;
 import com.neptunedreams.framework.ui.FieldBinding;
 import com.neptunedreams.skeleton.data.RecordField;
@@ -34,7 +35,7 @@ import org.checkerframework.checker.initialization.qual.UnderInitialization;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings("WeakerAccess")
-public final class RecordView<R> extends JPanel {
+public final class RecordView<R> extends JPanel implements RecordSelectionModel<R> {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
   private static final int NO_RECORD = -999;
@@ -47,7 +48,6 @@ public final class RecordView<R> extends JPanel {
   private R currentRecord; // = new Record("D", "D", "D", "D");
   
   private RecordController<R, ?> controller;
-  private final FieldBinding.IntegerBinding<R> idBinding;
   private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
 
   @SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible", "method.invocation.invalid", "HardCodedStringLiteral"})
@@ -68,7 +68,7 @@ public final class RecordView<R> extends JPanel {
     final JTextComponent notesField = addNotesField();
     assert getIdFunction != null : "Null id getter";
     assert setIdFunction != null : "Null id Setter";
-    idBinding = FieldBinding.bindInteger(getIdFunction, setIdFunction, idField);
+    final FieldBinding.IntegerBinding<R> idBinding = FieldBinding.bindInteger(getIdFunction, setIdFunction, idField);
     final FieldBinding.StringEditableBinding<R> sourceBinding = FieldBinding.bindEditableString(getSourceFunction, setSourceFunction, sourceField);
     final FieldBinding.StringEditableBinding<R> userNameBinding = FieldBinding.bindEditableString(getUserNameFunction, setUserNameFunction, usernameField);
     final FieldBinding.StringEditableBinding<R> passwordBinding = FieldBinding.bindEditableString(getPasswordFunction, setPasswordFunction, pwField);
@@ -86,6 +86,7 @@ public final class RecordView<R> extends JPanel {
     installStandardCaret(usernameField);
     installStandardCaret(pwField);
     installStandardCaret(notesField);
+    MasterEventBus.instance().register(this);
   }
 
   /**
@@ -154,6 +155,7 @@ public final class RecordView<R> extends JPanel {
       if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
         controller.specifyOrder(orderField);
         // Here's where I want to call RecordUI.searchNow(). The code needs to be restructured before I can do that.
+        MasterEventBus.postSearchNowEvent();
       }
     };
     orderBy.addItemListener(checkBoxListener);
@@ -173,14 +175,19 @@ public final class RecordView<R> extends JPanel {
     return new JScrollPane(wrapped, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
   }
   
-  void setCurrentRecord(R newRecord) {
+  @SuppressWarnings("unused") // Called by EventBus
+  @Subscribe
+  public void setCurrentRecord(MasterEventBus.ChangeRecord<R> recordEvent) {
+    R newRecord = recordEvent.getNewRecord();
+    assert newRecord != null;
     currentRecord = newRecord;
     for (FieldBinding<R, ?, ?> binding: allBindings) {
       binding.prepareEditor(newRecord);
     }
   }
   
-  boolean recordHasChanged() {
+  @Override
+  public boolean recordHasChanged() {
     for (FieldBinding<R, ?, ?> binding: allBindings) {
       if (binding.isEditable() && binding.propertyHasChanged(currentRecord)) {
         return true;
@@ -190,61 +197,41 @@ public final class RecordView<R> extends JPanel {
   }
   
   public boolean saveOnExit() throws SQLException {
-    final R current = getCurrentRecord();
     // Test four cases:
     // 1. New Record with data
     // 2. New Record with no data
     // 3. Existing record with changes
     // 4. Existing record with no changes
-//    final Integer currentId = idBinding.getValue(current);
     final boolean hasChanged = recordHasChanged();
-//    System.out.printf("if %d == 0 && recordHasChanged = %b ...%n", currentId, hasChanged);
     if (hasChanged) {
-      loadUIData(current);
-//      System.out.printf("Saving%n");
+      loadUserEdits(MasterEventBus.uiEvent);
       return true;
     }
-//    System.out.println("Not Saving");
     return false;
   }
 
+  @Override
   public R getCurrentRecord() {
     return currentRecord;
   }
 
   /**
    * Reads the data from the editor fields and loads it into the current record's 
-   * @param theRecord Unused. I'm still not entirely convinced that I'll never need it, so I'm keeping it around for now.
+   * @param event Unused. This used to be a Record, but we didn't need it.
    */
-  public void loadUIData(@SuppressWarnings("unused") R theRecord) {
-    final int id = (currentRecord == null) ? 0 : idBinding.getValue(currentRecord);
-    for (FieldBinding<R, ?, ?> binding : allBindings) {
-      if (binding.isEditable()) {
-        binding.saveEdit(currentRecord);
+  @Subscribe
+  public void loadUserEdits(MasterEventBus.LoadUIEvent event){
+    // If statement guaranteed to be true, just to keep the VM from removing an unused parameter, which causes
+    // EventBus to not recognize this method.
+    if (!event.getClass().isArray()) {
+      for (FieldBinding<R, ?, ?> binding : allBindings) {
+        if (binding.isEditable()) {
+          binding.saveEdit(currentRecord);
+        }
       }
     }
   }
 
-//  public void setButtonState(boolean nextEnabled, boolean prevEnabled) {
-//    
-//  }
-  
-//  private class LoggingCaret extends DefaultCaret {
-//    LoggingCaret() {
-//      super();
-//    }
-//
-//    @Override
-//    public void setDot(final int dot) {
-//      super.setDot(dot);
-//      System.out.printf("Dot set to %d to %d (requested %d)%n", getDot(), getMark(), dot);
-//    }
-//
-//    @Override
-//    public void moveDot(final int dot) {
-//      System.out.printf("Dot mov to %d to %d (requested %d)%n", getDot(), getMark(), dot);
-//    }
-//  }
     @SuppressWarnings("initialization.fields.uninitialized")
     public static class Builder<RR> {
       private RR record;

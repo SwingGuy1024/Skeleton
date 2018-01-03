@@ -2,13 +2,12 @@ package com.neptunedreams.skeleton.ui;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Objects;
+import java.util.LinkedList;
 import java.util.StringTokenizer;
 import java.util.function.Function;
 import com.ErrorReport;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.RecordField;
-import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -27,19 +26,19 @@ public class RecordController<R, PK> implements RecordModelListener {
   private final Dao<R, PK> dao;
   // TODO:  RecordController and RecordView have references to each other. Replace this with a listener system
   // todo   This shouldn't be too hard. There are very few calls made to the RecordView.
-  private final RecordView<R> recordView;
+  private final RecordSelectionModel<R> recordSelectionModel;
   private final RecordModel<R> model;
   private boolean initializeComplete = false;
 
   @SuppressWarnings("argument.type.incompatible")
   public RecordController(
       Dao<R, PK> theDao, 
-      RecordView<R> view, 
+      RecordSelectionModel<R> recordSelectionModel, 
       RecordField initialOrder,
       Function<Void, R> recordConstructor
   ) {
     dao = theDao;
-    recordView = view;
+    this.recordSelectionModel = recordSelectionModel;
     model = new RecordModel<>(recordConstructor);
     model.addModelListener(this); // Type checker needs "this" to be initialized, so suppress the warning.
     order = initialOrder;
@@ -59,9 +58,9 @@ public class RecordController<R, PK> implements RecordModelListener {
     return order;
   }
 
-  private void loadNewRecord(R record) {
+  private void loadNewRecord(@NonNull R record) {
 //    Thread.dumpStack();
-    R currentRecord = recordView.getCurrentRecord(); // Move this back to where the comment is
+    R currentRecord = recordSelectionModel.getCurrentRecord(); // Move this back to where the comment is
 //    System.err.printf("Loading record with id %s while current id is %s%n (size=%d)",
 //        dao.getPrimaryKey(record),
 //        dao.getPrimaryKey(currentRecord),
@@ -70,14 +69,19 @@ public class RecordController<R, PK> implements RecordModelListener {
     
     // Don't save the existing record on the initial search.
     if (initializeComplete) {
+      // (Is this the best way to test for this branch? Maybe recordHasChanged() should figure out that there's no 
+      // data, and just return false.
 //      R currentRecord = model.getRecordAt(prior);
       assert currentRecord != null;
-      final PK primaryKey = dao.getPrimaryKey(currentRecord);
-      assert Objects.equals(primaryKey, ((RecordRecord) currentRecord).getId()); // Debug only. Don't check in.
-      if (recordView.recordHasChanged()) {
+
+//      final PK primaryKey = dao.getPrimaryKey(currentRecord);
+//      assert Objects.equals(primaryKey, ((RecordRecord) currentRecord).getId()); // Debug only. Don't check in.
+
+      if (recordSelectionModel.recordHasChanged()) {
 //        System.out.printf("  Record (id=%s) has changed. Saving data with insertOrUpdate()%n", primaryKey);
         try {
-          recordView.loadUIData(currentRecord);
+          MasterEventBus.postLoadUserData();
+//          recordSelectionModel.loadUserEdits(currentRecord);
           dao.insertOrUpdate(currentRecord);
           model.incrementTotal();
         } catch (SQLException e) {
@@ -85,7 +89,8 @@ public class RecordController<R, PK> implements RecordModelListener {
         }
       }
     }
-    recordView.setCurrentRecord(record);
+//    recordSelectionModel.setCurrentRecord(record);
+    MasterEventBus.instance().post(new MasterEventBus.ChangeRecord<>(record));
     initializeComplete = true;
   }
 
@@ -93,10 +98,11 @@ public class RecordController<R, PK> implements RecordModelListener {
     // If the last record is already blank, just go to it
     final int lastIndex = model.getSize() - 1;
     R lastRecord = model.getRecordAt(lastIndex);
+    assert lastRecord != null;
     final PK lastRecordKey = dao.getPrimaryKey(lastRecord);
     
     // If we are already showing an unchanged blank record...
-    if ((model.getRecordIndex() == lastIndex) && ((lastRecordKey == null) || (lastRecordKey == ZERO)) && !recordView.recordHasChanged()) {
+    if ((model.getRecordIndex() == lastIndex) && ((lastRecordKey == null) || (lastRecordKey == ZERO)) && !recordSelectionModel.recordHasChanged()) {
       // ... we don't bother to create a new one.
 //      System.out.printf("Not creating blank record at index %d%n", lastIndex);
       loadNewRecord(lastRecord);
@@ -196,6 +202,19 @@ public class RecordController<R, PK> implements RecordModelListener {
   @Override
   public void modelListChanged(final int newSize) {
     
+  }
+
+  public Collection<R> retrieveNow(final RecordField searchField, final SearchOption searchOption, final String searchText) {
+    try {
+      if (searchField.isField()) {
+        return findRecordsInField(searchText, searchField, searchOption);
+      } else {
+        return findRecordsAnywhere(searchText, searchOption);
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+      return new LinkedList<>();
+    }
   }
 
   @Override

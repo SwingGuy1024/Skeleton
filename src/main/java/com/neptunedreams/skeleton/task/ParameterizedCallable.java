@@ -14,15 +14,17 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @param <R> ResultType
  */
 public abstract class ParameterizedCallable<I, R> implements Callable<R> {
-  private @Nullable I inputData = null;
-  public ParameterizedCallable() {
+  private I inputData;
+  public ParameterizedCallable(I initialValue) {
+    inputData = initialValue;
   }
 
   @SuppressWarnings("WeakerAccess")
-  public void setInputData(@NonNull I input) {
+  public void setInputData(I input) {
     inputData = input;
   }
-  protected @Nullable I getInputData() { return inputData; }
+
+  protected I getInputData() { return inputData; }
 
   @Override
   public abstract R call() throws InterruptedException;

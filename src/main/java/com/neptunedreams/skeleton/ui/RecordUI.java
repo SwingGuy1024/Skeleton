@@ -5,7 +5,6 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.function.Consumer;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -20,6 +19,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import com.ErrorReport;
+import com.google.common.eventbus.Subscribe;
 import com.neptunedreams.framework.ui.ButtonGroupListener;
 import com.neptunedreams.framework.ui.EnumGroup;
 import com.neptunedreams.framework.ui.HidingPanel;
@@ -53,12 +53,12 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   // todo   is easier to maintain. This will also allow me to implement instant response to changing the sort order.
   // todo   Maybe the way to do this would be to create a UIModel class that keeps track of all the UI state. Maybe 
   // todo   that way, the controller won't need to keep an instance of RecordView.
-  
+
   private static final long DELAY = 1000L;
   private JTextField findField = new JTextField(10);
   private final RecordController<R, Integer> controller;
   private EnumGroup<RecordField> buttonGroup = new EnumGroup<>();
-  private RecordView<R> view;
+//  private RecordView<R> view;
   private final @NonNull RecordModel<R> recordModel;
   private JButton prev = new JButton(Resource.getLeftArrow());
   private JButton next = new JButton(Resource.getRightArrow());
@@ -95,7 +95,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   public RecordUI(@NonNull RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
     super(new BorderLayout());
     recordModel = model;
-    view = theView;
     add(theView, BorderLayout.CENTER);
     add(createControlPanel(), BorderLayout.PAGE_START);
     add(createTrashPanel(), BorderLayout.PAGE_END);
@@ -122,6 +121,8 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       }
       
     });
+    
+    MasterEventBus.instance().register(this);
   }
 
   private void process(DocumentEvent e) {
@@ -144,7 +145,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     if (queuedTask == null) {
       queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
     }
-   return queuedTask;
+    return queuedTask;
   }
 
   private JPanel createControlPanel() {
@@ -187,7 +188,8 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       try {
         controller.delete(selectedRecord); // Removes from database
         recordModel.deleteSelected(true, recordModel.getRecordIndex());
-        view.setCurrentRecord(recordModel.getFoundRecord());
+        MasterEventBus.instance().post(new MasterEventBus.ChangeRecord<>(recordModel.getFoundRecord()));
+//        view.setCurrentRecord(recordModel.getFoundRecord());
       } catch (SQLException e) {
         ErrorReport.reportException("delete current record", e);
       }
@@ -260,10 +262,19 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   
   private void loadInfoLine() {
     final R selectedRecord = recordModel.getFoundRecord();
-    int entryItem = (controller.getDao().getPrimaryKey(selectedRecord) == null) ? 1 : 0;
+    final int index;
+    final int foundSize;
+    final Integer primaryKey = controller.getDao().getPrimaryKey(selectedRecord);
+    if((primaryKey == null) || (primaryKey == 0)) {
+      index = 0;
+      foundSize = 0;
+    } else {
+      index = recordModel.getRecordIndex() + 1;
+      foundSize = recordModel.getSize();
+    }
+    final int total = recordModel.getTotal();
     //noinspection HardcodedFileSeparator
-    String info = String.format("%d/%d of %d", 
-        recordModel.getRecordIndex()+1, recordModel.getSize(), recordModel.getTotal() + entryItem);
+    String info = String.format("%d/%d of %d", index, foundSize, total);
     infoLine.setText(info);
   }
 
@@ -283,42 +294,39 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     error when I called getSearchOption. This is due to the nullness checker bug where it doesn't know that a
     lambda or anonymous class only gets called after initialization is complete. 
     
-    I fixed this by lazily instantiating the QueueTask that used the return value of this method. That way, I could
+    I fixed this by lazily instantiating the QueuedTask that used the return value of this method. That way, I could
     remove the @UnderInitialization annotation of the implicit this parameter. This method is now called after
     construction completes, so it works fine. Very annoying that I need to do this, but it's a relatively clean
     solution.  
    */
   private ParameterizedCallable<String, Collection<R>> createCallable() {
-    return new ParameterizedCallable<String, Collection<R>>() {
+    return new ParameterizedCallable<String, Collection<R>>("") {
       @Override
       public Collection<R> call() throws InterruptedException {
-        return retrieveNow();
+        final String inputData = this.getInputData();
+        return retrieveNow(inputData);
       }
     };
   }
-
-  private Collection<R> retrieveNow(@UnknownInitialization RecordUI<R> this) {
+  
+  private Collection<R> retrieveNow(@UnknownInitialization RecordUI<R> this, String text) {
+    assert controller != null;
     assert buttonGroup != null;
-    RecordField field = buttonGroup.getSelected();
-    SearchOption searchOption = getSearchOption();
-    try {
-      assert controller != null;
-      assert findField != null;
-      if (field.isField()) {
-        return controller.findRecordsInField(findField.getText(), field, searchOption);
-      } else {
-        return controller.findRecordsAnywhere(findField.getText(), searchOption);
-      }
-    } catch(SQLException e){
-      e.printStackTrace();
-      return new LinkedList<>();
-    }
+    return controller.retrieveNow(buttonGroup.getSelected(), getSearchOption(), text);
   }
   
+  @SuppressWarnings("unused") // used by MasterEventBus
+  @Subscribe
+  public void doSearchNow(MasterEventBus.SearchNowEvent searchNowEvent) {
+    searchNow();
+  }
+
   // This is public because I expect other classes to use it in the future. 
   @SuppressWarnings("WeakerAccess")
   public void searchNow(@UnknownInitialization RecordUI<R> this) {
-    recordConsumer.accept(retrieveNow());
+    assert SwingUtilities.isEventDispatchThread();
+    assert findField != null;
+    recordConsumer.accept(retrieveNow(findField.getText()));
   }
 
   private SearchOption getSearchOption(@UnknownInitialization RecordUI<R> this) {

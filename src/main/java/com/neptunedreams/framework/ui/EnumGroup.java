@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
 import javax.swing.JComponent;
@@ -30,6 +31,7 @@ public final class EnumGroup<E extends DisplayEnum> {
   private final Map<String, E> textMap = new HashMap<>();
   private final Map<E, ButtonModel> buttonMap = new HashMap<>();
   private final List<ButtonGroupListener> listenerList = new LinkedList<>();
+  private final AtomicReference<ButtonModel> selectedModelRef = new AtomicReference<>(); 
 
   /**
    * Add a JRadioButton to the button group, linking it to the specified constant value
@@ -61,6 +63,7 @@ public final class EnumGroup<E extends DisplayEnum> {
 
   private void fireButtonChange(ChangeEvent evt) {
     ButtonModel selectedModel = (ButtonModel) evt.getSource();
+    selectedModelRef.set(selectedModel);
     for (ButtonGroupListener listener : listenerList) {
       listener.selectionChanged(selectedModel);
     }
@@ -95,13 +98,15 @@ public final class EnumGroup<E extends DisplayEnum> {
     return button;
   }
 
+  /**
+   * Thread safe method to get the selection.
+   * @return The value assigned to the selected button
+   */
   public E getSelected() {
-    final ButtonModel selection = group.getSelection();
+    ButtonModel selection = selectedModelRef.get();
     //noinspection UseOfSystemOutOrSystemErr
-    System.err.printf("Selection command: %s%n", selection.getActionCommand()); // NON-NLS
     final String actionCommand = selection.getActionCommand();
     //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
-    System.err.printf("ActionCommand: %s from %s into map %s%n", actionCommand, selection, textMap);
     return Objects.requireNonNull(textMap.get(actionCommand));
   }
   

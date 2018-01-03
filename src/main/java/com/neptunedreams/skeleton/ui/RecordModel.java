@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -69,8 +70,10 @@ public class RecordModel<R> {
     fireModelListChanged();
   }
 
-  public R createNewEmptyRecord() {
-    return constructor.apply(null);
+  public @NonNull R createNewEmptyRecord() {
+    final R emptyRecord = constructor.apply(null);
+    assert emptyRecord != null;
+    return emptyRecord;
   }
 
   public void goNext() {
@@ -123,9 +126,11 @@ public class RecordModel<R> {
     fireModelListChanged();
   }
 
-  public R getFoundRecord() {
+  public @NonNull R getFoundRecord() {
     if (!foundItems.isEmpty()) {
-      return foundItems.get(recordIndex);
+      final R foundRecord = foundItems.get(recordIndex);
+      assert foundRecord != null;
+      return foundRecord;
     }
     R emptyRecord = createNewEmptyRecord();
     foundItems.add(emptyRecord);

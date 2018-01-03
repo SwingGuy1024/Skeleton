@@ -22,6 +22,7 @@ public class QueuedTask<I, R> {
   private final Consumer<R> consumer;
   private final BlockingQueue<I> queue = new SynchronousQueue<>();
   private final @NonNull CountDownDoor door = new CountDownDoor(1);
+  private final Thread launchThread;
 
 
   public QueuedTask(long delay, ParameterizedCallable<I, R> task, Consumer<R> theConsumer) {
@@ -31,7 +32,7 @@ public class QueuedTask<I, R> {
     final Thread waitThread = new Thread(createWaitTask(), "QueuedTask.waitThread");
     waitThread.setDaemon(true);
     waitThread.start();
-    final Thread launchThread = new Thread(createLaunchTask(), "QueuedTask.launch Thread");
+    launchThread = new Thread(createLaunchTask(), "QueuedTask.launch Thread");
     launchThread.setDaemon(true);
     launchThread.start();
   }
@@ -40,11 +41,11 @@ public class QueuedTask<I, R> {
    * Search for the text after waiting for {@code interval} milliseconds. Calling this a second time before the wait
    * is up will restart the wait with a new String. This method may be called from any thread, including the 
    * EventDispatchThread. The wait happens on a private Thread.
-   * TODO: Remove ParameterizedCallable and use an ordinary Callable. We never look at the parameter.
    * @param text the text to process.
    */
   public void feedData(I text) {
     queue.add(text);
+    launchThread.interrupt();
   }
   
   @SuppressWarnings("method.invocation.invalid")
@@ -65,12 +66,6 @@ public class QueuedTask<I, R> {
     };
   }
   
-  private void sleep(long millis) {
-    try {
-      Thread.sleep(millis);
-    } catch (InterruptedException ignored) { }
-  }
-
   @SuppressWarnings("methodref.inference.unimplemented")
   private Runnable createLaunchTask(@UnderInitialization QueuedTask<I, R>this) {
     return this::launchTaskLoop; // Doesn't type check this, but it's only used after initialization, so we're okay.
@@ -79,6 +74,7 @@ public class QueuedTask<I, R> {
   private void launchTaskLoop() {
     //noinspection InfiniteLoopStatement
     while (true) {
+      // This try block gets interrupted whenever feedData() is called.
       try {
 //            System.out.println("... Awaiting... " + System.currentTimeMillis());
         assert door != null;
@@ -86,7 +82,7 @@ public class QueuedTask<I, R> {
 //            System.out.println(".. reOpening... " + System.currentTimeMillis());
         door.reset(1);
 //            System.out.println("... Sleeping... " + System.currentTimeMillis());
-        QueuedTask.this.sleep(delayMilliSeconds);
+        Thread.sleep(delayMilliSeconds);
 //            System.out.println(".. Launching... " + System.currentTimeMillis());
         QueuedTask.this.launchCallable();
       } catch (InterruptedException ignored) {

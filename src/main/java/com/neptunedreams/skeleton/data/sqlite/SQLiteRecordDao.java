@@ -169,8 +169,12 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
    * @return A Field{@literal <String>} to pass to the orderBy() method to support case insensitive ordering.
    */
   @SuppressWarnings("unchecked")
-  private @NonNull Field<String> castOrderToUpper(final @Nullable RecordField orderBy) {
-    // cast to Field<String> is safe because all the orderBy values are for text fields
+  private @NonNull Field<?> castOrderToUpper(final @Nullable RecordField orderBy) {
+    // Only integer field
+    if (orderBy == RecordField.ID) {
+      return fieldMap.get(RecordField.ID);
+    }
+    // unchecked cast to Field<String> is safe because all the remaining orderBy values are for text fields
     return upper((Field<String>) Objects.requireNonNull(fieldMap.get(orderBy)));
   }
 
