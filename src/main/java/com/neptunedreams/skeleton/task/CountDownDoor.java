@@ -148,10 +148,12 @@ public class CountDownDoor {
       return getState();
     }
 
+    @Override
     protected int tryAcquireShared(int acquires) {
       return (getState() == 0) ? 1 : -1;
     }
 
+    @Override
     protected boolean tryReleaseShared(int releases) {
       // Decrement count; signal when transition to zero
       while (true) {
