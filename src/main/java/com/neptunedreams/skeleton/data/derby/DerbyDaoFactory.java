@@ -16,7 +16,7 @@ class DerbyDaoFactory extends AbstractDaoFactory {
     super();
     //noinspection UnnecessaryLocalVariable
     final ConnectionSource connectionSource = source;
-    addDao(Record.class, new DerbyRecordDao(connectionSource));
+    addDao(Record.class, DerbyRecordDao.create(connectionSource));
   }
   
   

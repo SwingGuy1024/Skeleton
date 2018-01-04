@@ -19,6 +19,7 @@ import com.neptunedreams.skeleton.ui.RecordController;
 import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
 import com.neptunedreams.skeleton.ui.SearchOption;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -35,9 +36,9 @@ public final class Skeleton extends JPanel
   // Done: Test Bundling: https://github.com/federkasten/appbundle-maven-plugin
   // Done: Add an info line: 4/15 (25 total)
   // Done: Write a query thread to handle find requests.
-  // Todo: immediately resort when changing sort field.
+  // Done: immediately resort when changing sort field.
   // Done: BUG: Fix finding no records.
-  // TODO: BUG: Fix search in field.
+  // Done: BUG: Fix search in field.
   // Done: disable buttons when nothing is found.
   // Done: QUESTION: Are we properly setting currentRecord after a find? for each find type? Before updating the screen?
   // Done: BUG: New database. Inserting and saving changed records is still buggy. (see prev note for hypothesis)
@@ -49,7 +50,7 @@ public final class Skeleton extends JPanel
   //       For accessing a sequencer, see https://stackoverflow.com/questions/5729063/how-to-use-sequence-in-apache-derby
   // Done: BUG: Search that produces no results gives the user a data-entry screen to doesn't get saved.
   // Done: BUG: Search that produces one result gives the user an entry screen that gets treated as a new record 
-  // TODO: BUG: Key Queue in QueuedTask never reads the keys it saves. Can we get rid of it?
+  // Done: BUG: Key Queue in QueuedTask never reads the keys it saves. Can we get rid of it?
   
   // https://db.apache.org/ojb/docu/howtos/howto-use-db-sequences.html
   // https://db.apache.org/derby/docs/10.8/ref/rrefsqljcreatesequence.html 
@@ -154,7 +155,7 @@ public final class Skeleton extends JPanel
   }
 
   @SuppressWarnings("unused")
-  private RecordRecord recordConstructor(@UnknownInitialization Skeleton this, Void ignored) {
+  private RecordRecord recordConstructor(@UnderInitialization Skeleton this, Void ignored) {
     //noinspection ConstantConditions
     return new RecordRecord(0, "", "", "", "");
   }

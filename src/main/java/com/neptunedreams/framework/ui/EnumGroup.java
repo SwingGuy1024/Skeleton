@@ -1,5 +1,6 @@
 package com.neptunedreams.framework.ui;
 
+import java.awt.event.ItemEvent;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,7 +47,7 @@ public final class EnumGroup<E extends DisplayEnum> {
     final ButtonModel model = button.getModel();
     model.setActionCommand(display);
     buttonMap.put(enumValue, model);
-    model.addChangeListener(this::fireButtonChange);
+    model.addItemListener(this::fireButtonChange);
   }
   
   /**
@@ -61,11 +62,13 @@ public final class EnumGroup<E extends DisplayEnum> {
     panel.add(button);
   }
 
-  private void fireButtonChange(ChangeEvent evt) {
-    ButtonModel selectedModel = (ButtonModel) evt.getSource();
-    selectedModelRef.set(selectedModel);
-    for (ButtonGroupListener listener : listenerList) {
-      listener.selectionChanged(selectedModel);
+  private void fireButtonChange(ItemEvent evt) {
+    if (evt.getStateChange() == ItemEvent.SELECTED) {
+      ButtonModel selectedModel = (ButtonModel) evt.getSource();
+      selectedModelRef.set(selectedModel);
+      for (ButtonGroupListener listener : listenerList) {
+        listener.selectionChanged(selectedModel);
+      }
     }
   }
   

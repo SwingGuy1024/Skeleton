@@ -14,7 +14,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Miguel Mu\u00f1oz
  */
 public interface Dao<E, PK> {
-  boolean createTableIfNeeded(@UnderInitialization Dao<E, PK> this) throws SQLException;
+  boolean createTableIfNeeded() throws SQLException;
   
   Collection<E> getAll(@Nullable RecordField orderBy) throws SQLException;
   

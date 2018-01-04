@@ -47,7 +47,7 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
     //noinspection EqualityOperatorComparesObjects
     if (entityClass == RECORD_RECORD_CLASS) {
       //noinspection unchecked
-      return (Dao<T, PK>) new SQLiteRecordDao(source);
+      return (Dao<T, PK>) SQLiteRecordDao.create(source);
     }
     throw new IllegalArgumentException(String.valueOf(entityClass));
   }

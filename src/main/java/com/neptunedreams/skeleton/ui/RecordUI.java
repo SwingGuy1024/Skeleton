@@ -6,6 +6,7 @@ import java.awt.GridLayout;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.function.Consumer;
+import javax.swing.ButtonModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -27,7 +28,6 @@ import com.neptunedreams.skeleton.data.RecordField;
 import com.neptunedreams.skeleton.task.ParameterizedCallable;
 import com.neptunedreams.skeleton.task.QueuedTask;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
-import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -84,9 +84,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     optionsPanel.add(findExact);
     optionsPanel.add(findAll);
     optionsPanel.add(findAny);
-    optionsGroup.setSelected(SearchOption.findExact);
+    optionsGroup.setSelected(SearchOption.findAny);
     
-    optionsGroup.addButtonGroupListener(selectedButtonModel -> searchNow());
+    optionsGroup.addButtonGroupListener(this::selectionChanged);
 
     return HidingPanel.create(optionsPanel);
   }
@@ -243,8 +243,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       controller.findTextAnywhere(findField.getText(), searchOption);
     }
   }
-  
-  private JPanel createSearchRadioPanel(@UnknownInitialization RecordUI<R>this) {
+
+  // I don't know why I don't need @UnknownInitialization or @UnderInitialization here.
+  private JPanel createSearchRadioPanel() {
     JPanel radioPanel = new JPanel(new GridLayout(0, 1));
     assert buttonGroup != null;
     buttonGroup.add(RecordField.All, radioPanel);
@@ -309,7 +310,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     };
   }
   
-  private Collection<R> retrieveNow(@UnknownInitialization RecordUI<R> this, String text) {
+  private Collection<R> retrieveNow(String text) {
     assert controller != null;
     assert buttonGroup != null;
     return controller.retrieveNow(buttonGroup.getSelected(), getSearchOption(), text);
@@ -323,19 +324,18 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
 
   // This is public because I expect other classes to use it in the future. 
   @SuppressWarnings("WeakerAccess")
-  public void searchNow(@UnknownInitialization RecordUI<R> this) {
+  public void searchNow() {
     assert SwingUtilities.isEventDispatchThread();
     assert findField != null;
     recordConsumer.accept(retrieveNow(findField.getText()));
   }
 
-  private SearchOption getSearchOption(@UnknownInitialization RecordUI<R> this) {
+  private SearchOption getSearchOption() {
     return searchOptionsPanel.isContentVisible() ? optionsGroup.getSelected() : SearchOption.findExact;
   }
 
   @SuppressWarnings("dereference.of.nullable") // controller is null when we call this, but not when we call the lambda.
-  private Consumer<Collection<R>> createRecordConsumer(@UnknownInitialization RecordUI<R>this) {
-//    assert controller != null;
+  private Consumer<Collection<R>> createRecordConsumer(@UnderInitialization RecordUI<R>this) {
     return records -> SwingUtilities.invokeLater(() -> controller.setFoundRecords(records));
   }
 
@@ -343,4 +343,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   public void indexChanged(final int index, int prior) {
     loadInfoLine();
   }
+
+  private void selectionChanged(@SuppressWarnings("unused") ButtonModel selectedButtonModel) { searchNow(); }
 }

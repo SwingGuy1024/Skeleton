@@ -26,7 +26,7 @@ import static com.neptunedreams.skeleton.DataUtil.*;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "SqlNoDataSourceInspection", "resource", "HardCodedStringLiteral"})
-public class DerbyRecordDao implements Dao<Record, Integer> {
+public final class DerbyRecordDao implements Dao<Record, Integer> {
   private static final String CREATE_TABLE = "CREATE TABLE record (" +
       "id INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY," +
       "source VARCHAR(256) NOT NULL," +
@@ -45,17 +45,25 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
   private static final String SELECT_MAX = "SELECT MAX(ID) FROM RECORD";
   private final @NonNull Connection connection;
   
-  public DerbyRecordDao(ConnectionSource source) {
+  private DerbyRecordDao(ConnectionSource source) {
     connection = source.getConnection();
+  }
+
+  private DerbyRecordDao launch() {
     try {
       createTableIfNeeded();
     } catch (SQLException e) {
       throw new IllegalStateException(e);
     }
+    return this;
   }
   
+  public static DerbyRecordDao create(ConnectionSource source) {
+    return new DerbyRecordDao(source).launch();
+  }
+
   @Override
-  public boolean createTableIfNeeded(@UnderInitialization DerbyRecordDao this) throws SQLException {
+  public boolean createTableIfNeeded() throws SQLException {
     assert connection != null;
     try {
       connection.prepareStatement(SELECT_ALL + "id");
@@ -68,7 +76,7 @@ public class DerbyRecordDao implements Dao<Record, Integer> {
     return true;
   }
 
-  private void createTable(@UnderInitialization DerbyRecordDao this, Connection c) throws SQLException {
+  private void createTable(Connection c) throws SQLException {
     PreparedStatement statement = c.prepareStatement(CREATE_TABLE);
     statement.execute();
   }

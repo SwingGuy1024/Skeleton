@@ -1,6 +1,7 @@
 package com.neptunedreams.skeleton.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -18,6 +19,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.border.MatteBorder;
 import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.JTextComponent;
@@ -87,6 +89,9 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     installStandardCaret(pwField);
     installStandardCaret(notesField);
     MasterEventBus.instance().register(this);
+    
+    // Put a line at the top, one pixel wide.
+    setBorder(new MatteBorder(1, 0, 0, 0, Color.black));
   }
 
   /**

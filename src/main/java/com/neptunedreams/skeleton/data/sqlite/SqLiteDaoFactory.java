@@ -16,6 +16,6 @@ public class SqLiteDaoFactory extends AbstractDaoFactory {
     super();
     //noinspection UnnecessaryLocalVariable
     ConnectionSource source = connectionSource;
-    addDao(RecordRecord.class, new SQLiteRecordDao(source));
+    addDao(RecordRecord.class, SQLiteRecordDao.create(source));
   }
 }
