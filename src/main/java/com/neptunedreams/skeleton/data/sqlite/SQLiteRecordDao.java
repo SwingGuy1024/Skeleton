@@ -15,7 +15,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.ResultQuery;
@@ -139,7 +138,7 @@ public final class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
         return recordRecords.fetch();
       } else {
         //noinspection resource
-        return recordRecords.orderBy(castOrderToUpper(orderBy)).fetch();
+        return recordRecords.orderBy(getField(orderBy)).fetch();
       }
     }
   }
@@ -160,28 +159,21 @@ public final class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
           RECORD.NOTES.like(wildCardText)))));
         final ResultQuery<RecordRecord> query = (orderBy == null) ? 
           where : 
-          where.orderBy(castOrderToUpper(orderBy)) // unsafe cast
+          where.orderBy(getField(orderBy)) // unsafe cast
     ) {
       return query.fetch();
     }
   }
 
   /**
-   * The proper way to do a cast-insensitive sort is by saying "ORDER BY xxx COLLATE NOCASE", but there's no method
-   * call to do this in jOOQ. So instead, we cast the order to upper case, which is probably slower, but it works.
-   * However, I may be able to do this by adding COLLATE NOCASE to the initial table create statement, which will allow
-   * me to remove the upper() call from this method after rebuilding the table.
+   * This used to cast to upper() before returning the field, to implement case-insensitive sorting. Now
+   * this is done in the table definitions, this just extracts the right TableField from the fieldMap.
    * @param orderBy The orderBy field
    * @return A Field{@literal <String>} to pass to the orderBy() method to support case insensitive ordering.
    */
   @SuppressWarnings("unchecked")
-  private @NonNull Field<?> castOrderToUpper(final @Nullable RecordField orderBy) {
-    // Only integer field
-    if (orderBy == RecordField.ID) {
-      return fieldMap.get(RecordField.ID);
-    }
-    // unchecked cast to Field<String> is safe because all the remaining orderBy values are for text fields
-    return upper((Field<String>) Objects.requireNonNull(fieldMap.get(orderBy)));
+  private @NonNull TableField<RecordRecord, ?> getField(final @Nullable RecordField orderBy) {
+    return Objects.requireNonNull(fieldMap.get(orderBy));
   }
 
   private @NonNull String wrapWithWildCards(final String text) {
@@ -245,7 +237,7 @@ public final class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
       final ResultQuery<RecordRecord> query;
       query = (orderBy == null) ?
         where :
-        where.orderBy(castOrderToUpper(orderBy));
+        where.orderBy(getField(orderBy));
       return query.fetch();
     }
   }
@@ -291,7 +283,7 @@ public final class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
     try (SelectConditionStep<RecordRecord> where = recordRecords.where(condition)) {
       query = (orderBy == null) ?
           where :
-          where.orderBy(castOrderToUpper(orderBy));
+          where.orderBy(getField(orderBy));
     }
     return query.fetch();
   }

@@ -116,9 +116,7 @@ public class RecordController<R, PK> implements RecordModelListener {
 
   public void setFoundRecords(final Collection<R> theFoundItems) {
     model.setNewList(theFoundItems);
-    if (theFoundItems.isEmpty()) {
-      addBlankRecord();
-    } else {
+    if (!theFoundItems.isEmpty()) {
       final R selectedRecord = model.getFoundRecord();
       assert selectedRecord != null;
       loadNewRecord(selectedRecord);

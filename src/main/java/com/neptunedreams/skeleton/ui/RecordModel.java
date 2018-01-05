@@ -1,5 +1,6 @@
 package com.neptunedreams.skeleton.ui;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -15,8 +16,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings("WeakerAccess")
-public class RecordModel<R> {
-  private final List<RecordModelListener> listenerList = new LinkedList<>();
+public class RecordModel<R> implements Serializable {
+  private final transient List<RecordModelListener> listenerList = new LinkedList<>();
   
 //  RecordModel() {
 //    Thread.dumpStack();
@@ -24,9 +25,9 @@ public class RecordModel<R> {
 //
   // foundItems should be a RandomAccess list
   private List<R> foundItems = new ArrayList<>();
-  private int recordIndex = 0;
-  private int total = 0;
-  private final Function<Void, R> constructor;
+  private transient int recordIndex = 0;
+  private transient int total = 0;
+  private final transient Function<Void, R> constructor;
   
   RecordModel(Function<Void, R> theConstructor) {
     constructor = theConstructor;

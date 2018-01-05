@@ -3,8 +3,13 @@ package com.neptunedreams.skeleton;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.sql.SQLException;
+import java.util.Objects;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
@@ -16,6 +21,7 @@ import com.neptunedreams.skeleton.data.RecordField;
 import com.neptunedreams.skeleton.data.sqlite.SQLiteInfo;
 import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
 import com.neptunedreams.skeleton.ui.RecordController;
+import com.neptunedreams.skeleton.ui.RecordModel;
 import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
 import com.neptunedreams.skeleton.ui.SearchOption;
@@ -24,13 +30,20 @@ import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
- * Hello world!
- *
+ * Skeleton Key Application
+ * <p/>
+ * Optional Arguments: <br>
+ *   -export Upon launching, export all data to an xml file. <br>
+ *   -import Upon launching, if there is no data, import all data from the same .xml file that you previously exported. <br>
+ * Neither of these options assumes long-term storage. They use serialization, so import should be done 
+ * immediately after exporting and deleting the database.
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
 public final class Skeleton extends JPanel
 {
   private static final int DUMMY_ID = -999;
+  @SuppressWarnings("HardcodedFileSeparator")
+  private static final String EXPORT_FILE = "/.SkeletonData.xml";
   // Done: Write an import mechanism.
   // Done: Test packaging
   // Done: Test Bundling: https://github.com/federkasten/appbundle-maven-plugin
@@ -43,7 +56,7 @@ public final class Skeleton extends JPanel
   // Done: QUESTION: Are we properly setting currentRecord after a find? for each find type? Before updating the screen?
   // Done: BUG: New database. Inserting and saving changed records is still buggy. (see prev note for hypothesis)
   // Done: Test boundary issues on insertion index.
-  // Xxxx: enable buttons on new record. ??
+  // Done: enable buttons on new record. ??
   // Done: Convert to jOOQ
   // Done: Add a getTotal method for info line.
   // Done: Figure out a better way to get the ID of a new record. Can we ask the sequencer?
@@ -64,37 +77,34 @@ public final class Skeleton extends JPanel
   //    org.jooq.util.JavaGenerator generator;
   private static JFrame frame = new JFrame("Skeleton");
   private final @NonNull DatabaseInfo info;
+  private final @NonNull RecordController<RecordRecord, Integer> controller;
+  //  private RecordController<>
 
-  public static void main(String[] args ) throws IOException {
+  @SuppressWarnings("OverlyBroadThrowsClause")
+  public static void main(String[] args ) throws IOException, ClassNotFoundException {
+    boolean doImport = (args.length > 0) && Objects.equals(args[0], "-import");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.setLocationByPlatform(true);
-    final Skeleton skeleton = new Skeleton();
+    final Skeleton skeleton = new Skeleton(doImport);
     frame.add(skeleton.getPanel());
     frame.pack();
     frame.addWindowListener(skeleton.shutdownListener());
 //    UIMenus.Menu.installMenu(frame);
     frame.setVisible(true);
+    
+    if ((args.length > 0) && Objects.equals(args[0], "-export")) {
+      RecordModel<RecordRecord> model = skeleton.controller.getModel();
+      //noinspection StringConcatenation,StringConcatenationMissingWhitespace
+      String exportPath = System.getProperty("user.home") + EXPORT_FILE;
+      try (ObjectOutputStream bos = new ObjectOutputStream(new FileOutputStream(exportPath))) {
+        bos.writeObject(model);
+      }
+    }
   }
   
-  private Skeleton() throws IOException {
+  @SuppressWarnings("OverlyBroadThrowsClause")
+  private Skeleton(boolean doImport) throws IOException, ClassNotFoundException {
     super();
-//    String userHome = System.getProperty("user.home");
-////    System.out.printf("user.home: %s%n", userHome);
-//    //noinspection StringConcatenation,HardcodedFileSeparator
-//    final String derbySystemHome = userHome + "/.skeleton";
-
-//    Properties props = new Properties();
-//    props.setProperty(DERBY_SYSTEM_HOME, derbySystemHome);
-//    DatabaseInfo info = new DerbyInfo();
-
-//    String userHome = System.getProperty("user.home");
-//    //noinspection StringConcatenation,HardcodedFileSeparator
-//    final String derbySystemHome = userHome + "/.skeleton";
-//    System.setProperty(DERBY_SYSTEM_HOME, derbySystemHome);
-//
-////    Properties props = new Properties();
-////    props.setProperty(DERBY_SYSTEM_HOME, derbySystemHome);
-//    init(derbySystemHome);
 
     try {
       info = new SQLiteInfo();
@@ -109,17 +119,21 @@ public final class Skeleton extends JPanel
           .password(RecordRecord::getPassword, RecordRecord::setPassword)
           .notes   (RecordRecord::getNotes,    RecordRecord::setNotes)
           .build();
-      @SuppressWarnings("unchecked") 
-      RecordController<RecordRecord, Integer> controller = new RecordController<>(
+      controller = new RecordController<>(
           dao, 
           view, 
           RecordField.Source,
           this::recordConstructor
       );
       view.setController(controller);
-      mainPanel = new RecordUI<>(controller.getModel(), view, controller);
+      final RecordModel<RecordRecord> model = controller.getModel();
+      mainPanel = new RecordUI<>(model, view, controller);
       controller.findTextAnywhere("", SearchOption.findExact);
-      controller.getModel().setTotalFromSize();
+      model.setTotalFromSize();
+      System.err.printf("id of model index 0 of %d: %d%n", model.getSize(), model.getRecordAt(0).getId()); // NON-NLS
+      if ((model.getSize() == 1) && (model.getRecordAt(0).getId() == 0) && doImport) {
+        importFromFile(dao, controller); // throws ClassNotFoundException
+      }
 
       // Make sure you save the last change before shutting down.
       frame.addWindowListener(new WindowAdapter() {
@@ -127,6 +141,7 @@ public final class Skeleton extends JPanel
         public void windowClosing(final WindowEvent e) {
           try {
             if (view.saveOnExit()) {
+              assert controller != null;
               controller.getDao().insertOrUpdate(view.getCurrentRecord());
             }
           } catch (SQLException e1) {
@@ -152,6 +167,22 @@ public final class Skeleton extends JPanel
       shutDownDatabase();
       throw new IOException(e); // don't even open the window!
     }
+  }
+
+  private static void importFromFile(
+      final Dao<RecordRecord, Integer> dao, 
+      RecordController<RecordRecord, Integer> controller)
+      throws SQLException, IOException, ClassNotFoundException {
+    //noinspection StringConcatenation,StringConcatenationMissingWhitespace
+    String exportPath = System.getProperty("user.home") + EXPORT_FILE;
+    try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(exportPath))) {
+      @SuppressWarnings("unchecked")
+      RecordModel<RecordRecord> model = (RecordModel<RecordRecord>) objectInputStream.readObject();
+      for (int ii=0; ii<model.getSize(); ++ii) {
+        dao.insert(model.getRecordAt(ii));
+      }
+    }
+    controller.findTextAnywhere("", SearchOption.findExact);
   }
 
   @SuppressWarnings("unused")
