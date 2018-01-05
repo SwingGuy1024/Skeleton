@@ -260,7 +260,12 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
 
     return radioPanel;
   }
-  
+
+  /**
+   * Loads the info line. The info line looks like this:
+   * 3/12 of 165
+   * This means we're looking at record 3 of the 12 found records, from a total of 165 records in the database.
+   */
   private void loadInfoLine() {
     final R selectedRecord = recordModel.getFoundRecord();
     final int index;
@@ -273,10 +278,14 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       index = recordModel.getRecordIndex() + 1;
       foundSize = recordModel.getSize();
     }
-    final int total = recordModel.getTotal();
-    //noinspection HardcodedFileSeparator
-    String info = String.format("%d/%d of %d", index, foundSize, total);
-    infoLine.setText(info);
+    try {
+      final int total = controller.getDao().getTotal();
+      //noinspection HardcodedFileSeparator
+      String info = String.format("%d/%d of %d", index, foundSize, total);
+      infoLine.setText(info);
+    } catch (SQLException e) {
+      ErrorReport.reportException("loadInfoLine()", e);
+    }
   }
 
   @Override

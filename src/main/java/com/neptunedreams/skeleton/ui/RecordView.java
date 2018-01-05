@@ -40,7 +40,6 @@ import org.checkerframework.checker.initialization.qual.UnderInitialization;
 public final class RecordView<R> extends JPanel implements RecordSelectionModel<R> {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
-  private static final int NO_RECORD = -999;
   private JPanel labelPanel = new JPanel(new GridLayout(0, 1));
   private JPanel fieldPanel = new JPanel(new GridLayout(0, 1));
   private JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
@@ -81,7 +80,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     for (FieldBinding<R, ?, ?> b : allBindings) {
       cleanValue(b, currentRecord);
     }
-    idBinding.setValue(currentRecord, NO_RECORD);
+    idBinding.setValue(currentRecord, 0);
     add(makeTopPanel(), BorderLayout.PAGE_START);
 
     installStandardCaret(sourceField);

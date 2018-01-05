@@ -9,6 +9,7 @@ import java.util.Objects;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.gen.Tables;
 import com.neptunedreams.skeleton.gen.tables.Record;
 import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -32,11 +33,11 @@ import static org.jooq.impl.DSL.*;
  * Create statement: 
  * 
  * CREATE TABLE record (
- *    id          INTEGER        NOT NULL PRIMARY KEY AUTOINCREMENT,
- *    source      VARCHAR (256)  NOT NULL,
- *    username    VARCHAR (256)  NOT NULL,
- *    password    VARCHAR (256)  NOT NULL,
- *    notes       [LONG VARCHAR] NOT NULL
+ *    id          INTEGER        NOT NULL PRIMARY KEY,
+ *    source      VARCHAR (256)  NOT NULL collate noCase,
+ *    username    VARCHAR (256)  NOT NULL collate noCase,
+ *    password    VARCHAR (256)  NOT NULL collate noCase,
+ *    notes       LONG VARCHAR   NOT NULL collate noCase
  * );
  * 
  * <p>Created by IntelliJ IDEA.
@@ -63,20 +64,13 @@ public final class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   }
 
   private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS record (" +
-      "id INTEGER NOT NULL PRIMARY KEY," + // AUTOINCREMENT," +
+      "id INTEGER NOT NULL PRIMARY KEY," + 
       "source VARCHAR(256) NOT NULL collate noCase," +
       "username VARCHAR(256) NOT NULL collate noCase," +
       "password VARCHAR(256) NOT NULL collate noCase," +
       "notes LONG VARCHAR NOT NULL collate noCase" +
       ')';
-//  private static final String SELECT_ALL = "SELECT * FROM record ORDER BY ";
-//  private static final String FIND = "SELECT * FROM record WHERE (source LIKE ?) OR (username like ?) OR (password like ?) OR (notes like ?) ORDER BY ";
-//  private static final String FIND_BY_FIELD = "SELECT * FROM record WHERE ? LIKE ? ORDER BY ";
-//  private static final String SAVE = "UPDATE record SET source = ?, username = ?, password = ?, notes = ? where id = ?";
-//  private static final String INSERT = "INSERT INTO record (source, username, password, notes) VALUES (?, ?, ?, ?)";
-//  private static final String DELETE = "DELETE FROM record WHERE ID = ?";
   private static final char WC = '%';
-//  private final DSLContext dslContext;
   private DSLContext getDslContext() throws SQLException {
     assert connection != null;
     assert connectionSource != null;
@@ -112,6 +106,10 @@ public final class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
     //noinspection resource
     DSLContext dslContext = getDslContext();
     dslContext.execute(CREATE_TABLE);
+    
+    // Neither of the following code blocks works, so I needed to use my CREATE_TABLE String to create the table I needed
+//    dslContext.ddl(Tables.RECORD).executeBatch();
+
 //    DefaultSchema schema = DefaultSchema.DEFAULT_SCHEMA;
 //    dslContext.createSchemaIfNotExists("skeleton").execute();
 //    Name recordName = new 
@@ -363,7 +361,14 @@ public final class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
     entity.setId(primaryKey);
   }
 
-//  /**
+  @Override
+  public int getTotal() throws SQLException {
+    //noinspection resource
+    DSLContext dslContext = getDslContext();
+    return dslContext.fetchCount(Tables.RECORD);
+  }
+
+  //  /**
 //   * This is an attempt (ultimately successful) to fix the sql statement that fails during code generation.
 //   * @param <T>
 //   * @return

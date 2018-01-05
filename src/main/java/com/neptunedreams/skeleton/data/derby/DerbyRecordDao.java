@@ -12,7 +12,6 @@ import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.Record;
 import com.neptunedreams.skeleton.data.RecordField;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -66,6 +65,7 @@ public final class DerbyRecordDao implements Dao<Record, Integer> {
   public boolean createTableIfNeeded() throws SQLException {
     assert connection != null;
     try {
+      //noinspection JDBCResourceOpenedButNotSafelyClosed
       connection.prepareStatement(SELECT_ALL + "id");
     } catch (SQLException e) {
       if (Objects.toString(e.getMessage()).contains("does not exist.")) {
@@ -77,6 +77,7 @@ public final class DerbyRecordDao implements Dao<Record, Integer> {
   }
 
   private void createTable(Connection c) throws SQLException {
+    //noinspection JDBCResourceOpenedButNotSafelyClosed
     PreparedStatement statement = c.prepareStatement(CREATE_TABLE);
     statement.execute();
   }
@@ -235,6 +236,7 @@ public final class DerbyRecordDao implements Dao<Record, Integer> {
   
   @Override
   public Integer getNextId() throws SQLException {
+    //noinspection JDBCResourceOpenedButNotSafelyClosed
     PreparedStatement statement = connection.prepareStatement(SELECT_MAX);
     try (ResultSet resultSet = statement.executeQuery()) {
       resultSet.next();
@@ -328,5 +330,10 @@ public final class DerbyRecordDao implements Dao<Record, Integer> {
     resultSet = statement.executeQuery();
     printResultSet(resultSet);
     return new LinkedList<>();
+  }
+
+  @Override
+  public int getTotal() {
+    throw new AssertionError("Not yet written");
   }
 }

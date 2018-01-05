@@ -41,7 +41,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
 public final class Skeleton extends JPanel
 {
-  private static final int DUMMY_ID = -999;
   @SuppressWarnings("HardcodedFileSeparator")
   private static final String EXPORT_FILE = "/.SkeletonData.xml";
   // Done: Write an import mechanism.
@@ -64,6 +63,8 @@ public final class Skeleton extends JPanel
   // Done: BUG: Search that produces no results gives the user a data-entry screen to doesn't get saved.
   // Done: BUG: Search that produces one result gives the user an entry screen that gets treated as a new record 
   // Done: BUG: Key Queue in QueuedTask never reads the keys it saves. Can we get rid of it?
+  // TODO: Fix bug on adding: If I add a record, then do a find all by hitting return in the find field, it finds
+  // todo  all the records except the on I just added. Doing another find all finds everything.
   
   // https://db.apache.org/ojb/docu/howtos/howto-use-db-sequences.html
   // https://db.apache.org/derby/docs/10.8/ref/rrefsqljcreatesequence.html 
@@ -111,7 +112,7 @@ public final class Skeleton extends JPanel
       info.init();
       final ConnectionSource connectionSource = info.getConnectionSource();
       Dao<RecordRecord, Integer> dao = info.getDao(RecordRecord.class, connectionSource);
-      RecordRecord dummyRecord = new RecordRecord(DUMMY_ID, "D", "D", "D", "D");
+      RecordRecord dummyRecord = new RecordRecord(0, "", "", "", "");
       final RecordView<RecordRecord> view = new RecordView.Builder<>(dummyRecord, RecordField.Source)
           .source  (RecordRecord::getSource,   RecordRecord::setSource)
           .id      (RecordRecord::getId,       RecordRecord::setId)
@@ -129,8 +130,6 @@ public final class Skeleton extends JPanel
       final RecordModel<RecordRecord> model = controller.getModel();
       mainPanel = new RecordUI<>(model, view, controller);
       controller.findTextAnywhere("", SearchOption.findExact);
-      model.setTotalFromSize();
-      System.err.printf("id of model index 0 of %d: %d%n", model.getSize(), model.getRecordAt(0).getId()); // NON-NLS
       if ((model.getSize() == 1) && (model.getRecordAt(0).getId() == 0) && doImport) {
         importFromFile(dao, controller); // throws ClassNotFoundException
       }
@@ -139,12 +138,13 @@ public final class Skeleton extends JPanel
       frame.addWindowListener(new WindowAdapter() {
         @Override
         public void windowClosing(final WindowEvent e) {
+          //noinspection ErrorNotRethrown
           try {
             if (view.saveOnExit()) {
               assert controller != null;
               controller.getDao().insertOrUpdate(view.getCurrentRecord());
             }
-          } catch (SQLException e1) {
+          } catch (SQLException | RuntimeException | Error e1) {
             ErrorReport.reportException("Saving last change", e1);
           }
         }

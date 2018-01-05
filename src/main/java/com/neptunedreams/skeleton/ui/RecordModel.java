@@ -19,14 +19,9 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 public class RecordModel<R> implements Serializable {
   private final transient List<RecordModelListener> listenerList = new LinkedList<>();
   
-//  RecordModel() {
-//    Thread.dumpStack();
-//  }
-//
   // foundItems should be a RandomAccess list
   private List<R> foundItems = new ArrayList<>();
   private transient int recordIndex = 0;
-  private transient int total = 0;
   private final transient Function<Void, R> constructor;
   
   RecordModel(Function<Void, R> theConstructor) {
@@ -38,18 +33,6 @@ public class RecordModel<R> implements Serializable {
   }
   
   public int getSize() { return foundItems.size(); }
-
-  public int getTotal() {
-    return total;
-  }
-
-  public void setTotalFromSize() {
-    this.total = foundItems.size();
-  }
-  
-  public void incrementTotal() { total++; }
-  
-  public void decrementTotal() { total--; }
 
   public void addModelListener(RecordModelListener listener) {
     listenerList.add(listener);

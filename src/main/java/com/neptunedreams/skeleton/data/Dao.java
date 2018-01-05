@@ -2,7 +2,6 @@ package com.neptunedreams.skeleton.data;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -37,16 +36,21 @@ public interface Dao<E, PK> {
   void update(E entity) throws SQLException;
 
   void insert(E entity) throws SQLException;
-  
+
+  /**
+   * insert or update the provided entity. If the id is 0 or null, it inserts the record. Otherwise it updates it.
+   * @param entity The entity to save
+   * @throws SQLException Sql exception
+   */
   void insertOrUpdate(E entity) throws SQLException;
 
   void delete(E entity) throws SQLException;
   
-//  int getNewId(E entity) throws SQLException;
-  
   PK getNextId() throws SQLException;
   
   PK getPrimaryKey(E entity);
+  
+  int getTotal() throws SQLException;
 
   void setPrimaryKey(E entity, PK primaryKey);
   
