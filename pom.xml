@@ -214,7 +214,7 @@
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
-          <!--This remove the "with-dependencies" from the name, so it ends with ".jar"-->
+          <!--This removes the "with-dependencies" from the name.-->
 	        <!--(This is commented out because it interferes with the creation of the Mac App Bundle.)-->
 	        <!--(It overwrites the other jar file.)-->
           <!--It also interferes with creating a single executable jar file.-->
@@ -222,7 +222,7 @@
         </configuration>
       </plugin>
 
-      <!--This is the Maven dependency plugin. I don't know what it does but it's apparently needed.-->
+      <!--This is the Maven dependency plugin.-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -243,7 +243,7 @@
         </executions>
       </plugin>
 
-      <!--This creates an executable jar file. It's commented out because it interferes with creating a Mac app bundle.-->
+      <!--This creates an executable jar file.-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -307,7 +307,7 @@
           </execution>
         </executions>
 
-        <!-- Manage the plugin's dependency. In this example, we'll use a PostgreSQL database -->
+        <!-- Manage the plugin's dependency. -->
         <dependencies>
           <dependency>
             <!--<groupId>org.apache.derby</groupId>-->
