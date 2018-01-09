@@ -72,7 +72,12 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
         throw new IOException("Failed to create database file at " + databaseFile.getAbsolutePath());
       }
     }
-    initialize();
+    try {
+      Class.forName("org.sqlite.JDBC"); // Not needed for Mac bundle. Needed for execution from a single jar file.
+      initialize();
+    } catch (ClassNotFoundException e) {
+      throw new IOException(e);
+    }
   }
 
   @Override

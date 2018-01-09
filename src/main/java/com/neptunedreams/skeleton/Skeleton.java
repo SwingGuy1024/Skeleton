@@ -63,8 +63,8 @@ public final class Skeleton extends JPanel
   // Done: BUG: Search that produces no results gives the user a data-entry screen to doesn't get saved.
   // Done: BUG: Search that produces one result gives the user an entry screen that gets treated as a new record 
   // Done: BUG: Key Queue in QueuedTask never reads the keys it saves. Can we get rid of it?
-  // TODO: Fix bug on adding: If I add a record, then do a find all by hitting return in the find field, it finds
-  // todo  all the records except the on I just added. Doing another find all finds everything.
+  // TODO:  Fix bug on adding: If I add a record, then do a find all by hitting return in the find field, it finds
+  // todo   all the records except the on I just added. Doing another find all finds everything.
   
   // https://db.apache.org/ojb/docu/howtos/howto-use-db-sequences.html
   // https://db.apache.org/derby/docs/10.8/ref/rrefsqljcreatesequence.html 

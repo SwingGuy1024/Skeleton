@@ -203,21 +203,23 @@
       </plugin>
 
       <!--This packs all the classes into a single jar-->
-      <!--<plugin>-->
-        <!--<artifactId>maven-assembly-plugin</artifactId>-->
-        <!--<configuration>-->
-          <!--<archive>-->
-            <!--<manifest>-->
-              <!--<mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>-->
-            <!--</manifest>-->
-          <!--</archive>-->
-          <!--<descriptorRefs>-->
-            <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
-          <!--</descriptorRefs>-->
-          <!--&lt;!&ndash;This remove the "with-dependencies" from the name, so it ends with ".jar"&ndash;&gt;-->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <!--This remove the "with-dependencies" from the name, so it ends with ".jar"-->
+	        <!--(This is commented out because it interferes with the creation of the Mac App Bundle.)-->
+	        <!--(It overwrites the other jar file.-->
           <!--<appendAssemblyId>false</appendAssemblyId>-->
-        <!--</configuration>-->
-      <!--</plugin>-->
+        </configuration>
+      </plugin>
 
       <!--This is the Maven dependency plugin. I don't know what it does but it's apparently needed.-->
       <plugin>
@@ -240,7 +242,7 @@
         </executions>
       </plugin>
 
-      <!--This creates an executable jar file.-->
+      <!--This creates an executable jar file. It's commented out because it interferes with creating a Mac app bundle.-->
       <!--<plugin>-->
         <!--<groupId>org.apache.maven.plugins</groupId>-->
         <!--<artifactId>maven-jar-plugin</artifactId>-->
@@ -257,7 +259,7 @@
         <!--</configuration>-->
       <!--</plugin>-->
       
-      <!--This one will bundle everything into a Mac Application bundle, I hope.-->
+      <!--This one will bundle everything into a Mac Application bundle.-->
       <plugin>
         <!-- https://github.com/federkasten/appbundle-maven-plugin -->
         <groupId>sh.tak.appbundler</groupId>

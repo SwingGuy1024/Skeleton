@@ -32,7 +32,7 @@ import static org.jooq.impl.DSL.*;
 /**
  * Create statement: 
  * 
- * CREATE TABLE record (
+ * CREATE TABLE IF NOT EXISTS record (
  *    id          INTEGER        NOT NULL PRIMARY KEY,
  *    source      VARCHAR (256)  NOT NULL collate noCase,
  *    username    VARCHAR (256)  NOT NULL collate noCase,
