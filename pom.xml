@@ -216,7 +216,8 @@
           </descriptorRefs>
           <!--This remove the "with-dependencies" from the name, so it ends with ".jar"-->
 	        <!--(This is commented out because it interferes with the creation of the Mac App Bundle.)-->
-	        <!--(It overwrites the other jar file.-->
+	        <!--(It overwrites the other jar file.)-->
+          <!--It also interferes with creating a single executable jar file.-->
           <!--<appendAssemblyId>false</appendAssemblyId>-->
         </configuration>
       </plugin>
@@ -243,21 +244,21 @@
       </plugin>
 
       <!--This creates an executable jar file. It's commented out because it interferes with creating a Mac app bundle.-->
-      <!--<plugin>-->
-        <!--<groupId>org.apache.maven.plugins</groupId>-->
-        <!--<artifactId>maven-jar-plugin</artifactId>-->
-        <!--<version>2.6</version>-->
-        <!--<configuration>-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.6</version>
+        <configuration>
           <!--<detail>-->
             <!--<derby.system.home>${user.home}/.skeleton</derby.system.home>-->
           <!--</detail>-->
-          <!--<archive>-->
-            <!--<manifest>-->
-              <!--<mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>-->
-            <!--</manifest>-->
-          <!--</archive>-->
-        <!--</configuration>-->
-      <!--</plugin>-->
+          <archive>
+            <manifest>
+              <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
       
       <!--This one will bundle everything into a Mac Application bundle.-->
       <plugin>
