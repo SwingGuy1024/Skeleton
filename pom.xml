@@ -214,10 +214,9 @@
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
-          <!--This removes the "with-dependencies" from the name.-->
-	        <!--(This is commented out because it interferes with the creation of the Mac App Bundle.)-->
-	        <!--(It overwrites the other jar file.)-->
-          <!--It also interferes with creating a single executable jar file.-->
+          <!--This "appendAssemblyId" tag removes the "with-dependencies" from the name.-->
+	        <!--This is commented out because it overwrites the other jar file.-->
+	        <!--That interferes with the creation of the Mac App Bundle.-->
           <!--<appendAssemblyId>false</appendAssemblyId>-->
         </configuration>
       </plugin>
