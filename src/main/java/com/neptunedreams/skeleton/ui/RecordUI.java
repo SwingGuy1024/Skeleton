@@ -28,7 +28,6 @@ import com.neptunedreams.skeleton.data.RecordField;
 import com.neptunedreams.skeleton.task.ParameterizedCallable;
 import com.neptunedreams.skeleton.task.QueuedTask;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -58,23 +57,19 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JTextField findField = new JTextField(10);
   private final RecordController<R, Integer> controller;
   private EnumGroup<RecordField> buttonGroup = new EnumGroup<>();
-//  private RecordView<R> view;
   private final @NonNull RecordModel<R> recordModel;
   private JButton prev = new JButton(Resource.getLeftArrow());
   private JButton next = new JButton(Resource.getRightArrow());
   private JButton first = new JButton(Resource.getFirst());
   private JButton last = new JButton(Resource.getLast());
   private JLabel infoLine = new JLabel("");
-//  private final ButtonGroup optionsGroup = new ButtonGroup();
   private final EnumGroup<SearchOption> optionsGroup = new EnumGroup<>();
 
   private final HidingPanel searchOptionsPanel = makeSearchOptionsPanel(optionsGroup);
 
-//  private final ParameterizedCallable<String, Collection<R>> callable = createCallable();
-
   // recordConsumer is how the QueuedTask communicates with the application code.
   private final Consumer<Collection<R>> recordConsumer = createRecordConsumer();
-  private @MonotonicNonNull QueuedTask<String, Collection<R>> queuedTask;
+  private @NonNull QueuedTask<String, Collection<R>> queuedTask;
 
   private HidingPanel makeSearchOptionsPanel(@UnderInitialization RecordUI<R> this, EnumGroup<SearchOption> optionsGroup) {
     JPanel optionsPanel = new JPanel(new GridLayout(1, 0));
@@ -102,8 +97,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     setBorder(new MatteBorder(4, 4, 4, 4, getBackground()));
     recordModel.addModelListener(this); // argument.type.incompatible checker error suppressed
     
-//    findField.addPropertyChangeListener("text", 
-//        (evt) -> System.out.printf("Change %s from %s to %s%n", evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
     findField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(final DocumentEvent e) {
@@ -123,14 +116,14 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     });
     
     MasterEventBus.instance().register(this);
+    queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
   }
 
   private void process(DocumentEvent e) {
     final Document document = e.getDocument();
     try {
       final String text = document.getText(0, document.getLength());
-      QueuedTask<String, Collection<R>> qTask = getQueuedTask();
-      qTask.feedData(text);
+      queuedTask.feedData(text);
       // I'm assuming here that text can't contain \n, \r, \f, or \t, or even nbsp. If this turns out to be false,
       // I should probably filter them out in the process method.
 
@@ -139,13 +132,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     } catch (BadLocationException e1) {
       e1.printStackTrace();
     }
-  }
-
-  private QueuedTask<String, Collection<R>> getQueuedTask() {
-    if (queuedTask == null) {
-      queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
-    }
-    return queuedTask;
   }
 
   private JPanel createControlPanel() {
@@ -173,7 +159,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     assert infoLine != null;
     trashPanel.add(infoLine, BorderLayout.LINE_START);
     assert recordModel != null;
-    recordModel.addModelListener(this);
+//    recordModel.addModelListener(this);
     return trashPanel;
   }
 
@@ -189,7 +175,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
         controller.delete(selectedRecord); // Removes from database
         recordModel.deleteSelected(true, recordModel.getRecordIndex());
         MasterEventBus.instance().post(new MasterEventBus.ChangeRecord<>(recordModel.getFoundRecord()));
-//        view.setCurrentRecord(recordModel.getFoundRecord());
       } catch (SQLException e) {
         ErrorReport.reportException("delete current record", e);
       }
@@ -207,7 +192,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     buttons.add(last);
 //    buttons.add(importBtn);
     
-    add.addActionListener((e)->controller.addBlankRecord());
+    add.addActionListener((e)->addBlankRecord());
     prev.addActionListener((e)->recordModel.goPrev());
     next.addActionListener((e)->recordModel.goNext());
     first.addActionListener((e) -> recordModel.goFirst());
@@ -217,7 +202,13 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     flowPanel.add(buttons);
     return flowPanel;
   }
-  
+
+  private void addBlankRecord() {
+    controller.addBlankRecord();
+    MasterEventBus.postUserRequestedNewRecordEvent();
+    loadInfoLine();
+  }
+
 //  private void doImport() {
 //    ImportDialog importDialog = new ImportDialog((Window) getRootPane().getParent(), controller.getDao());
 //    importDialog.setVisible(true);
@@ -267,22 +258,21 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
    * This means we're looking at record 3 of the 12 found records, from a total of 165 records in the database.
    */
   private void loadInfoLine() {
-    final R selectedRecord = recordModel.getFoundRecord();
+//    Thread.dumpStack();
     final int index;
     final int foundSize;
-    final Integer primaryKey = controller.getDao().getPrimaryKey(selectedRecord);
-    if((primaryKey == null) || (primaryKey == 0)) {
-      index = 0;
-      foundSize = 0;
-    } else {
-      index = recordModel.getRecordIndex() + 1;
-      foundSize = recordModel.getSize();
-    }
+    index = recordModel.getRecordIndex() + 1;
+    foundSize = recordModel.getSize();
     try {
-      final int total = controller.getDao().getTotal();
+      int total = controller.getDao().getTotal();
+      if (total < foundSize) {
+        // This happens when the user hits the + button.
+        total = foundSize;
+      }
       //noinspection HardcodedFileSeparator
       String info = String.format("%d/%d of %d", index, foundSize, total);
       infoLine.setText(info);
+//      System.err.printf("Info: %S%n", info); // NON-NLS
     } catch (SQLException e) {
       ErrorReport.reportException("loadInfoLine()", e);
     }
@@ -325,7 +315,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     return controller.retrieveNow(buttonGroup.getSelected(), getSearchOption(), text);
   }
   
-  @SuppressWarnings("unused") // used by MasterEventBus
   @Subscribe
   public void doSearchNow(MasterEventBus.SearchNowEvent searchNowEvent) {
     searchNow();

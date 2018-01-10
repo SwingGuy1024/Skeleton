@@ -28,6 +28,14 @@ public final class MasterEventBus {
     master.post(uiEvent);
   }
   
+  static final class UserRequestedNewRecordEvent { }
+  
+  static final UserRequestedNewRecordEvent userRequestedNewRecordEvent = new UserRequestedNewRecordEvent();
+  
+  static void postUserRequestedNewRecordEvent() {
+    master.post(userRequestedNewRecordEvent);
+  }
+
   static final class SearchNowEvent {
     private SearchNowEvent() { }
   }
@@ -37,7 +45,6 @@ public final class MasterEventBus {
     master.post(searchNowEvent);
   }
   
-  @SuppressWarnings("unused")
   @Subscribe
   public void showDeadEvent(DeadEvent deadEvent) {
     //noinspection UseOfSystemOutOrSystemErr,HardCodedStringLiteral

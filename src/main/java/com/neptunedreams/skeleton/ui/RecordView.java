@@ -50,6 +50,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   
   private RecordController<R, ?> controller;
   private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
+  private final JTextComponent sourceField;
 
   @SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible", "method.invocation.invalid", "HardCodedStringLiteral"})
   private RecordView(R record,
@@ -63,7 +64,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     super(new BorderLayout());
     currentRecord = record;
     final JLabel idField = (JLabel) addField("ID", false, RecordField.ID, initialSort);
-    final JTextComponent sourceField = (JTextComponent) addField("Source", true, RecordField.Source, initialSort);
+    sourceField = (JTextComponent) addField("Source", true, RecordField.Source, initialSort);
     final JTextComponent usernameField = (JTextComponent) addField("User Name", true, RecordField.Username, initialSort);
     final JTextComponent pwField = (JTextComponent) addField("Password", true, RecordField.Password, initialSort);
     final JTextComponent notesField = addNotesField();
@@ -179,7 +180,6 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     return new JScrollPane(wrapped, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
   }
   
-  @SuppressWarnings("unused") // Called by EventBus
   @Subscribe
   public void setCurrentRecord(MasterEventBus.ChangeRecord<R> recordEvent) {
     R newRecord = recordEvent.getNewRecord();
@@ -220,11 +220,12 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   }
 
   /**
-   * Reads the data from the editor fields and loads it into the current record's 
+   * Reads the data from the editor fields and loads them into the current record's model. This gets called by
+   * the event bus in response to a LoadUIEvent.
    * @param event Unused. This used to be a Record, but we didn't need it.
    */
   @Subscribe
-  public void loadUserEdits(MasterEventBus.LoadUIEvent event){
+  public void loadUserEdits(MasterEventBus.LoadUIEvent event) {
     // If statement guaranteed to be true, just to keep the VM from removing an unused parameter, which causes
     // EventBus to not recognize this method.
     if (!event.getClass().isArray()) {
@@ -234,6 +235,10 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
         }
       }
     }
+  }
+  
+  @Subscribe void userRequestedNewRecord(MasterEventBus.UserRequestedNewRecordEvent event) {
+    sourceField.requestFocus();
   }
 
     @SuppressWarnings("initialization.fields.uninitialized")

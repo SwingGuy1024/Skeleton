@@ -81,7 +81,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     final PK lastRecordKey = dao.getPrimaryKey(lastRecord);
     
     // If we are already showing an unchanged blank record...
-    if ((model.getRecordIndex() == lastIndex) && ((lastRecordKey == null) || (lastRecordKey == ZERO)) && !recordSelectionModel.recordHasChanged()) {
+    if ((model.getRecordIndex() == lastIndex) && ((lastRecordKey == null) || (lastRecordKey.equals(ZERO))) && !recordSelectionModel.recordHasChanged()) {
       // ... we don't bother to create a new one.
       loadNewRecord(lastRecord);
     } else {
@@ -93,7 +93,7 @@ public class RecordController<R, PK> implements RecordModelListener {
 
   public void setFoundRecords(final Collection<R> theFoundItems) {
     model.setNewList(theFoundItems);
-    if (!theFoundItems.isEmpty()) {
+    if (model.getSize() > 0) {
       final R selectedRecord = model.getFoundRecord();
       assert selectedRecord != null;
       loadNewRecord(selectedRecord);
