@@ -302,8 +302,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private ParameterizedCallable<String, Collection<R>> createCallable() {
     return new ParameterizedCallable<String, Collection<R>>("") {
       @Override
-      public Collection<R> call() throws InterruptedException {
-        final String inputData = this.getInputData();
+      public Collection<R> call(String inputData) {
         return retrieveNow(inputData);
       }
     };

@@ -33,7 +33,6 @@ public class QueuedTask<I, R> {
   private final long delayMilliSeconds;
   private final Consumer<R> consumer;
   private final BlockingQueue<I> queue = new SynchronousQueue<>();
-  private final @NonNull CountDownDoor door = new CountDownDoor(1);
   private final Thread launchThread;
 
 
@@ -56,9 +55,9 @@ public class QueuedTask<I, R> {
    * @param data the data to process.
    */
   public void feedData(I data) {
-    queue.poll(); // remove the prior data. This prevents a rare exception when feedData gets called twice too quickly.
-    queue.add(data);
-    launchThread.interrupt();
+    try {
+      queue.put(data); // SynchronousQueue.add() should never get called. Unnecessary and causes big problems.
+    } catch (InterruptedException ignored) { }
   }
   
   private Runnable createWaitTask(@UnderInitialization QueuedTask<I, R> this) {
@@ -72,11 +71,9 @@ public class QueuedTask<I, R> {
         I input = queue.take();
         if (input != null) {
           launchTask(input);
+          launchThread.interrupt();
         }
-      } catch (InterruptedException ignored) {
-        Thread.interrupted(); // clears the interrupt.
-        queue.clear();
-      }
+      } catch (InterruptedException ignored) { }
     }
   }
 
@@ -89,15 +86,9 @@ public class QueuedTask<I, R> {
     while (true) {
       // This try block gets interrupted whenever feedData() is called.
       try {
-        // We might be able to get rid of this door and just use an AtomicBoolean to determine if the callable should
-        // be launched. But for now, I'm happy with how this works.
-        assert door != null;
-        door.await();      // throws InterruptedException
-        door.reset(1);
         Thread.sleep(delayMilliSeconds);
         QueuedTask.this.launchCallable();
-      } catch (InterruptedException ignored) {
-      }
+      } catch (InterruptedException ignored) { }
     }
   }
 
@@ -105,15 +96,18 @@ public class QueuedTask<I, R> {
    * Skip the queuing and waiting and just launch the task immediately.
    */
   private void launchCallable() {
-    try {
-      R result = callable.call(); // throws InterruptedException
-      consumer.accept(result);
-    } catch (InterruptedException ignored) {
+    final I inputData = callable.getInputData();
+    if (inputData != null) {
+      try {
+        callable.setInputData(null);
+        R result = callable.call(inputData); // throws InterruptedException
+        consumer.accept(result);
+//        callable.setInputData(null);
+      } catch (InterruptedException ignored) { }
     }
   }
 
   private void launchTask(@NonNull I input) {
     callable.setInputData(input);
-    door.countDown();
   }
 }
