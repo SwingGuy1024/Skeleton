@@ -8,6 +8,7 @@ import java.util.function.Function;
 import com.ErrorReport;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.event.MasterEventBus;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -70,7 +71,7 @@ public class RecordController<R, PK> implements RecordModelListener {
         ErrorReport.reportException("Insert", e);
       }
     }
-    MasterEventBus.instance().post(new MasterEventBus.ChangeRecord<>(record));
+    MasterEventBus.postChangeRecordEvent(record);
   }
 
   public void addBlankRecord() {
@@ -156,7 +157,7 @@ public class RecordController<R, PK> implements RecordModelListener {
       ErrorReport.reportException("Find Text anywhere", e);
     }
   }
-
+  
   Collection<R> findRecordsAnywhere(final String text, SearchOption searchOption) throws SQLException {
     if (text.isEmpty()) {
       return dao.getAll(getOrder());

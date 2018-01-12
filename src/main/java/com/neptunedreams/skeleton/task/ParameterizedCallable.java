@@ -22,8 +22,8 @@ public abstract class ParameterizedCallable<I, R> {
     inputData = input;
   }
 
+  @SuppressWarnings("WeakerAccess")
   protected @Nullable I getInputData() { return inputData; }
 
-//  @Override
-  public abstract R call(I input) throws InterruptedException;
+  public abstract R call(I input);
 }

@@ -367,7 +367,7 @@ public final class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
     DSLContext dslContext = getDslContext();
     return dslContext.fetchCount(Tables.RECORD);
   }
-
+  
   //  /**
 //   * This is an attempt (ultimately successful) to fix the sql statement that fails during code generation.
 //   * @param <T>

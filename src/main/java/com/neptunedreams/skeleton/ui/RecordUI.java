@@ -25,6 +25,7 @@ import com.neptunedreams.framework.ui.ButtonGroupListener;
 import com.neptunedreams.framework.ui.EnumGroup;
 import com.neptunedreams.framework.ui.HidingPanel;
 import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.event.MasterEventBus;
 import com.neptunedreams.skeleton.task.ParameterizedCallable;
 import com.neptunedreams.skeleton.task.QueuedTask;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
@@ -115,8 +116,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       
     });
     
-    MasterEventBus.instance().register(this);
+    MasterEventBus.registerMasterEventHandler(this);
     queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
+    findField.setText(""); // This fires the initial search in queuedTask.
   }
 
   private void process(DocumentEvent e) {
@@ -174,7 +176,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       try {
         controller.delete(selectedRecord); // Removes from database
         recordModel.deleteSelected(true, recordModel.getRecordIndex());
-        MasterEventBus.instance().post(new MasterEventBus.ChangeRecord<>(recordModel.getFoundRecord()));
+        MasterEventBus.postChangeRecordEvent(recordModel.getFoundRecord());
       } catch (SQLException e) {
         ErrorReport.reportException("delete current record", e);
       }

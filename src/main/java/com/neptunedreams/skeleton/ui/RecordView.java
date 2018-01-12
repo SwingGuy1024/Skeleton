@@ -27,6 +27,8 @@ import com.google.common.eventbus.Subscribe;
 import com.neptunedreams.Setter;
 import com.neptunedreams.framework.ui.FieldBinding;
 import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.event.ChangeRecord;
+import com.neptunedreams.skeleton.event.MasterEventBus;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 
 /**
@@ -88,7 +90,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     installStandardCaret(usernameField);
     installStandardCaret(pwField);
     installStandardCaret(notesField);
-    MasterEventBus.instance().register(this);
+    MasterEventBus.registerMasterEventHandler(this);
     
     // Put a line at the top, one pixel wide.
     setBorder(new MatteBorder(1, 0, 0, 0, Color.black));
@@ -181,7 +183,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   }
   
   @Subscribe
-  public void setCurrentRecord(MasterEventBus.ChangeRecord<R> recordEvent) {
+  public void setCurrentRecord(ChangeRecord<R> recordEvent) {
     R newRecord = recordEvent.getNewRecord();
     assert newRecord != null;
     currentRecord = newRecord;
@@ -208,7 +210,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     // 4. Existing record with no changes
     final boolean hasChanged = recordHasChanged();
     if (hasChanged) {
-      loadUserEdits(MasterEventBus.uiEvent);
+      loadUserEdits();
       return true;
     }
     return false;
@@ -226,17 +228,17 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
    */
   @Subscribe
   public void loadUserEdits(MasterEventBus.LoadUIEvent event) {
-    // If statement guaranteed to be true, just to keep the VM from removing an unused parameter, which causes
-    // EventBus to not recognize this method.
-    if (!event.getClass().isArray()) {
-      for (FieldBinding<R, ?, ?> binding : allBindings) {
-        if (binding.isEditable()) {
-          binding.saveEdit(currentRecord);
-        }
+    loadUserEdits();
+  }
+
+  private void loadUserEdits() {
+    for (FieldBinding<R, ?, ?> binding : allBindings) {
+      if (binding.isEditable()) {
+        binding.saveEdit(currentRecord);
       }
     }
   }
-  
+
   @Subscribe void userRequestedNewRecord(MasterEventBus.UserRequestedNewRecordEvent event) {
     sourceField.requestFocus();
   }

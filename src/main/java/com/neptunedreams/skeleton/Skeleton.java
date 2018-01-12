@@ -92,7 +92,7 @@ public final class Skeleton extends JPanel
     frame.addWindowListener(skeleton.shutdownListener());
 //    UIMenus.Menu.installMenu(frame);
     frame.setVisible(true);
-    
+
     if ((args.length > 0) && Objects.equals(args[0], "-export")) {
       RecordModel<RecordRecord> model = skeleton.controller.getModel();
       //noinspection StringConcatenation,StringConcatenationMissingWhitespace
@@ -128,8 +128,8 @@ public final class Skeleton extends JPanel
       );
       view.setController(controller);
       final RecordModel<RecordRecord> model = controller.getModel();
-      mainPanel = new RecordUI<>(model, view, controller);
-      controller.findTextAnywhere("", SearchOption.findExact);
+      mainPanel = new RecordUI<>(model, view, controller); // RecordUI launches the initial search
+
       if ((model.getSize() == 1) && (model.getRecordAt(0).getId() == 0) && doImport) {
         importFromFile(dao, controller); // throws ClassNotFoundException
       }
