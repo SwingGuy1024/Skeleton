@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.Objects;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import com.ErrorReport;
 import com.neptunedreams.skeleton.data.ConnectionSource;
@@ -74,7 +75,7 @@ public final class Skeleton extends JPanel
 
 //  private static final String DERBY_SYSTEM_HOME = "derby.system.home";
 //  private Connection connection;
-  private JPanel mainPanel;
+  private RecordUI<RecordRecord> mainPanel;
   //    org.jooq.util.JavaGenerator generator;
   private static JFrame frame = new JFrame("Skeleton");
   private final @NonNull DatabaseInfo info;
@@ -91,18 +92,37 @@ public final class Skeleton extends JPanel
     frame.pack();
     frame.addWindowListener(skeleton.shutdownListener());
 //    UIMenus.Menu.installMenu(frame);
+    skeleton.mainPanel.launchInitialSearch();
     frame.setVisible(true);
 
+    doExport(args, skeleton);
+  }
+
+  private static void doExport(final String[] args, final Skeleton skeleton) {
     if ((args.length > 0) && Objects.equals(args[0], "-export")) {
-      RecordModel<RecordRecord> model = skeleton.controller.getModel();
-      //noinspection StringConcatenation,StringConcatenationMissingWhitespace
-      String exportPath = System.getProperty("user.home") + EXPORT_FILE;
-      try (ObjectOutputStream bos = new ObjectOutputStream(new FileOutputStream(exportPath))) {
-        bos.writeObject(model);
-      }
+      try {
+        // There has to be a delay, because there's a 1-second delay built into the launchInitialSearch() method,
+        // and this needs to take place after that finishes, or we won't see any records. 
+        //noinspection MagicNumber
+        Thread.sleep(1000); // Yeah, this is kludgy, but it's only for the export, which is only done in development.
+      } catch (InterruptedException ignored) { }
+
+      SwingUtilities.invokeLater(() -> {
+        RecordModel<RecordRecord> model = skeleton.controller.getModel();
+        //noinspection StringConcatenation,StringConcatenationMissingWhitespace
+        String exportPath = System.getProperty("user.home") + EXPORT_FILE;
+        System.err.printf("Exporting %d records to %s%n", model.getSize(), exportPath); // NON-NLS
+        //noinspection OverlyBroadCatchBlock
+        try (ObjectOutputStream bos = new ObjectOutputStream(new FileOutputStream(exportPath))) {
+          bos.writeObject(model);
+        } catch (IOException e) {
+          ErrorReport.reportException("Error during export", e);
+        }
+        System.err.printf("Export done%n"); // NON-NLS
+      });
     }
   }
-  
+
   @SuppressWarnings("OverlyBroadThrowsClause")
   private Skeleton(boolean doImport) throws IOException, ClassNotFoundException {
     super();

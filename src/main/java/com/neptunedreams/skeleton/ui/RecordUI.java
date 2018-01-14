@@ -55,7 +55,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   // todo   that way, the controller won't need to keep an instance of RecordView.
 
   private static final long DELAY = 1000L;
-  private JTextField findField = new JTextField(10);
+
+  // We set the initial text to a space, so we can fire the initial search by setting the text to the empty String.
+  private JTextField findField = new JTextField(" ",10);
   private final RecordController<R, Integer> controller;
   private EnumGroup<RecordField> buttonGroup = new EnumGroup<>();
   private final @NonNull RecordModel<R> recordModel;
@@ -118,7 +120,16 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     
     MasterEventBus.registerMasterEventHandler(this);
     queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
-    findField.setText(""); // This fires the initial search in queuedTask.
+  }
+  
+  public void launchInitialSearch() {
+    SwingUtilities.invokeLater(() -> {
+      findField.setText(""); // This fires the initial search in queuedTask.
+    });
+    try {
+      // This is how long it takes before the find starts working
+      Thread.sleep(queuedTask.getDelayMilliSeconds());
+    } catch (InterruptedException ignored) { }
   }
 
   private void process(DocumentEvent e) {
@@ -293,7 +304,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   /*
     NullnessChecker notes:
     This used to be called during construction. It specified an implicit parameter. But this created a compiler
-    error when I called getSearchOption. This is due to the nullness checker bug where it doesn't know that a
+    error when I called getSearchOption. This is due to the nullness checker bug where it doesn't know that the
     lambda or anonymous class only gets called after initialization is complete. 
     
     I fixed this by lazily instantiating the QueuedTask that used the return value of this method. That way, I could
@@ -302,7 +313,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     solution.  
    */
   private ParameterizedCallable<String, Collection<R>> createCallable() {
-    return new ParameterizedCallable<String, Collection<R>>("") {
+    return new ParameterizedCallable<String, Collection<R>>(null) {
       @Override
       public Collection<R> call(String inputData) {
         return retrieveNow(inputData);

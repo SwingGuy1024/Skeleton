@@ -54,6 +54,10 @@ public class QueuedTask<I, R> {
     launchThread.start();
   }
 
+  public long getDelayMilliSeconds() {
+    return delayMilliSeconds;
+  }
+
   // External Thread Code
 
   /**
