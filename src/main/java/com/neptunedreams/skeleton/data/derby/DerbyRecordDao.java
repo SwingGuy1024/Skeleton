@@ -11,7 +11,7 @@ import java.util.Objects;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.Record;
-import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.data.SiteField;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -90,13 +90,13 @@ public final class DerbyRecordDao implements Dao<Record, Integer> {
    * @param orderBy The field to order by, which may be null
    * @return the sql String, with the orderBy clause if needed.
    */
-  private String sqlWithOrder(String sql, @Nullable RecordField orderBy) {
+  private String sqlWithOrder(String sql, @Nullable SiteField orderBy) {
     return (orderBy == null) ? sql : (sql + ORDER_BY + orderBy);
   }
 
 
   @Override
-  public Collection<Record> getAll(final @Nullable RecordField orderBy) throws SQLException {
+  public Collection<Record> getAll(final @Nullable SiteField orderBy) throws SQLException {
     // using setObject() for the orderBy value gives this error message:
     //   "There is a ? parameter in the select list.  This is not allowed."
     final String sql = sqlWithOrder(SELECT_ALL, orderBy);
@@ -110,6 +110,7 @@ public final class DerbyRecordDao implements Dao<Record, Integer> {
       List<Record> recordList = new LinkedList<>();
       boolean rowIsValid = resultSet.next();
       while (rowIsValid) {
+        //noinspection ObjectAllocationInLoop
         Record aRecord = new Record();
         aRecord.setId(resultSet.getInt(1));
         aRecord.setSource(Objects.toString(resultSet.getString(2), ""));
@@ -124,7 +125,7 @@ public final class DerbyRecordDao implements Dao<Record, Integer> {
   }
 
   @Override
-  public Collection<Record> find(final String text, final @Nullable RecordField orderBy) throws SQLException {
+  public Collection<Record> find(final String text, final @Nullable SiteField orderBy) throws SQLException {
     // using setObject() for the orderBy value gives this error message:
     //   "There is a ? parameter in the select list.  This is not allowed."
     final String sql = sqlWithOrder(FIND, orderBy);
@@ -140,7 +141,7 @@ public final class DerbyRecordDao implements Dao<Record, Integer> {
   }
 
   @Override
-  public Collection<Record> findInField(final String text, final @NonNull RecordField fieldName, final @Nullable RecordField orderBy) throws SQLException {
+  public Collection<Record> findInField(final String text, final @NonNull SiteField fieldName, final @Nullable SiteField orderBy) throws SQLException {
     // using setObject() for the orderBy value gives this error message:
     //   "There is a ? parameter in the select list.  This is not allowed."
     final String sql = sqlWithOrder(FIND_BY_FIELD, orderBy);
@@ -154,22 +155,22 @@ public final class DerbyRecordDao implements Dao<Record, Integer> {
   }
 
   @Override
-  public Collection<Record> findAny(final @Nullable RecordField orderBy, final String... text) throws SQLException {
+  public Collection<Record> findAny(final @Nullable SiteField orderBy, final String... text) throws SQLException {
     throw new AssertionError("Not yet written");
   }
 
   @Override
-  public Collection<Record> findAll(final @Nullable RecordField orderBy, final String... text) throws SQLException {
+  public Collection<Record> findAll(final @Nullable SiteField orderBy, final String... text) throws SQLException {
     throw new AssertionError("Not yet written");
   }
 
   @Override
-  public Collection<Record> findAnyInField(final @NonNull RecordField findBy, final @Nullable RecordField orderBy, final String... text) throws SQLException {
+  public Collection<Record> findAnyInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
     throw new AssertionError("Not yet written");
   }
 
   @Override
-  public Collection<Record> findAllInField(final @NonNull RecordField findBy, final @Nullable RecordField orderBy, final String... text) throws SQLException {
+  public Collection<Record> findAllInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
     throw new AssertionError("Not yet written");
   }
 

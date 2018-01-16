@@ -326,7 +326,7 @@
             <!--<driver>org.apache.derby.jdbc.EmbeddedDriver</driver>-->
             <!--<url>jdbc:derby:skeleton;create=true;collation=TERRITORY_BASED:PRIMARY</url>-->
             <driver>org.sqlite.JDBC</driver>
-            <url>jdbc:sqlite:/Users/miguelmunoz/.sqlite.master.skeleton/skeleton.db</url>
+            <url>jdbc:sqlite:src/main/resources/sql/generateFromSkeleton.db</url>
             <!--<user>postgres</user>-->
             <!--<password>test</password>-->
           </jdbc>

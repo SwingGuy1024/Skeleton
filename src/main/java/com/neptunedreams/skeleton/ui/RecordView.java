@@ -26,7 +26,7 @@ import javax.swing.text.JTextComponent;
 import com.google.common.eventbus.Subscribe;
 import com.neptunedreams.Setter;
 import com.neptunedreams.framework.ui.FieldBinding;
-import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.event.ChangeRecord;
 import com.neptunedreams.skeleton.event.MasterEventBus;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
@@ -56,7 +56,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
 
   @SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible", "method.invocation.invalid", "HardCodedStringLiteral"})
   private RecordView(R record,
-                     RecordField initialSort,
+                     SiteField initialSort,
                      Function<R, Integer> getIdFunction, Setter<R, Integer> setIdFunction,
                      Function<R, String> getSourceFunction, Setter<R, String> setSourceFunction,
                      Function<R, String> getUserNameFunction, Setter<R, String> setUserNameFunction,
@@ -65,10 +65,10 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
    ) {
     super(new BorderLayout());
     currentRecord = record;
-    final JLabel idField = (JLabel) addField("ID", false, RecordField.ID, initialSort);
-    sourceField = (JTextComponent) addField("Source", true, RecordField.Source, initialSort);
-    final JTextComponent usernameField = (JTextComponent) addField("User Name", true, RecordField.Username, initialSort);
-    final JTextComponent pwField = (JTextComponent) addField("Password", true, RecordField.Password, initialSort);
+    final JLabel idField = (JLabel) addField("ID", false, SiteField.ID, initialSort);
+    sourceField = (JTextComponent) addField("Source", true, SiteField.Source, initialSort);
+    final JTextComponent usernameField = (JTextComponent) addField("User Name", true, SiteField.Username, initialSort);
+    final JTextComponent pwField = (JTextComponent) addField("Password", true, SiteField.Password, initialSort);
     final JTextComponent notesField = addNotesField();
     assert getIdFunction != null : "Null id getter";
     assert setIdFunction != null : "Null id Setter";
@@ -141,7 +141,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     caret.setBlinkRate(blinkRate); // Starts the new caret blinking.
   }
 
-  private JComponent addField(final String labelText, final boolean editable, final RecordField orderField, RecordField initialSort) {
+  private JComponent addField(final String labelText, final boolean editable, final SiteField orderField, SiteField initialSort) {
     //noinspection StringConcatenation,MagicCharacter
     JLabel label = new JLabel(labelText + ':');
     labelPanel.add(label);
@@ -246,7 +246,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     @SuppressWarnings("initialization.fields.uninitialized")
     public static class Builder<RR> {
       private RR record;
-      private RecordField initialSort;
+      private SiteField initialSort;
       private Function<RR, Integer> getId;
       private Setter<RR, Integer> setId;
       private Function<RR, String> getSource;
@@ -257,7 +257,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       private Setter<RR, String> setPassword;
       private Function<RR, String> getNotes;
       private Setter<RR, String> setNotes;
-      public Builder(RR record, RecordField initialSort) {
+      public Builder(RR record, SiteField initialSort) {
         this.record = record;
         this.initialSort = initialSort;
       }

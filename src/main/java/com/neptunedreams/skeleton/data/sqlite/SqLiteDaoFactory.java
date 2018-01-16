@@ -2,7 +2,7 @@ package com.neptunedreams.skeleton.data.sqlite;
 
 import com.neptunedreams.skeleton.data.AbstractDaoFactory;
 import com.neptunedreams.skeleton.data.ConnectionSource;
-import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
+import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -16,6 +16,6 @@ public class SqLiteDaoFactory extends AbstractDaoFactory {
     super();
     //noinspection UnnecessaryLocalVariable
     ConnectionSource source = connectionSource;
-    addDao(RecordRecord.class, SQLiteRecordDao.create(source));
+    addDao(SiteRecord.class, SQLiteRecordDao.create(source));
   }
 }

@@ -7,7 +7,7 @@ import java.util.StringTokenizer;
 import java.util.function.Function;
 import com.ErrorReport;
 import com.neptunedreams.skeleton.data.Dao;
-import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.event.MasterEventBus;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -23,7 +23,7 @@ public class RecordController<R, PK> implements RecordModelListener {
   private static final Integer ZERO = 0;
   // For DerbyRecordDao, E was Record.FIELD
 //  private E order = Record.FIELD.SOURCE;
-  private RecordField order;
+  private SiteField order;
   private final Dao<R, PK> dao;
   // TODO:  RecordController and RecordView have references to each other. Replace this with a listener system
   // todo   This shouldn't be too hard. There are very few calls made to the RecordView.
@@ -34,7 +34,7 @@ public class RecordController<R, PK> implements RecordModelListener {
   public RecordController(
       Dao<R, PK> theDao, 
       RecordSelectionModel<R> recordSelectionModel, 
-      RecordField initialOrder,
+      SiteField initialOrder,
       Function<Void, R> recordConstructor
   ) {
     dao = theDao;
@@ -50,11 +50,11 @@ public class RecordController<R, PK> implements RecordModelListener {
   
   public Dao<R, PK> getDao() { return dao; }
 
-  public void specifyOrder(RecordField theOrder) {
+  public void specifyOrder(SiteField theOrder) {
     order = theOrder;
   }
 
-  public RecordField getOrder() {
+  public SiteField getOrder() {
     return order;
   }
 
@@ -101,7 +101,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
 
-  public void findTextInField(String dirtyText, final RecordField field, SearchOption searchOption) {
+  public void findTextInField(String dirtyText, final SiteField field, SearchOption searchOption) {
     //noinspection TooBroadScope
     String text = dirtyText.trim();
     try {
@@ -113,7 +113,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
 
-  Collection<R> findRecordsInField(final String text, final RecordField field, SearchOption searchOption) throws SQLException {
+  Collection<R> findRecordsInField(final String text, final SiteField field, SearchOption searchOption) throws SQLException {
     if (text.trim().isEmpty()) {
       return dao.getAll(getOrder());
     } else {
@@ -180,7 +180,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     
   }
 
-  public Collection<R> retrieveNow(final RecordField searchField, final SearchOption searchOption, final String searchText) {
+  public Collection<R> retrieveNow(final SiteField searchField, final SearchOption searchOption, final String searchText) {
     try {
       if (searchField.isField()) {
         return findRecordsInField(searchText, searchField, searchOption);

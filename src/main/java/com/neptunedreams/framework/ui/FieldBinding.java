@@ -57,7 +57,8 @@ public abstract class FieldBinding<R, T, C extends Component> {
    * @param record The record with the data
    * @return The value
    */
-  T getTheValue(R record) { return getter.apply(record); }
+  @SuppressWarnings("WeakerAccess")
+  protected T getTheValue(R record) { return getter.apply(record); }
 
   /**
    * Gets the value from the editor or display field, without doing any cleaning. Subclasses should implement this for 

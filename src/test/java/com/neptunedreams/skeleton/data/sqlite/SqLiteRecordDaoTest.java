@@ -11,8 +11,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.DatabaseInfo;
-import com.neptunedreams.skeleton.data.RecordField;
-import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
+import com.neptunedreams.skeleton.data.SiteField;
+import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -44,16 +44,16 @@ public class SqLiteRecordDaoTest {
     final DatabaseInfo info = new SQLiteInfo("/.sqlite.skeletonTest");
     info.init();
     connectionSource = info.getConnectionSource();
-    dao = (SQLiteRecordDao) info.<RecordRecord, Integer>getDao(RecordRecord.class, connectionSource);
+    dao = (SQLiteRecordDao) info.<SiteRecord, Integer>getDao(SiteRecord.class, connectionSource);
   }
   
   @After
   public void tearDown() throws SQLException {
     System.err.printf("After%n%n"); // NON-NLS
     assert dao != null;
-    Collection<RecordRecord> results = dao.findAll(null);
-    for (RecordRecord recordRecord : results) {
-      recordRecord.delete();
+    Collection<SiteRecord> results = dao.findAll(null);
+    for (SiteRecord siteRecord : results) {
+      siteRecord.delete();
     }
   }
 
@@ -66,12 +66,12 @@ public class SqLiteRecordDaoTest {
 //    if (info.isCreateSchemaAllowed()) {
 //      info.createSchema();
 //    }
-    RecordRecord record1 = new RecordRecord(0,"TestSiteAlpha", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
-//    RecordRecord record1 = createRecord("TestSiteAlpha", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
+    SiteRecord record1 = new SiteRecord(0,"TestSiteAlpha", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
+//    SiteRecord record1 = createRecord("TestSiteAlpha", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
     //noinspection resource
     assertFalse(connectionSource.getConnection().isClosed());
 
-    Collection<RecordRecord> allRecords = showAllRecords(dao, 0);
+    Collection<SiteRecord> allRecords = showAllRecords(dao, 0);
     assertEquals(0, allRecords.size());
 
     dao.insert(record1);
@@ -80,26 +80,26 @@ public class SqLiteRecordDaoTest {
     assertEquals(1, allRecords.size());
     assertEquals(allRecords.iterator().next().getId(), r1Id);
 
-    RecordRecord record2 = new RecordRecord(0, "t2Site", "t2User", "t2Pw", "t2Note");
-//    RecordRecord record2 = createRecord("t2Site", "t2User", "t2Pw", "t2Note");
+    SiteRecord record2 = new SiteRecord(0, "t2Site", "t2User", "t2Pw", "t2Note");
+//    SiteRecord record2 = createRecord("t2Site", "t2User", "t2Pw", "t2Note");
     dao.insert(record2);
     Integer r2Id = record2.getId();
     assertNotEquals(r1Id, r2Id);
     allRecords = showAllRecords(dao, 2);
     assertEquals(2, allRecords.size());
-//    Set<Integer> set1 = new HashSet<>();for (RecordRecord rr: allRecords) set1.add(rr.getId());
+//    Set<Integer> set1 = new HashSet<>();for (SiteRecord rr: allRecords) set1.add(rr.getId());
     Set<Integer> set2 = allRecords
         .stream()
-        .map(RecordRecord::getId)
+        .map(SiteRecord::getId)
         .collect(Collectors.toSet());
     assertThat(set2, Matchers.hasItems(r1Id, r2Id));
 
-    allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.Source);
+    allRecords = dao.getAll(SiteField.Source);
     System.out.printf("getAll() returned %d records, expecting 2%n", allRecords.size());
     assertEquals(2, allRecords.size());
     showAllRecords(dao, 2);
 
-    Collection<RecordRecord> foundRecords = dao.find("alpha", com.neptunedreams.skeleton.data.RecordField.Source);
+    Collection<SiteRecord> foundRecords = dao.find("alpha", SiteField.Source);
     System.out.printf("find(alpha) returned %d records, expecting 1%n", foundRecords.size());
     assertEquals(1, foundRecords.size()); // I expect this to fail
     record1 = foundRecords.iterator().next();
@@ -110,37 +110,37 @@ public class SqLiteRecordDaoTest {
     record1.setUsername(revisedName);
     System.out.printf("Changing the Name from %s to %s%n", originalName, revisedName);
     dao.update(record1);
-    foundRecords = dao.find("alpha", com.neptunedreams.skeleton.data.RecordField.Source);
+    foundRecords = dao.find("alpha", SiteField.Source);
     System.out.printf("Found %d records%n", foundRecords.size());
     assertEquals(1, foundRecords.size());
-    RecordRecord revisedRecord = foundRecords.iterator().next();
+    SiteRecord revisedRecord = foundRecords.iterator().next();
     assertEquals("revisedName", revisedRecord.getUsername());
     testShowRecord(revisedRecord);
 
     int deletedId = revisedRecord.getId();
     dao.delete(revisedRecord);
-    allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.Source);
+    allRecords = dao.getAll(SiteField.Source);
     System.out.printf("Total of %d records after deleting id %d%n", allRecords.size(), deletedId);
     assertEquals(1, allRecords.size());
-    RecordRecord remainingRecord = allRecords.iterator().next();
+    SiteRecord remainingRecord = allRecords.iterator().next();
     dao.delete(remainingRecord);
-    allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.Source);
+    allRecords = dao.getAll(SiteField.Source);
     assertEquals(0, allRecords.size());
     System.out.printf("Total of %d records after deleting 1%n", allRecords.size());
 
-//    RecordRecord record1b = new RecordRecord(1, "TestSiteAlpha", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
+//    SiteRecord record1b = new SiteRecord(1, "TestSiteAlpha", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
 //    dao.insert(record1b);
-//    allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.SOURCE);
+//    allRecords = dao.getAll(com.neptunedreams.skeleton.data.SiteField.SOURCE);
 //    assertEquals(0, allRecords.size());
 //    System.out.printf("Total of %d records after lastInsert 1%n", allRecords.size());
 
   }
 
-  private Collection<RecordRecord> showAllRecords(final SQLiteRecordDao dao, int expectedCount) throws SQLException {
-    Collection<RecordRecord> allRecords = dao.getAll(com.neptunedreams.skeleton.data.RecordField.Source);
+  private Collection<SiteRecord> showAllRecords(final SQLiteRecordDao dao, int expectedCount) throws SQLException {
+    Collection<SiteRecord> allRecords = dao.getAll(SiteField.Source);
     System.out.printf("getAll() returned %d records, expecting %d%n", allRecords.size(), expectedCount);
-//    DataUtil.printRecord(allRecords, RecordRecord::getId, RecordRecord::getSource);
-    for (RecordRecord rr: allRecords) {
+//    DataUtil.printRecord(allRecords, SiteRecord::getId, SiteRecord::getSource);
+    for (SiteRecord rr: allRecords) {
       System.out.println(rr);
     }
     if (expectedCount >= 0) {
@@ -150,8 +150,8 @@ public class SqLiteRecordDaoTest {
   }
 
   @SuppressWarnings("unused")
-  private RecordRecord createRecord(String source, String userName, String password, String note) {
-    RecordRecord record = new RecordRecord();
+  private SiteRecord createRecord(String source, String userName, String password, String note) {
+    SiteRecord record = new SiteRecord();
     record.setUsername(userName);
     record.setSource(source);
     record.setPassword(password);
@@ -159,7 +159,7 @@ public class SqLiteRecordDaoTest {
     return record;
   }
 
-  private void testShowRecord(final RecordRecord record) {
+  private void testShowRecord(final SiteRecord record) {
     System.out.printf("Record: %n  id: %d%n  sr: %s%n  un: %s%n  pw: %s%n  Nt: %s%n",
         record.getId(), record.getSource(), record.getUsername(),
         record.getPassword(), record.getNotes());
@@ -172,10 +172,10 @@ public class SqLiteRecordDaoTest {
     assert dao != null;
     //noinspection resource
     assertFalse(connectionSource.getConnection().isClosed());
-    Collection<RecordRecord> allRecords = showAllRecords(dao, 0);
+    Collection<SiteRecord> allRecords = showAllRecords(dao, 0);
     assertEquals(0, allRecords.size());
     setupFindTests();
-    Collection<RecordRecord> results;
+    Collection<SiteRecord> results;
     assert dao != null;
 
     // Find Any
@@ -183,14 +183,14 @@ public class SqLiteRecordDaoTest {
     assertThat(getIds(results), hasItems(1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18));
     assertEquals(17, results.size());
 
-    results = dao.findAny(RecordField.Source, "bravo", "charlie", "delta");
+    results = dao.findAny(SiteField.Source, "bravo", "charlie", "delta");
     assertTrue(arraysMatch(getIds(results), 7, 4, 12, 2, 11, 14, 6, 13, 15, 3, 8, 1, 10, 16, 5, 18, 17));
 
     results = dao.findAny(null, "bravo", "charlie");
     assertThat(getIds(results), hasItems(1, 2, 3, 4, 5, 6, 8, 13, 16, 17, 18));
     assertEquals(11, results.size());
 
-    results = dao.findAny(RecordField.Source, "bravo", "charlie");
+    results = dao.findAny(SiteField.Source, "bravo", "charlie");
     assertTrue(arraysMatch(getIds(results), 4, 2, 6, 13, 3, 8, 1, 16, 5, 18, 17));
 
     // Find All
@@ -199,79 +199,79 @@ public class SqLiteRecordDaoTest {
     assertThat(getIds(results), hasItems(4, 17, 18));
     assertEquals(3, results.size());
 
-    results = dao.findAll(RecordField.Source, "bravo", "charlie", "delta");
+    results = dao.findAll(SiteField.Source, "bravo", "charlie", "delta");
     assertTrue(arraysMatch(getIds(results), 4, 18, 17));
 
     results = dao.findAll(null, "bravo", "charlie");
     assertThat(getIds(results), hasItems(1, 3, 4, 17, 18));
     assertEquals(5, results.size());
 
-    results = dao.findAll(RecordField.Source, "bravo", "charlie");
+    results = dao.findAll(SiteField.Source, "bravo", "charlie");
     assertTrue(arraysMatch(getIds(results), 4, 3, 1, 18, 17));
 
     // Find Any In Field
 
-    results = dao.findAnyInField(RecordField.Source, null, "bravo", "charlie", "delta");
+    results = dao.findAnyInField(SiteField.Source, null, "bravo", "charlie", "delta");
     assertThat(getIds(results), hasItems(1, 2, 3, 4, 5, 6, 7, 10, 13, 14, 16, 17, 18));
     assertEquals(13, results.size());
 
-    results = dao.findAnyInField(RecordField.Source, RecordField.Source, "bravo", "charlie", "delta");
+    results = dao.findAnyInField(SiteField.Source, SiteField.Source, "bravo", "charlie", "delta");
     assertTrue(arraysMatch(getIds(results), 7, 4, 2, 14, 6, 13, 3, 1, 10, 16, 5, 18, 17));
 
-    results = dao.findAnyInField(RecordField.Username, null, "bravo", "charlie", "delta");
+    results = dao.findAnyInField(SiteField.Username, null, "bravo", "charlie", "delta");
     assertThat(getIds(results), hasItems(1, 2, 5, 6, 7, 8, 11, 17, 18));
     assertEquals(9, results.size());
 
-    results = dao.findAnyInField(RecordField.Username, RecordField.Source, "bravo", "charlie", "delta");
+    results = dao.findAnyInField(SiteField.Username, SiteField.Source, "bravo", "charlie", "delta");
     assertTrue(arraysMatch(getIds(results), 7, 2, 11, 6, 8, 1, 5, 18, 17));
 
-    results = dao.findAnyInField(RecordField.Password, null, "bravo", "charlie", "delta");
+    results = dao.findAnyInField(SiteField.Password, null, "bravo", "charlie", "delta");
     assertThat(getIds(results), hasItems(3, 4, 6, 12));
     assertEquals(4, results.size());
 
-    results = dao.findAnyInField(RecordField.Password, RecordField.Source, "bravo", "charlie", "delta");
+    results = dao.findAnyInField(SiteField.Password, SiteField.Source, "bravo", "charlie", "delta");
     assertTrue(arraysMatch(getIds(results), 4, 12, 6, 3));
 
-    results = dao.findAnyInField(RecordField.Notes, null, "bravo", "charlie", "delta");
+    results = dao.findAnyInField(SiteField.Notes, null, "bravo", "charlie", "delta");
     assertThat(getIds(results), hasItems(4, 15, 17, 18));
     assertEquals(4, results.size());
 
-    results = dao.findAnyInField(RecordField.Notes, RecordField.Source, "bravo", "charlie", "delta");
+    results = dao.findAnyInField(SiteField.Notes, SiteField.Source, "bravo", "charlie", "delta");
     assertTrue(arraysMatch(getIds(results), 4, 15, 18, 17));
 
 
-    results = dao.findAnyInField(RecordField.Source, null, "bravo", "charlie");
+    results = dao.findAnyInField(SiteField.Source, null, "bravo", "charlie");
     assertThat(getIds(results), hasItems(1, 2, 3, 4, 5, 13, 16, 17, 18));
     assertEquals(9, results.size());
 
-    results = dao.findAnyInField(RecordField.Source, RecordField.Source, "bravo", "charlie");
+    results = dao.findAnyInField(SiteField.Source, SiteField.Source, "bravo", "charlie");
     assertTrue(arraysMatch(getIds(results), 4, 2, 13, 3, 1, 16, 5, 18, 17));
 
-    results = dao.findAnyInField(RecordField.Username, null, "bravo", "charlie");
+    results = dao.findAnyInField(SiteField.Username, null, "bravo", "charlie");
     assertThat(getIds(results), hasItems(1, 5, 6, 8));
     assertEquals(4, results.size());
 
-    results = dao.findAnyInField(RecordField.Username, RecordField.Source, "bravo", "charlie");
+    results = dao.findAnyInField(SiteField.Username, SiteField.Source, "bravo", "charlie");
     assertTrue(arraysMatch(getIds(results), 6, 8, 1, 5));
 
-    results = dao.findAnyInField(RecordField.Password, null, "bravo", "charlie");
+    results = dao.findAnyInField(SiteField.Password, null, "bravo", "charlie");
     assertThat(getIds(results), hasItems(3));
     assertEquals(1, results.size());
 
-    results = dao.findAnyInField(RecordField.Password, RecordField.Source, "bravo", "charlie");
+    results = dao.findAnyInField(SiteField.Password, SiteField.Source, "bravo", "charlie");
     assertTrue(arraysMatch(getIds(results), 3));
 
-    results = dao.findAnyInField(RecordField.Notes, null, "bravo", "charlie");
+    results = dao.findAnyInField(SiteField.Notes, null, "bravo", "charlie");
     assertThat(getIds(results), hasItems(4, 17, 18));
     assertEquals(3, results.size());
 
-    results = dao.findAnyInField(RecordField.Notes, RecordField.Source, "bravo", "charlie");
+    results = dao.findAnyInField(SiteField.Notes, SiteField.Source, "bravo", "charlie");
     assertTrue(arraysMatch(getIds(results), 4, 18, 17));
   }
   
-  private List<Integer> getIds(Collection<RecordRecord> records) {
+  private List<Integer> getIds(Collection<SiteRecord> records) {
     List<Integer> ids = new LinkedList<>();
-    for (RecordRecord r : records) {
+    for (SiteRecord r : records) {
       ids.add(r.getId());
     }
     return ids;
@@ -293,121 +293,121 @@ public class SqLiteRecordDaoTest {
   }
   
   private void setupFindTests() throws SQLException {
-    RecordRecord[] records = {
-        new RecordRecord(1, "mBravoSource", "xCharlieName", "pw", ""),
-        new RecordRecord(2, "EBravoSource", "xDeltaName", "pw", ""),
-        new RecordRecord(3, "kBravoSource", "dummy", "xCharliePw", ""),
-        new RecordRecord(4, "BBravoSource", "name", "xDeltaPw", "xCharlieNotes"),
-        new RecordRecord(5, "pCharlieSource", "xCharlieName", "pw", ""),
-        new RecordRecord(6, "HDeltaSource", "xCharlieName", "xDeltaPw", ""),
-        new RecordRecord(7, "aDeltaSource", "xDeltaName", "pw", ""),
-        new RecordRecord(8, "lSource", "xCharlieName", "pw", ""),
-        new RecordRecord(9, "dSource", "name", "pw", ""),
-        new RecordRecord(10, "NDeltaSource", "name", "pw", ""),
-        new RecordRecord(11, "fSource", "xDeltaName", "pw", ""),
-        new RecordRecord(12, "cSource", "xName", "xDeltaPw", ""),
-        new RecordRecord(13, "iBravoSource", "xEchoName", "pw", ""),
-        new RecordRecord(14, "GDeltaSource", "xEchoName", "pw", ""),
-        new RecordRecord(15, "jSource", "xName", "xpw", "xDeltaZ"),
-        new RecordRecord(16, "OBravoSource", "name", "pw", ""),
-        new RecordRecord(17, "RBravoSource", "xDelta", "pw", "xCharlieNotes"),
-        new RecordRecord(18, "qCharlieSource", "xDeltaName", "pw", "zBravoNotes"),
+    SiteRecord[] records = {
+        new SiteRecord(1, "mBravoSource", "xCharlieName", "pw", ""),
+        new SiteRecord(2, "EBravoSource", "xDeltaName", "pw", ""),
+        new SiteRecord(3, "kBravoSource", "dummy", "xCharliePw", ""),
+        new SiteRecord(4, "BBravoSource", "name", "xDeltaPw", "xCharlieNotes"),
+        new SiteRecord(5, "pCharlieSource", "xCharlieName", "pw", ""),
+        new SiteRecord(6, "HDeltaSource", "xCharlieName", "xDeltaPw", ""),
+        new SiteRecord(7, "aDeltaSource", "xDeltaName", "pw", ""),
+        new SiteRecord(8, "lSource", "xCharlieName", "pw", ""),
+        new SiteRecord(9, "dSource", "name", "pw", ""),
+        new SiteRecord(10, "NDeltaSource", "name", "pw", ""),
+        new SiteRecord(11, "fSource", "xDeltaName", "pw", ""),
+        new SiteRecord(12, "cSource", "xName", "xDeltaPw", ""),
+        new SiteRecord(13, "iBravoSource", "xEchoName", "pw", ""),
+        new SiteRecord(14, "GDeltaSource", "xEchoName", "pw", ""),
+        new SiteRecord(15, "jSource", "xName", "xpw", "xDeltaZ"),
+        new SiteRecord(16, "OBravoSource", "name", "pw", ""),
+        new SiteRecord(17, "RBravoSource", "xDelta", "pw", "xCharlieNotes"),
+        new SiteRecord(18, "qCharlieSource", "xDeltaName", "pw", "zBravoNotes"),
     };
     assert dao != null;
-    for (RecordRecord r: records) {
+    for (SiteRecord r: records) {
       dao.insert(r);
     }
   }
   
   private void setUpFindAllTests() throws SQLException {
-    RecordRecord[] records = {
-        new RecordRecord(1, "mBravoSource CharlieX", "xCharlieName", "pw", ""),
-        new RecordRecord(2, "NBravoSource DeltaX", "xDeltaName", "aBravo bEchoX cCharlieZ", ""),
-        new RecordRecord(3, "KBravoSource EchoX", "dummy", "xCharliePw bBravoX aDeltaZ", ""),
-        new RecordRecord(4, "bBravoSource CharlieX Delta Force", "name", "xDeltaPw", "xCharlieNotes"),
-        new RecordRecord(5, "pCharlieSource", "xCharlieName yBravo", "pw", ""),
-        new RecordRecord(6, "HDeltaSource", "xCharlieNameX yDeltaX", "xDeltaPw", "xDeltaNameX PBravoNameX ZCharlieX"),
-        new RecordRecord(7, "aDeltaSource", "xDeltaNameX PBravoNameX ZCharlieX", "pw", ""),
-        new RecordRecord(8, "LSource", "xCharlieName", "pw", ""),
-        new RecordRecord(9, "dSource", "name", "CharlieXpw", ""),
-        new RecordRecord(10, "eDeltaSource", "name", "CharlieX BravoPw XDeltaZ", "XBravoZ aCharlieZ"),
-        new RecordRecord(11, "JSource", "xDeltaName zCharlieX bBravoZ", "pw", ""),
-        new RecordRecord(12, "CSource", "xName", "xDeltaPw", ""),
-        new RecordRecord(13, "qBravoSource dDeltaX aCharlieB", "xEchoName", "ABravoZ BDeltaX bCharlieX pw", ""),
-        new RecordRecord(14, "GDeltaSource", "xEchoName", "pw", "xBravo bCharlie ZDeltaX"),
-        new RecordRecord(15, "fSource", "xName", "xpw", "xDeltaNameX PBravoNameX ZCharlieX"),
-        new RecordRecord(16, "OBravoSource", "name", "pw", ""),
-        new RecordRecord(17, "rBravoSource", "xDelta", "pw", "xCharlieNotes"),
-        new RecordRecord(18, "ICharlieSource aDeltaX bBravoX", "xDeltaName aBravoX bCharlieZ", "bEcho", "zBravoNotes"),
+    SiteRecord[] records = {
+        new SiteRecord(1, "mBravoSource CharlieX", "xCharlieName", "pw", ""),
+        new SiteRecord(2, "NBravoSource DeltaX", "xDeltaName", "aBravo bEchoX cCharlieZ", ""),
+        new SiteRecord(3, "KBravoSource EchoX", "dummy", "xCharliePw bBravoX aDeltaZ", ""),
+        new SiteRecord(4, "bBravoSource CharlieX Delta Force", "name", "xDeltaPw", "xCharlieNotes"),
+        new SiteRecord(5, "pCharlieSource", "xCharlieName yBravo", "pw", ""),
+        new SiteRecord(6, "HDeltaSource", "xCharlieNameX yDeltaX", "xDeltaPw", "xDeltaNameX PBravoNameX ZCharlieX"),
+        new SiteRecord(7, "aDeltaSource", "xDeltaNameX PBravoNameX ZCharlieX", "pw", ""),
+        new SiteRecord(8, "LSource", "xCharlieName", "pw", ""),
+        new SiteRecord(9, "dSource", "name", "CharlieXpw", ""),
+        new SiteRecord(10, "eDeltaSource", "name", "CharlieX BravoPw XDeltaZ", "XBravoZ aCharlieZ"),
+        new SiteRecord(11, "JSource", "xDeltaName zCharlieX bBravoZ", "pw", ""),
+        new SiteRecord(12, "CSource", "xName", "xDeltaPw", ""),
+        new SiteRecord(13, "qBravoSource dDeltaX aCharlieB", "xEchoName", "ABravoZ BDeltaX bCharlieX pw", ""),
+        new SiteRecord(14, "GDeltaSource", "xEchoName", "pw", "xBravo bCharlie ZDeltaX"),
+        new SiteRecord(15, "fSource", "xName", "xpw", "xDeltaNameX PBravoNameX ZCharlieX"),
+        new SiteRecord(16, "OBravoSource", "name", "pw", ""),
+        new SiteRecord(17, "rBravoSource", "xDelta", "pw", "xCharlieNotes"),
+        new SiteRecord(18, "ICharlieSource aDeltaX bBravoX", "xDeltaName aBravoX bCharlieZ", "bEcho", "zBravoNotes"),
     };
     assert dao != null;
-    for (RecordRecord r : records) {
+    for (SiteRecord r : records) {
       dao.insert(r);
     }
   }
 
   @Test
   public void findAllInFieldTest() throws SQLException {
-    Collection<RecordRecord> results;
+    Collection<SiteRecord> results;
     assert dao != null;
     setUpFindAllTests();
 
     // Find All In Field
-    results = dao.findAllInField(RecordField.Source, null, "bravo", "charlie", "delta");
+    results = dao.findAllInField(SiteField.Source, null, "bravo", "charlie", "delta");
     assertThat(getIds(results), hasItems(4, 13, 18));
     assertEquals(3, results.size());
 
-    results = dao.findAllInField(RecordField.Source, RecordField.Source, "bravo", "charlie", "delta");
+    results = dao.findAllInField(SiteField.Source, SiteField.Source, "bravo", "charlie", "delta");
     assertTrue(arraysMatch(getIds(results), 4, 18, 13));
 
-    results = dao.findAllInField(RecordField.Username, null, "bravo", "charlie", "delta");
+    results = dao.findAllInField(SiteField.Username, null, "bravo", "charlie", "delta");
     assertThat(getIds(results), hasItems(7, 11, 18));
     assertEquals(3, results.size());
 
-    results = dao.findAllInField(RecordField.Username, RecordField.Source, "bravo", "charlie", "delta");
+    results = dao.findAllInField(SiteField.Username, SiteField.Source, "bravo", "charlie", "delta");
     assertTrue(arraysMatch(getIds(results), 7, 18, 11));
 
-    results = dao.findAllInField(RecordField.Password, null, "bravo", "charlie", "delta");
+    results = dao.findAllInField(SiteField.Password, null, "bravo", "charlie", "delta");
     assertThat(getIds(results), hasItems(3, 10, 13));
     assertEquals(3, results.size());
 
-    results = dao.findAllInField(RecordField.Password, RecordField.Source, "bravo", "charlie", "delta");
+    results = dao.findAllInField(SiteField.Password, SiteField.Source, "bravo", "charlie", "delta");
     assertTrue(arraysMatch(getIds(results), 10, 3, 13));
 
-    results = dao.findAllInField(RecordField.Notes, null, "bravo", "charlie", "delta");
+    results = dao.findAllInField(SiteField.Notes, null, "bravo", "charlie", "delta");
     assertThat(getIds(results), hasItems(6, 14, 15));
     assertEquals(3, results.size());
 
-    results = dao.findAllInField(RecordField.Notes, RecordField.Source, "bravo", "charlie", "delta");
+    results = dao.findAllInField(SiteField.Notes, SiteField.Source, "bravo", "charlie", "delta");
     assertTrue(arraysMatch(getIds(results), 15, 14, 6));
 
 
-    results = dao.findAllInField(RecordField.Source, null, "bravo", "charlie");
+    results = dao.findAllInField(SiteField.Source, null, "bravo", "charlie");
     assertThat(getIds(results), hasItems(1, 4, 13, 18));
     assertEquals(4, results.size());
 
-    results = dao.findAllInField(RecordField.Source, RecordField.Source, "bravo", "charlie");
+    results = dao.findAllInField(SiteField.Source, SiteField.Source, "bravo", "charlie");
     assertTrue(arraysMatch(getIds(results), 4, 18, 1, 13));
 
-    results = dao.findAllInField(RecordField.Username, null, "bravo", "charlie");
+    results = dao.findAllInField(SiteField.Username, null, "bravo", "charlie");
     assertThat(getIds(results), hasItems(5, 7, 11, 18));
     assertEquals(4, results.size());
 
-    results = dao.findAllInField(RecordField.Username, RecordField.Source, "bravo", "charlie");
+    results = dao.findAllInField(SiteField.Username, SiteField.Source, "bravo", "charlie");
     assertTrue(arraysMatch(getIds(results), 7, 18, 11, 5));
 
-    results = dao.findAllInField(RecordField.Password, null, "bravo", "charlie");
+    results = dao.findAllInField(SiteField.Password, null, "bravo", "charlie");
     assertThat(getIds(results), hasItems(2, 3, 10, 13));
     assertEquals(4, results.size());
 
-    results = dao.findAllInField(RecordField.Password, RecordField.Source, "bravo", "charlie");
+    results = dao.findAllInField(SiteField.Password, SiteField.Source, "bravo", "charlie");
     assertTrue(arraysMatch(getIds(results), 10, 3, 2, 13));
 
-    results = dao.findAllInField(RecordField.Notes, null, "bravo", "charlie");
+    results = dao.findAllInField(SiteField.Notes, null, "bravo", "charlie");
     assertThat(getIds(results), hasItems(6, 10, 14, 15));
     assertEquals(4, results.size());
 
-    results = dao.findAllInField(RecordField.Notes, RecordField.Source, "bravo", "charlie");
+    results = dao.findAllInField(SiteField.Notes, SiteField.Source, "bravo", "charlie");
     assertTrue(arraysMatch(getIds(results), 10, 15, 14, 6));
   }
 
@@ -424,10 +424,10 @@ public class SqLiteRecordDaoTest {
     } finally {
 
       // cleanup even on failure.
-      Collection<RecordRecord> allRecords = showAllRecords(dao, -1);
+      Collection<SiteRecord> allRecords = showAllRecords(dao, -1);
       int count = allRecords.size();
-      for (RecordRecord recordRecord : allRecords) {
-        dao.delete(recordRecord);
+      for (SiteRecord siteRecord : allRecords) {
+        dao.delete(siteRecord);
       }
       allRecords = showAllRecords(dao, 0);
       assertEquals(0, allRecords.size());

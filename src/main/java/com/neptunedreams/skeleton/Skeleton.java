@@ -18,9 +18,9 @@ import com.ErrorReport;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.DatabaseInfo;
-import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.data.sqlite.SQLiteInfo;
-import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
+import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import com.neptunedreams.skeleton.ui.RecordController;
 import com.neptunedreams.skeleton.ui.RecordModel;
 import com.neptunedreams.skeleton.ui.RecordUI;
@@ -43,7 +43,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 public final class Skeleton extends JPanel
 {
   @SuppressWarnings("HardcodedFileSeparator")
-  private static final String EXPORT_FILE = "/.SkeletonData.xml";
+  private static final String EXPORT_FILE = "/.SkeletonData.serial";
   // Done: Write an import mechanism.
   // Done: Test packaging
   // Done: Test Bundling: https://github.com/federkasten/appbundle-maven-plugin
@@ -75,11 +75,11 @@ public final class Skeleton extends JPanel
 
 //  private static final String DERBY_SYSTEM_HOME = "derby.system.home";
 //  private Connection connection;
-  private RecordUI<RecordRecord> mainPanel;
+  private RecordUI<SiteRecord> mainPanel;
   //    org.jooq.util.JavaGenerator generator;
   private static JFrame frame = new JFrame("Skeleton");
   private final @NonNull DatabaseInfo info;
-  private final @NonNull RecordController<RecordRecord, Integer> controller;
+  private final @NonNull RecordController<SiteRecord, Integer> controller;
   //  private RecordController<>
 
   @SuppressWarnings("OverlyBroadThrowsClause")
@@ -108,7 +108,7 @@ public final class Skeleton extends JPanel
       } catch (InterruptedException ignored) { }
 
       SwingUtilities.invokeLater(() -> {
-        RecordModel<RecordRecord> model = skeleton.controller.getModel();
+        RecordModel<SiteRecord> model = skeleton.controller.getModel();
         //noinspection StringConcatenation,StringConcatenationMissingWhitespace
         String exportPath = System.getProperty("user.home") + EXPORT_FILE;
         System.err.printf("Exporting %d records to %s%n", model.getSize(), exportPath); // NON-NLS
@@ -131,23 +131,23 @@ public final class Skeleton extends JPanel
       info = new SQLiteInfo();
       info.init();
       final ConnectionSource connectionSource = info.getConnectionSource();
-      Dao<RecordRecord, Integer> dao = info.getDao(RecordRecord.class, connectionSource);
-      RecordRecord dummyRecord = new RecordRecord(0, "", "", "", "");
-      final RecordView<RecordRecord> view = new RecordView.Builder<>(dummyRecord, RecordField.Source)
-          .source  (RecordRecord::getSource,   RecordRecord::setSource)
-          .id      (RecordRecord::getId,       RecordRecord::setId)
-          .userName(RecordRecord::getUsername, RecordRecord::setUsername)
-          .password(RecordRecord::getPassword, RecordRecord::setPassword)
-          .notes   (RecordRecord::getNotes,    RecordRecord::setNotes)
+      Dao<SiteRecord, Integer> dao = info.getDao(SiteRecord.class, connectionSource);
+      SiteRecord dummyRecord = new SiteRecord(0, "", "", "", "");
+      final RecordView<SiteRecord> view = new RecordView.Builder<>(dummyRecord, SiteField.Source)
+          .source  (SiteRecord::getSource,   SiteRecord::setSource)
+          .id      (SiteRecord::getId,       SiteRecord::setId)
+          .userName(SiteRecord::getUsername, SiteRecord::setUsername)
+          .password(SiteRecord::getPassword, SiteRecord::setPassword)
+          .notes   (SiteRecord::getNotes,    SiteRecord::setNotes)
           .build();
       controller = new RecordController<>(
           dao, 
           view, 
-          RecordField.Source,
+          SiteField.Source,
           this::recordConstructor
       );
       view.setController(controller);
-      final RecordModel<RecordRecord> model = controller.getModel();
+      final RecordModel<SiteRecord> model = controller.getModel();
       mainPanel = new RecordUI<>(model, view, controller); // RecordUI launches the initial search
 
       if ((model.getSize() == 1) && (model.getRecordAt(0).getId() == 0) && doImport) {
@@ -176,11 +176,11 @@ public final class Skeleton extends JPanel
 //      
 //      FileInputStream inputStream = new FileInputStream(file);
 //      InputStreamReader reader = new InputStreamReader(inputStream, "UTF-8");
-//      List<RecordRecord> recordList = objectMapper.readValue(reader, new TypeReference<List<RecordRecord>>() {});
-//      for (RecordRecord recordRecord: recordList) {
-////        System.out.println(recordRecord);
-////        objectMapper.writeValueAsString(recordRecord); // Didn't work.
-//        dao.insert(recordRecord);
+//      List<SiteRecord> recordList = objectMapper.readValue(reader, new TypeReference<List<SiteRecord>>() {});
+//      for (SiteRecord siteRecord: recordList) {
+////        System.out.println(siteRecord);
+////        objectMapper.writeValueAsString(siteRecord); // Didn't work.
+//        dao.insert(siteRecord);
 //      }
     } catch (SQLException e) {
       e.printStackTrace();
@@ -190,14 +190,14 @@ public final class Skeleton extends JPanel
   }
 
   private static void importFromFile(
-      final Dao<RecordRecord, Integer> dao, 
-      RecordController<RecordRecord, Integer> controller)
+      final Dao<SiteRecord, Integer> dao, 
+      RecordController<SiteRecord, Integer> controller)
       throws SQLException, IOException, ClassNotFoundException {
     //noinspection StringConcatenation,StringConcatenationMissingWhitespace
     String exportPath = System.getProperty("user.home") + EXPORT_FILE;
     try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(exportPath))) {
       @SuppressWarnings("unchecked")
-      RecordModel<RecordRecord> model = (RecordModel<RecordRecord>) objectInputStream.readObject();
+      RecordModel<SiteRecord> model = (RecordModel<SiteRecord>) objectInputStream.readObject();
       for (int ii=0; ii<model.getSize(); ++ii) {
         dao.insert(model.getRecordAt(ii));
       }
@@ -206,9 +206,9 @@ public final class Skeleton extends JPanel
   }
 
   @SuppressWarnings("unused")
-  private RecordRecord recordConstructor(@UnderInitialization Skeleton this, Void ignored) {
+  private SiteRecord recordConstructor(@UnderInitialization Skeleton this, Void ignored) {
     //noinspection ConstantConditions
-    return new RecordRecord(0, "", "", "", "");
+    return new SiteRecord(0, "", "", "", "");
   }
   
   private JPanel getPanel() { return mainPanel; }

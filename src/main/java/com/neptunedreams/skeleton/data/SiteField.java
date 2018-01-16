@@ -10,7 +10,7 @@ import org.checkerframework.checker.nullness.qual.KeyFor;
  *
  * @author Miguel Mu\u00f1oz
  */
-public enum RecordField implements DisplayEnum {
+public enum SiteField implements DisplayEnum {
   @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") ID,
   @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") Source,
   @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") Username,
@@ -20,11 +20,11 @@ public enum RecordField implements DisplayEnum {
 
   private final boolean isField;
 
-  RecordField() {
+  SiteField() {
     isField = true;
   }
 
-  RecordField(boolean field) {
+  SiteField(boolean field) {
     isField = field;
   }
 

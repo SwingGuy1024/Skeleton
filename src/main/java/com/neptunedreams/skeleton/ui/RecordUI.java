@@ -24,7 +24,7 @@ import com.google.common.eventbus.Subscribe;
 import com.neptunedreams.framework.ui.ButtonGroupListener;
 import com.neptunedreams.framework.ui.EnumGroup;
 import com.neptunedreams.framework.ui.HidingPanel;
-import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.event.MasterEventBus;
 import com.neptunedreams.skeleton.task.ParameterizedCallable;
 import com.neptunedreams.skeleton.task.QueuedTask;
@@ -59,7 +59,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   // We set the initial text to a space, so we can fire the initial search by setting the text to the empty String.
   private JTextField findField = new JTextField(" ",10);
   private final RecordController<R, Integer> controller;
-  private EnumGroup<RecordField> buttonGroup = new EnumGroup<>();
+  private EnumGroup<SiteField> buttonGroup = new EnumGroup<>();
   private final @NonNull RecordModel<R> recordModel;
   private JButton prev = new JButton(Resource.getLeftArrow());
   private JButton next = new JButton(Resource.getRightArrow());
@@ -239,7 +239,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   }
   
   private void findText() {
-    RecordField field = buttonGroup.getSelected();
+    SiteField field = buttonGroup.getSelected();
     final SearchOption searchOption = getSearchOption();
     if (field.isField()) {
       controller.findTextInField(findField.getText(), field, searchOption);
@@ -252,12 +252,12 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JPanel createSearchRadioPanel() {
     JPanel radioPanel = new JPanel(new GridLayout(0, 1));
     assert buttonGroup != null;
-    buttonGroup.add(RecordField.All, radioPanel);
-    buttonGroup.add(RecordField.Source, radioPanel);
-    buttonGroup.add(RecordField.Username, radioPanel);
-    buttonGroup.add(RecordField.Password, radioPanel);
-    buttonGroup.add(RecordField.Notes, radioPanel);
-    buttonGroup.setSelected(RecordField.All);
+    buttonGroup.add(SiteField.All, radioPanel);
+    buttonGroup.add(SiteField.Source, radioPanel);
+    buttonGroup.add(SiteField.Username, radioPanel);
+    buttonGroup.add(SiteField.Password, radioPanel);
+    buttonGroup.add(SiteField.Notes, radioPanel);
+    buttonGroup.setSelected(SiteField.All);
 
     ButtonGroupListener changeListener = e -> searchNow();
     buttonGroup.addButtonGroupListener(changeListener);
