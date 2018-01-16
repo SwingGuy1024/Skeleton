@@ -90,7 +90,6 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   private SQLiteRecordDao(ConnectionSource source) {
     connectionSource = source;
     connection = source.getConnection();
-//    dslContext = DSL.using(connection, SQLITE);
   }
   
   private SQLiteRecordDao launch() {
@@ -316,10 +315,8 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   public void insertOrUpdate(final SiteRecord entity) throws SQLException {
     final Integer id = entity.getId();
     if ((id == null) || (id == 0)) {
-//      System.out.printf("Saving entity (id=%s) with insert%n", id);
       insert(entity);
     } else {
-//      System.out.printf("Saving entity (id=%s) with UPDATE%n", id);
       update(entity);
     }
   }
@@ -329,29 +326,12 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   public void insert(final SiteRecord entity) throws SQLException {
     //noinspection resource
     DSLContext dslContext = getDslContext();
-//    Record1 record1 = dslContext.select(max(Site.SITE.ID)).from(Site.SITE).fetchOne();
-//    System.out.printf("Max: %s%n", record1);
-//    Integer max = ((Integer)(record1.get("max")));
-//    int id = (max == null) ? 1 : (max + 1);
     //noinspection ConstantConditions
     entity.setId(null); // argument.type.incompatible null assumed not allowed in generated code.
     Integer id = entity.getId(); 
-//    System.out.printf("Inserting into Site using id %d%n", id);
     entity.setId(id);
     dslContext.attach(entity);
     entity.insert();
-//    System.out.printf("Inserted record has id %d%n", entity.getId());
-//    dslContext.insertInto(SITE)
-//        .set(SITE.SOURCE, entity.getSource())
-//        .set(SITE.USERNAME, entity.getUsername())
-//        .set(SITE.PASSWORD, entity.getPassword())
-//        .set(SITE.NOTES, entity.getNotes())
-//        .execute();
-//    Result<?> result = dslContext.fetch("SELECT last_insert_rowId()");
-//    System.out.println(result);
-//    int id = (Integer) result.getValue(0, "last_insert_rowId()");
-//    entity.setId(id);
-//    
   }
 
   @Override
@@ -388,15 +368,4 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
     DSLContext dslContext = getDslContext();
     return dslContext.fetchCount(Tables.SITE);
   }
-  
-  //  /**
-//   * This is an attempt (ultimately successful) to fix the sql statement that fails during code generation.
-//   * @param <T>
-//   * @return
-//   * @throws SQLException
-//   */
-////  @Override
-//  public <T> Collection<T> getTableInfo() throws SQLException {
-//    return null;
-//  }
 }
