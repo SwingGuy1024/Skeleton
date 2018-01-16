@@ -2,6 +2,9 @@ package com.neptunedreams.skeleton.data;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
+
 /**
  * <p>Created by IntelliJ IDEA.
  * <p>Date: 10/26/17
@@ -12,10 +15,12 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 //@Entity
 public class Record {
 //  @Column(name="ID")
+  @JsonIgnore
   private int id = 0;
 //  @Column(name="SOURCE")
   private String source="";
 //  @Column(name = "USERNAME")
+  @JsonProperty("username")
   private String userName="";
 //  @Column(name = "PASSWORD")
   private String password="";
