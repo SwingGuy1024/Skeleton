@@ -45,6 +45,8 @@ final class ImportDialog extends JDialog {
     JButton load = new JButton("Load");
     getContentPane().add(load, BorderLayout.PAGE_END);
     pack();
+    importArea.setLineWrap(true);
+    importArea.setWrapStyleWord(true);
     
     load.addActionListener((e -> doLoad(importArea.getText())));
   }

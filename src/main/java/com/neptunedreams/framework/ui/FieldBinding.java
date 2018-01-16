@@ -57,7 +57,8 @@ public abstract class FieldBinding<R, T, C extends Component> {
    * @param record The record with the data
    * @return The value
    */
-  T getTheValue(R record) { return getter.apply(record); }
+  @SuppressWarnings("WeakerAccess")
+  protected T getTheValue(R record) { return getter.apply(record); }
 
   /**
    * Gets the value from the editor or display field, without doing any cleaning. Subclasses should implement this for 
@@ -183,10 +184,10 @@ public abstract class FieldBinding<R, T, C extends Component> {
   }
   
   public static <R> StringEditableBinding<R> bindEditableString(Function<R, String> getter, Setter<R, String> setter, JTextComponent field) {
-    return new StringEditableBinding<R>(getter, setter, field);
+    return new StringEditableBinding<>(getter, setter, field);
   }
 
   public static <R> IntegerBinding<R> bindInteger(Function<R, Integer> getter, Setter<R, Integer> setter, JLabel field) {
-    return new IntegerBinding<R>(getter, setter, field);
+    return new IntegerBinding<>(getter, setter, field);
   }
 }

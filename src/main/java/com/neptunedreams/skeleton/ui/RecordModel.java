@@ -1,10 +1,12 @@
 package com.neptunedreams.skeleton.ui;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -14,18 +16,13 @@ import java.util.function.Function;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings("WeakerAccess")
-public class RecordModel<R> {
-  private final List<RecordModelListener> listenerList = new LinkedList<>();
+public class RecordModel<R> implements Serializable {
+  private final transient List<RecordModelListener> listenerList = new LinkedList<>();
   
-//  RecordModel() {
-//    Thread.dumpStack();
-//  }
-//
   // foundItems should be a RandomAccess list
   private List<R> foundItems = new ArrayList<>();
-  private int recordIndex = 0;
-  private int total = 0;
-  private final Function<Void, R> constructor;
+  private transient int recordIndex = 0;
+  private final transient Function<Void, R> constructor;
   
   RecordModel(Function<Void, R> theConstructor) {
     constructor = theConstructor;
@@ -36,18 +33,6 @@ public class RecordModel<R> {
   }
   
   public int getSize() { return foundItems.size(); }
-
-  public int getTotal() {
-    return total;
-  }
-
-  public void setTotalFromSize() {
-    this.total = foundItems.size();
-  }
-  
-  public void incrementTotal() { total++; }
-  
-  public void decrementTotal() { total--; }
 
   public void addModelListener(RecordModelListener listener) {
     listenerList.add(listener);
@@ -69,8 +54,10 @@ public class RecordModel<R> {
     fireModelListChanged();
   }
 
-  public R createNewEmptyRecord() {
-    return constructor.apply(null);
+  public @NonNull R createNewEmptyRecord() {
+    final R emptyRecord = constructor.apply(null);
+    assert emptyRecord != null;
+    return emptyRecord;
   }
 
   public void goNext() {
@@ -123,9 +110,11 @@ public class RecordModel<R> {
     fireModelListChanged();
   }
 
-  public R getFoundRecord() {
+  public @NonNull R getFoundRecord() {
     if (!foundItems.isEmpty()) {
-      return foundItems.get(recordIndex);
+      final R foundRecord = foundItems.get(recordIndex);
+      assert foundRecord != null;
+      return foundRecord;
     }
     R emptyRecord = createNewEmptyRecord();
     foundItems.add(emptyRecord);

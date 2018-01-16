@@ -2,7 +2,6 @@ package com.neptunedreams.skeleton.data;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -14,14 +13,18 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Miguel Mu\u00f1oz
  */
 public interface Dao<E, PK> {
-  boolean createTableIfNeeded(@UnderInitialization Dao<E, PK> this) throws SQLException;
+  boolean createTableIfNeeded() throws SQLException;
   
-  Collection<E> getAll(@Nullable RecordField orderBy) throws SQLException;
+  Collection<E> getAll(@Nullable SiteField orderBy) throws SQLException;
   
-  Collection<E> find(String text, @Nullable RecordField orderBy) throws SQLException;
-  
-  Collection<E> findInField(String text, @NonNull RecordField findBy, RecordField orderBy) throws SQLException;
-  
+  Collection<E> find(String text, @Nullable SiteField orderBy) throws SQLException;
+  Collection<E> findAny(@Nullable SiteField orderBy, String... text) throws SQLException;
+  Collection<E> findAll(@Nullable SiteField orderBy, String... text) throws SQLException;
+
+  Collection<E> findInField(String text, @NonNull SiteField findBy, @Nullable SiteField orderBy) throws SQLException;
+  Collection<E> findAnyInField(@NonNull SiteField findBy, @Nullable SiteField orderBy, String... text) throws SQLException;
+  Collection<E> findAllInField(@NonNull SiteField findBy, @Nullable SiteField orderBy, String... text) throws SQLException;
+
 //  E newEmptyRecord();
 
   /**
@@ -33,16 +36,21 @@ public interface Dao<E, PK> {
   void update(E entity) throws SQLException;
 
   void insert(E entity) throws SQLException;
-  
+
+  /**
+   * insert or update the provided entity. If the id is 0 or null, it inserts the record. Otherwise it updates it.
+   * @param entity The entity to save
+   * @throws SQLException Sql exception
+   */
   void insertOrUpdate(E entity) throws SQLException;
 
   void delete(E entity) throws SQLException;
   
-//  int getNewId(E entity) throws SQLException;
-  
   PK getNextId() throws SQLException;
   
   PK getPrimaryKey(E entity);
+  
+  int getTotal() throws SQLException;
 
   void setPrimaryKey(E entity, PK primaryKey);
   

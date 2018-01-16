@@ -1,7 +1,5 @@
 package com.neptunedreams.skeleton.task;
 
-import java.util.concurrent.Callable;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -13,17 +11,19 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @param <I> InputType
  * @param <R> ResultType
  */
-public abstract class ParameterizedCallable<I, R> implements Callable<R> {
-  private @Nullable I inputData = null;
-  public ParameterizedCallable() {
+public abstract class ParameterizedCallable<I, R> {
+  private @Nullable I inputData;
+  public ParameterizedCallable(@Nullable I initialValue) {
+    inputData = initialValue;
   }
 
   @SuppressWarnings("WeakerAccess")
-  public void setInputData(@NonNull I input) {
+  public void setInputData(@Nullable I input) {
     inputData = input;
   }
+
+  @SuppressWarnings("WeakerAccess")
   protected @Nullable I getInputData() { return inputData; }
 
-  @Override
-  public abstract R call() throws InterruptedException;
+  public abstract R call(I input);
 }

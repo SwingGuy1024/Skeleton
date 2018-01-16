@@ -61,13 +61,14 @@ public abstract class AbstractDatabaseInfo implements DatabaseInfo {
 //    final String databaseHome = props.getProperty(DERBY_SYSTEM_HOME);
 //    System.out.printf("databaseHome: %s%n", databaseHome);
     @SuppressWarnings("HardcodedFileSeparator")
-    File dataDir = new File("/", databaseHome);
+    File dataDir = new File(databaseHome);
 //    System.out.printf("DataDir: %s%n", dataDir.getAbsolutePath());
     if (!dataDir.exists()) {
       //noinspection BooleanVariableAlwaysNegated
       boolean success = dataDir.mkdir();
       if (!success) {
-        throw new IllegalStateException("Failed to create home directory");
+        throw new IllegalStateException(String.format("Failed to create home directory: %s from %s",
+            dataDir.getAbsolutePath(), databaseHome));
       }
     }
 

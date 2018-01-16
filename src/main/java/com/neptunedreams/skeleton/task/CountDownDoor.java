@@ -148,10 +148,12 @@ public class CountDownDoor {
       return getState();
     }
 
+    @Override
     protected int tryAcquireShared(int acquires) {
       return (getState() == 0) ? 1 : -1;
     }
 
+    @Override
     protected boolean tryReleaseShared(int releases) {
       // Decrement count; signal when transition to zero
       while (true) {
@@ -300,7 +302,13 @@ public class CountDownDoor {
     //noinspection StringConcatenation,HardCodedStringLiteral,MagicCharacter
     return super.toString() + "[Count = " + sync.getCount() + ']';
   }
-  
+
+  /**
+   * This "closes" the door, allowing it to resume blocking a thread. In spite of the metaphor of a door opening and
+   * closing, I hesitate to use the name "close()" for this method, since it has another meaning in so many other 
+   * classes, so I call it reset() instead. 
+   * @param count The door's count, which also gets set by the constructor.
+   */
   public void reset(int count) {
     sync.reOpen(count);
   }

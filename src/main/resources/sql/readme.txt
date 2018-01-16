@@ -1,0 +1,5 @@
+The skeleton.db file in this directory is the SqLite3 database that jOOQ uses to generate the java code used to access
+the table. But it's not the database that the application uses. This way, we can delete the actual database as we
+make changes, but the master, from which the code is generated, will remain untouched. If you change the create 
+statement, it's important to apply that revised create statement to the table in this database. It has a few
+records that were once used for testing, but they're not necessary.

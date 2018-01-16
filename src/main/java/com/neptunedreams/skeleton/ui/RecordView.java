@@ -1,6 +1,7 @@
 package com.neptunedreams.skeleton.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -18,12 +19,16 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.border.MatteBorder;
 import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.JTextComponent;
+import com.google.common.eventbus.Subscribe;
 import com.neptunedreams.Setter;
 import com.neptunedreams.framework.ui.FieldBinding;
-import com.neptunedreams.skeleton.data.RecordField;
+import com.neptunedreams.skeleton.data.SiteField;
+import com.neptunedreams.skeleton.event.ChangeRecord;
+import com.neptunedreams.skeleton.event.MasterEventBus;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 
 /**
@@ -34,10 +39,9 @@ import org.checkerframework.checker.initialization.qual.UnderInitialization;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings("WeakerAccess")
-public final class RecordView<R> extends JPanel {
+public final class RecordView<R> extends JPanel implements RecordSelectionModel<R> {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
-  private static final int NO_RECORD = -999;
   private JPanel labelPanel = new JPanel(new GridLayout(0, 1));
   private JPanel fieldPanel = new JPanel(new GridLayout(0, 1));
   private JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
@@ -47,12 +51,12 @@ public final class RecordView<R> extends JPanel {
   private R currentRecord; // = new Record("D", "D", "D", "D");
   
   private RecordController<R, ?> controller;
-  private final FieldBinding.IntegerBinding<R> idBinding;
   private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
+  private final JTextComponent sourceField;
 
   @SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible", "method.invocation.invalid", "HardCodedStringLiteral"})
   private RecordView(R record,
-                     RecordField initialSort,
+                     SiteField initialSort,
                      Function<R, Integer> getIdFunction, Setter<R, Integer> setIdFunction,
                      Function<R, String> getSourceFunction, Setter<R, String> setSourceFunction,
                      Function<R, String> getUserNameFunction, Setter<R, String> setUserNameFunction,
@@ -61,14 +65,14 @@ public final class RecordView<R> extends JPanel {
    ) {
     super(new BorderLayout());
     currentRecord = record;
-    final JLabel idField = (JLabel) addField("ID", false, RecordField.ID, initialSort);
-    final JTextComponent sourceField = (JTextComponent) addField("Source", true, RecordField.SOURCE, initialSort);
-    final JTextComponent usernameField = (JTextComponent) addField("User Name", true, RecordField.USERNAME, initialSort);
-    final JTextComponent pwField = (JTextComponent) addField("Password", true, RecordField.PASSWORD, initialSort);
+    final JLabel idField = (JLabel) addField("ID", false, SiteField.ID, initialSort);
+    sourceField = (JTextComponent) addField("Source", true, SiteField.Source, initialSort);
+    final JTextComponent usernameField = (JTextComponent) addField("User Name", true, SiteField.Username, initialSort);
+    final JTextComponent pwField = (JTextComponent) addField("Password", true, SiteField.Password, initialSort);
     final JTextComponent notesField = addNotesField();
     assert getIdFunction != null : "Null id getter";
     assert setIdFunction != null : "Null id Setter";
-    idBinding = FieldBinding.bindInteger(getIdFunction, setIdFunction, idField);
+    final FieldBinding.IntegerBinding<R> idBinding = FieldBinding.bindInteger(getIdFunction, setIdFunction, idField);
     final FieldBinding.StringEditableBinding<R> sourceBinding = FieldBinding.bindEditableString(getSourceFunction, setSourceFunction, sourceField);
     final FieldBinding.StringEditableBinding<R> userNameBinding = FieldBinding.bindEditableString(getUserNameFunction, setUserNameFunction, usernameField);
     final FieldBinding.StringEditableBinding<R> passwordBinding = FieldBinding.bindEditableString(getPasswordFunction, setPasswordFunction, pwField);
@@ -79,13 +83,17 @@ public final class RecordView<R> extends JPanel {
     for (FieldBinding<R, ?, ?> b : allBindings) {
       cleanValue(b, currentRecord);
     }
-    idBinding.setValue(currentRecord, NO_RECORD);
+    idBinding.setValue(currentRecord, 0);
     add(makeTopPanel(), BorderLayout.PAGE_START);
 
     installStandardCaret(sourceField);
     installStandardCaret(usernameField);
     installStandardCaret(pwField);
     installStandardCaret(notesField);
+    MasterEventBus.registerMasterEventHandler(this);
+    
+    // Put a line at the top, one pixel wide.
+    setBorder(new MatteBorder(1, 0, 0, 0, Color.black));
   }
 
   /**
@@ -116,8 +124,8 @@ public final class RecordView<R> extends JPanel {
   /**
    * On the Mac, the AquaCaret will get installed. This caret has an annoying feature of selecting all the text on a
    * focus-gained event. If this isn't bad enough, it also fails to check temporary vs permanent focus gain, so it 
-   * gets triggered on a focused JTextComponent whenever a menu is released! This removes the Aqua Caret and installs
-   * a standard caret. It's safe to use on any platform.
+   * gets triggered on a focused JTextComponent whenever a menu is released! This method removes the Aqua Caret and 
+   * installs a standard caret. It's only needed on the Mac, but it's safe to use on any platform.
    * @param component The component to repair. This is usually a JTextField or JTextArea.
    */
   public static void installStandardCaret(JTextComponent component) {
@@ -133,7 +141,7 @@ public final class RecordView<R> extends JPanel {
     caret.setBlinkRate(blinkRate); // Starts the new caret blinking.
   }
 
-  private JComponent addField(final String labelText, final boolean editable, final RecordField orderField, RecordField initialSort) {
+  private JComponent addField(final String labelText, final boolean editable, final SiteField orderField, SiteField initialSort) {
     //noinspection StringConcatenation,MagicCharacter
     JLabel label = new JLabel(labelText + ':');
     labelPanel.add(label);
@@ -153,6 +161,8 @@ public final class RecordView<R> extends JPanel {
     ItemListener checkBoxListener = (itemEvent) -> {
       if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
         controller.specifyOrder(orderField);
+        // Here's where I want to call RecordUI.searchNow(). The code needs to be restructured before I can do that.
+        MasterEventBus.postSearchNowEvent();
       }
     };
     orderBy.addItemListener(checkBoxListener);
@@ -161,6 +171,8 @@ public final class RecordView<R> extends JPanel {
   
   private JTextComponent addNotesField() {
     final JTextArea wrappedField = new JTextArea(TEXT_ROWS, TEXT_COLUMNS);
+    wrappedField.setWrapStyleWord(true);
+    wrappedField.setLineWrap(true);
     JComponent scrollPane = wrap(wrappedField);
     add(BorderLayout.CENTER, scrollPane);
     return wrappedField;
@@ -170,14 +182,18 @@ public final class RecordView<R> extends JPanel {
     return new JScrollPane(wrapped, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
   }
   
-  void setCurrentRecord(R newRecord) {
+  @Subscribe
+  public void setCurrentRecord(ChangeRecord<R> recordEvent) {
+    R newRecord = recordEvent.getNewRecord();
+    assert newRecord != null;
     currentRecord = newRecord;
     for (FieldBinding<R, ?, ?> binding: allBindings) {
       binding.prepareEditor(newRecord);
     }
   }
   
-  boolean recordHasChanged() {
+  @Override
+  public boolean recordHasChanged() {
     for (FieldBinding<R, ?, ?> binding: allBindings) {
       if (binding.isEditable() && binding.propertyHasChanged(currentRecord)) {
         return true;
@@ -187,34 +203,35 @@ public final class RecordView<R> extends JPanel {
   }
   
   public boolean saveOnExit() throws SQLException {
-    final R current = getCurrentRecord();
     // Test four cases:
     // 1. New Record with data
     // 2. New Record with no data
     // 3. Existing record with changes
     // 4. Existing record with no changes
-//    final Integer currentId = idBinding.getValue(current);
     final boolean hasChanged = recordHasChanged();
-//    System.out.printf("if %d == 0 && recordHasChanged = %b ...%n", currentId, hasChanged);
     if (hasChanged) {
-      loadUIData(current);
-//      System.out.printf("Saving%n");
+      loadUserEdits();
       return true;
     }
-//    System.out.println("Not Saving");
     return false;
   }
 
+  @Override
   public R getCurrentRecord() {
     return currentRecord;
   }
 
   /**
-   * Reads the data from the editor fields and loads it into the current record's 
-   * @param theRecord Unused. I'm still not entirely convinced that I'll never need it, so I'm keeping it around for now.
+   * Reads the data from the editor fields and loads them into the current record's model. This gets called by
+   * the event bus in response to a LoadUIEvent.
+   * @param event Unused. This used to be a Record, but we didn't need it.
    */
-  public void loadUIData(@SuppressWarnings("unused") R theRecord) {
-    final int id = (currentRecord == null) ? 0 : idBinding.getValue(currentRecord);
+  @Subscribe
+  public void loadUserEdits(MasterEventBus.LoadUIEvent event) {
+    loadUserEdits();
+  }
+
+  private void loadUserEdits() {
     for (FieldBinding<R, ?, ?> binding : allBindings) {
       if (binding.isEditable()) {
         binding.saveEdit(currentRecord);
@@ -222,30 +239,14 @@ public final class RecordView<R> extends JPanel {
     }
   }
 
-//  public void setButtonState(boolean nextEnabled, boolean prevEnabled) {
-//    
-//  }
-  
-//  private class LoggingCaret extends DefaultCaret {
-//    LoggingCaret() {
-//      super();
-//    }
-//
-//    @Override
-//    public void setDot(final int dot) {
-//      super.setDot(dot);
-//      System.out.printf("Dot set to %d to %d (requested %d)%n", getDot(), getMark(), dot);
-//    }
-//
-//    @Override
-//    public void moveDot(final int dot) {
-//      System.out.printf("Dot mov to %d to %d (requested %d)%n", getDot(), getMark(), dot);
-//    }
-//  }
+  @Subscribe void userRequestedNewRecord(MasterEventBus.UserRequestedNewRecordEvent event) {
+    sourceField.requestFocus();
+  }
+
     @SuppressWarnings("initialization.fields.uninitialized")
     public static class Builder<RR> {
       private RR record;
-      private RecordField initialSort;
+      private SiteField initialSort;
       private Function<RR, Integer> getId;
       private Setter<RR, Integer> setId;
       private Function<RR, String> getSource;
@@ -256,7 +257,7 @@ public final class RecordView<R> extends JPanel {
       private Setter<RR, String> setPassword;
       private Function<RR, String> getNotes;
       private Setter<RR, String> setNotes;
-      public Builder(RR record, RecordField initialSort) {
+      public Builder(RR record, SiteField initialSort) {
         this.record = record;
         this.initialSort = initialSort;
       }

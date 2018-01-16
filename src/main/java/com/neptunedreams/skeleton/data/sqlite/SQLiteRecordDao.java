@@ -5,22 +5,21 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Objects;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
-import com.neptunedreams.skeleton.data.RecordField;
-import com.neptunedreams.skeleton.gen.tables.Record;
-import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
-import org.checkerframework.checker.initialization.qual.UnknownInitialization;
+import com.neptunedreams.skeleton.data.SiteField;
+import com.neptunedreams.skeleton.gen.Tables;
+import com.neptunedreams.skeleton.gen.tables.Site;
+import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.OrderField;
 import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.ResultQuery;
 import org.jooq.SelectConditionStep;
-import org.jooq.SelectSeekStep1;
 import org.jooq.SelectSelectStep;
 import org.jooq.SelectWhereStep;
 import org.jooq.TableField;
@@ -33,12 +32,12 @@ import static org.jooq.impl.DSL.*;
 /**
  * Create statement: 
  * 
- * CREATE TABLE record (
- *    id          INTEGER        NOT NULL PRIMARY KEY AUTOINCREMENT,
- *    source      VARCHAR (256)  NOT NULL,
- *    username    VARCHAR (256)  NOT NULL,
- *    password    VARCHAR (256)  NOT NULL,
- *    notes       [LONG VARCHAR] NOT NULL
+ * CREATE TABLE IF NOT EXISTS site (
+ *    id          INTEGER        NOT NULL PRIMARY KEY,
+ *    source      VARCHAR (256)  NOT NULL collate noCase,
+ *    username    VARCHAR (256)  NOT NULL collate noCase,
+ *    password    VARCHAR (256)  NOT NULL collate noCase,
+ *    notes       LONG VARCHAR   NOT NULL collate noCase
  * );
  * 
  * <p>Created by IntelliJ IDEA.
@@ -48,38 +47,38 @@ import static org.jooq.impl.DSL.*;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "HardCodedStringLiteral"})
-public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
+public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
 
-  private static final Map<RecordField, @NonNull TableField<RecordRecord, ?>> fieldMap = makeFieldMap();
+  private static final Map<SiteField, @NonNull TableField<SiteRecord, ?>> fieldMap = makeFieldMap();
   private final ConnectionSource connectionSource;
   private @NonNull Connection connection;
 
-  private static Map<RecordField, @NonNull TableField<RecordRecord, ?>> makeFieldMap() {
-    final EnumMap<RecordField, @NonNull TableField<RecordRecord, ?>> fieldMap = new EnumMap<>(RecordField.class);
-    fieldMap.put(RecordField.ID,       Record.RECORD.ID);
-    fieldMap.put(RecordField.SOURCE,   Record.RECORD.SOURCE);
-    fieldMap.put(RecordField.USERNAME, Record.RECORD.USERNAME);
-    fieldMap.put(RecordField.PASSWORD, Record.RECORD.PASSWORD);
-    fieldMap.put(RecordField.NOTES,    Record.RECORD.NOTES);
+  private static Map<SiteField, @NonNull TableField<SiteRecord, ?>> makeFieldMap() {
+    final EnumMap<SiteField, @NonNull TableField<SiteRecord, ?>> fieldMap = new EnumMap<>(SiteField.class);
+    fieldMap.put(SiteField.ID,       Site.SITE.ID);
+    fieldMap.put(SiteField.Source,   Site.SITE.SOURCE);
+    fieldMap.put(SiteField.Username, Site.SITE.USERNAME);
+    fieldMap.put(SiteField.Password, Site.SITE.PASSWORD);
+    fieldMap.put(SiteField.Notes,    Site.SITE.NOTES);
     return fieldMap;
   }
 
-  private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS record (" +
-      "id INTEGER NOT NULL PRIMARY KEY," + // AUTOINCREMENT," +
-      "source VARCHAR(256) NOT NULL," +
-      "username VARCHAR(256) NOT NULL," +
-      "password VARCHAR(256) NOT NULL," +
-      "notes LONG VARCHAR NOT NULL" +
+  // If you change the CREATE statement, you need to change it two other places. First, you should change the comment
+  // at the beginning of this file. But more important, you should delete the master database 
+  // at src/main/resources/sql/generateFromSkeleton.db anc re-create it using the revised CREATE statement.
+  // Also, this statement specifies the primary key as a property, instead of as a constraint at the end of the 
+  // statement. This is necessary so a null id will cause the database to generate a new valid id. If it's specified
+  // in a CONSTRAINT clause, a null id will throw an exception instead. In fact, even if I specify the collate nocase
+  // constraints as named constraints, a null ID will still throw an exception.
+  private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS site (" +
+      "id INTEGER NOT NULL PRIMARY KEY," + 
+      "source VARCHAR(256) NOT NULL collate noCase," +
+      "username VARCHAR(256) NOT NULL collate noCase," +
+      "password VARCHAR(256) NOT NULL collate noCase," +
+      "notes LONG VARCHAR NOT NULL collate noCase" +
       ')';
-//  private static final String SELECT_ALL = "SELECT * FROM record ORDER BY ";
-//  private static final String FIND = "SELECT * FROM record WHERE (source LIKE ?) OR (username like ?) OR (password like ?) OR (notes like ?) ORDER BY ";
-//  private static final String FIND_BY_FIELD = "SELECT * FROM record WHERE ? LIKE ? ORDER BY ";
-//  private static final String SAVE = "UPDATE record SET source = ?, username = ?, password = ?, notes = ? where id = ?";
-//  private static final String INSERT = "INSERT INTO record (source, username, password, notes) VALUES (?, ?, ?, ?)";
-//  private static final String DELETE = "DELETE FROM record WHERE ID = ?";
   private static final char WC = '%';
-//  private final DSLContext dslContext;
-  private DSLContext getDslContext(@UnknownInitialization SQLiteRecordDao this) throws SQLException {
+  private DSLContext getDslContext() throws SQLException {
     assert connection != null;
     assert connectionSource != null;
     if (connection.isClosed()) {
@@ -88,24 +87,37 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
     return DSL.using(connection, SQLITE);
   }
 
-  SQLiteRecordDao(ConnectionSource source) {
+  private SQLiteRecordDao(ConnectionSource source) {
     connectionSource = source;
     connection = source.getConnection();
-//    dslContext = DSL.using(connection, SQLITE);
+  }
+  
+  private SQLiteRecordDao launch() {
     try {
       createTableIfNeeded();
     } catch (SQLException e) {
       throw new IllegalStateException(e);
     }
+    return this;
+  }
+  
+  static SQLiteRecordDao create(ConnectionSource source) {
+    return new SQLiteRecordDao(source).launch();
   }
 
   @Override
-  public boolean createTableIfNeeded(@UnderInitialization SQLiteRecordDao this) throws SQLException {
+  public boolean createTableIfNeeded() throws SQLException {
     /* All my efforts to generate the table using jOOQ failed, so I had to resort to direct SQL. */
 
     //noinspection resource
     DSLContext dslContext = getDslContext();
+
+    // Creates the table using the sql statement
     dslContext.execute(CREATE_TABLE);
+    
+    // Neither of the following two code blocks works, so I needed to use my CREATE_TABLE String to create the table I needed.
+//    dslContext.ddl(Tables.SITE).executeBatch();
+
 //    DefaultSchema schema = DefaultSchema.DEFAULT_SCHEMA;
 //    dslContext.createSchemaIfNotExists("skeleton").execute();
 //    Name recordName = new 
@@ -118,121 +130,212 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
 ////      }
 //    }
     
+    // Here's what fails when I try to use jOOQ to create my table:
+    // 1. The created table does not have collate noCase for each text field. This means my sorting will be
+    //    case-sensitive, which I hate.
+    // 2. The create statement looks has the primary key specified as a constraint, rather than a property, like this:
+    //       create table if not exists site (id integer NOT NULL, ... CONSTRAINT pk_site primary key(id));
+    //    instead of this:
+    //       create table if not exists site (id integer NOT NULL primary key, ... );
+    //    I don't see why this should make a difference, but it does. The effect is that when I specify null for 
+    //    the ID, the first case will throw an SQLiteException with this message: 
+    //    A NOT NULL constraint failed (NOT NULL constraint failed: site.id). The second case will work because the 
+    //    database generates a valid id. I don't know why they behave differently.
+    
     return true;
   }
 
   @Override
-  @SuppressWarnings("cast.unsafe")
-  public Collection<RecordRecord> getAll(final @Nullable RecordField orderBy) throws SQLException {
+  public Collection<SiteRecord> getAll(final @Nullable SiteField orderBy) throws SQLException {
 
     //noinspection resource
     DSLContext dslContext = getDslContext();
     try (
-        SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD)) {
+        SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
       if (orderBy == null) {
-        return recordRecords.fetch();
+        return siteRecords.fetch();
       } else {
         //noinspection resource
-        return recordRecords.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy)).fetch();
+        return siteRecords.orderBy(getField(orderBy)).fetch();
       }
     }
   }
 
   @Override
   @SuppressWarnings("cast.unsafe")
-  public Collection<RecordRecord> find(final String text, final @Nullable RecordField orderBy) throws SQLException {
-    final String wildCardText = WC + text + WC;
+  public Collection<SiteRecord> find(final String text, final @Nullable SiteField orderBy) throws SQLException {
+    final String wildCardText = wrapWithWildCards(text);
     //noinspection resource
     DSLContext dslContext = getDslContext();
     //noinspection resource
     try (
-      final SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD);
-      SelectConditionStep<RecordRecord> where = recordRecords.where(
-          RECORD.SOURCE.like(wildCardText).or(
-          RECORD.USERNAME.like(wildCardText).or(
-          RECORD.PASSWORD.like(wildCardText).or(
-          RECORD.NOTES.like(wildCardText)))));
-      final ResultQuery<RecordRecord> query = (orderBy == null) ? 
+        final SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE);
+        SelectConditionStep<SiteRecord> where = siteRecords.where(
+          SITE.SOURCE.like(wildCardText).or(
+          SITE.USERNAME.like(wildCardText).or(
+          SITE.PASSWORD.like(wildCardText).or(
+          SITE.NOTES.like(wildCardText)))));
+        final ResultQuery<SiteRecord> query = (orderBy == null) ? 
           where : 
-          where.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy)) // unsafe cast
+          where.orderBy(getField(orderBy)) // unsafe cast
     ) {
       return query.fetch();
     }
   }
 
+  /**
+   * This used to cast to upper() before returning the field, to implement case-insensitive sorting. Now
+   * this is done in the table definitions, this just extracts the right TableField from the fieldMap.
+   * @param orderBy The orderBy field
+   * @return A Field{@literal <String>} to pass to the orderBy() method to support case insensitive ordering.
+   */
+  @SuppressWarnings("unchecked")
+  private @NonNull TableField<SiteRecord, ?> getField(final @Nullable SiteField orderBy) {
+    return Objects.requireNonNull(fieldMap.get(orderBy));
+  }
+
+  private @NonNull String wrapWithWildCards(final String text) {
+    return WC + text + WC;
+  }
+
   @Override
-  @SuppressWarnings({"assignment.type.incompatible", "cast.unsafe"})
-  public Collection<RecordRecord> findInField(final String text, final @NonNull RecordField findBy, final @Nullable RecordField orderBy) throws SQLException {
-    String wildCardText = WC + text + WC;
+  public Collection<SiteRecord> findAny(final @Nullable SiteField orderBy, final String... text) throws SQLException {
     //noinspection resource
     DSLContext dslContext = getDslContext();
-
-    // type incompatible error. It complains that the field isn't "@UnknownInitialization". I don't know why.
-    final @NonNull TableField<RecordRecord, ?> findByField = fieldMap.get(findBy);
-    try (
-        final SelectWhereStep<RecordRecord> recordRecords = dslContext.selectFrom(RECORD);
-        final SelectConditionStep<RecordRecord> where = recordRecords.where((findByField.like(wildCardText)))
-    ) {
-      if (orderBy != null) {
-        //noinspection NestedTryStatement, cast.unsafe
-        try (SelectSeekStep1<RecordRecord, ?> step = where.orderBy((@NonNull OrderField<?>) fieldMap.get(orderBy))) {
-          return step.fetch();
-        }
-      } else {
-        return where.fetch();
+    Condition condition = SITE.SOURCE.lt(""); // Should always be false
+    //noinspection resource
+    try (final SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE))
+    {
+      for (String txt : text) {
+        String wildCardText = wrapWithWildCards(txt);
+          condition = condition.or(
+            SITE.SOURCE.like(wildCardText)).or(
+            SITE.USERNAME.like(wildCardText)).or(
+            SITE.PASSWORD.like(wildCardText)).or(
+            SITE.NOTES.like(wildCardText));
       }
+      return getFromQuery(orderBy, siteRecords, condition);
     }
   }
 
   @Override
-  public void update(final RecordRecord entity) throws SQLException {
+  public Collection<SiteRecord> findAll(final @Nullable SiteField orderBy, final String... text) throws SQLException {
+    //noinspection resource
+    DSLContext dslContext = getDslContext();
+    Condition condition = SITE.SOURCE.ge(""); // Should always be true
+    try (final SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
+      for (String txt : text) {
+        String wildCardText = wrapWithWildCards(txt);
+        condition = condition.and(
+            SITE.SOURCE.like(wildCardText).or(
+            SITE.USERNAME.like(wildCardText)).or(
+            SITE.PASSWORD.like(wildCardText)).or(
+            SITE.NOTES.like(wildCardText)));
+      }
+      return getFromQuery(orderBy, siteRecords, condition);
+    }
+  }
+
+  @Override
+  @SuppressWarnings("cast.unsafe")
+  public Collection<SiteRecord> findInField(
+      final String text, 
+      final @NonNull SiteField findBy, 
+      final @Nullable SiteField orderBy
+  ) throws SQLException {
+    String wildCardText = wrapWithWildCards(text);
+    //noinspection resource
+    DSLContext dslContext = getDslContext();
+
+    final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
+    try (
+        final SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE);
+        final SelectConditionStep<SiteRecord> where = siteRecords.where((findByField.like(wildCardText)))
+    ) {
+      final ResultQuery<SiteRecord> query;
+      query = (orderBy == null) ?
+        where :
+        where.orderBy(getField(orderBy));
+      return query.fetch();
+    }
+  }
+
+  @Override
+  public Collection<SiteRecord> findAnyInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
+    //noinspection resource
+    DSLContext dslContext = getDslContext();
+
+    final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
+    Condition condition = SITE.SOURCE.lt(""); // Should always be false
+    try (SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
+      for (String txt : text) {
+        String wildCardText = wrapWithWildCards(txt);
+        condition = condition.or(findByField.like(wildCardText));
+      }
+      return getFromQuery(orderBy, siteRecords, condition);
+    }
+  }
+
+  @Override
+  public Collection<SiteRecord> findAllInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
+    //noinspection resource
+    DSLContext dslContext = getDslContext();
+
+    final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
+    Condition condition = SITE.SOURCE.ge(""); // Should always be true
+    try (SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
+      for (String txt : text) {
+        String wildCardText = wrapWithWildCards(txt);
+        condition = condition.and(findByField.like(wildCardText));
+      }
+      return getFromQuery(orderBy, siteRecords, condition);
+    }
+  }
+
+  private Collection<SiteRecord> getFromQuery(
+      final @Nullable SiteField orderBy,
+      final SelectWhereStep<SiteRecord> siteRecords,
+      final Condition condition
+  ) {
+    final ResultQuery<SiteRecord> query;
+    try (SelectConditionStep<SiteRecord> where = siteRecords.where(condition)) {
+      query = (orderBy == null) ?
+          where :
+          where.orderBy(getField(orderBy));
+    }
+    return query.fetch();
+  }
+
+  @Override
+  public void update(final SiteRecord entity) throws SQLException {
     entity.store();
   }
 
   @Override
-  public void insertOrUpdate(final RecordRecord entity) throws SQLException {
+  public void insertOrUpdate(final SiteRecord entity) throws SQLException {
     final Integer id = entity.getId();
     if ((id == null) || (id == 0)) {
-//      System.out.printf("Saving entity (id=%s) with insert%n", id);
       insert(entity);
     } else {
-//      System.out.printf("Saving entity (id=%s) with UPDATE%n", id);
       update(entity);
     }
   }
 
   @Override
   @SuppressWarnings("argument.type.incompatible")
-  public void insert(final RecordRecord entity) throws SQLException {
+  public void insert(final SiteRecord entity) throws SQLException {
     //noinspection resource
     DSLContext dslContext = getDslContext();
-//    Record1 record1 = dslContext.select(max(Record.RECORD.ID)).from(Record.RECORD).fetchOne();
-//    System.out.printf("Max: %s%n", record1);
-//    Integer max = ((Integer)(record1.get("max")));
-//    int id = (max == null) ? 1 : (max + 1);
     //noinspection ConstantConditions
     entity.setId(null); // argument.type.incompatible null assumed not allowed in generated code.
     Integer id = entity.getId(); 
-//    System.out.printf("Inserting into Record using id %d%n", id);
     entity.setId(id);
     dslContext.attach(entity);
     entity.insert();
-//    System.out.printf("Inserted record has id %d%n", entity.getId());
-//    dslContext.insertInto(RECORD)
-//        .set(RECORD.SOURCE, entity.getSource())
-//        .set(RECORD.USERNAME, entity.getUsername())
-//        .set(RECORD.PASSWORD, entity.getPassword())
-//        .set(RECORD.NOTES, entity.getNotes())
-//        .execute();
-//    Result<?> result = dslContext.fetch("SELECT last_insert_rowId()");
-//    System.out.println(result);
-//    int id = (Integer) result.getValue(0, "last_insert_rowId()");
-//    entity.setId(id);
-//    
   }
 
   @Override
-  public void delete(final RecordRecord entity) throws SQLException {
+  public void delete(final SiteRecord entity) throws SQLException {
     entity.delete();
   }
   
@@ -242,7 +345,7 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
     //noinspection resource
     DSLContext dslContext = getDslContext();
     try (
-        final SelectSelectStep<Record1<Integer>> select = dslContext.select(max(Record.RECORD.ID))
+        final SelectSelectStep<Record1<Integer>> select = dslContext.select(max(Site.SITE.ID))
     ) {
       Result<Record1<Integer>> result = select.fetch();
       return result.get(0).getValue(1, Integer.class); // I'm guessing that Result (a List) is zero-based, but Record1 is one-based.
@@ -250,23 +353,19 @@ public class SQLiteRecordDao implements Dao<RecordRecord, Integer> {
   }
 
   @Override
-  public Integer getPrimaryKey(final RecordRecord entity) {
+  public Integer getPrimaryKey(final SiteRecord entity) {
     return entity.getId();
   }
 
   @Override
-  public void setPrimaryKey(final RecordRecord entity, final Integer primaryKey) {
+  public void setPrimaryKey(final SiteRecord entity, final Integer primaryKey) {
     entity.setId(primaryKey);
   }
 
-//  /**
-//   * This is an attempt (ultimately successful) to fix the sql statement that fails during code generation.
-//   * @param <T>
-//   * @return
-//   * @throws SQLException
-//   */
-////  @Override
-//  public <T> Collection<T> getTableInfo() throws SQLException {
-//    return null;
-//  }
+  @Override
+  public int getTotal() throws SQLException {
+    //noinspection resource
+    DSLContext dslContext = getDslContext();
+    return dslContext.fetchCount(Tables.SITE);
+  }
 }

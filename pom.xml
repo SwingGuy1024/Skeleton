@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.5-SNAPSHOT</version>
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -44,7 +44,6 @@
       <groupId>org.xerial</groupId>
       <artifactId>sqlite-jdbc</artifactId>
       <version>3.20.1</version>
-      <!--<scope>test</scope>-->
     </dependency>
 
     <!--&lt;!&ndash; https://mvnrepository.com/artifact/javax.persistence/persistence-api &ndash;&gt;-->
@@ -59,6 +58,13 @@
       <groupId>org.jetbrains</groupId>
       <artifactId>annotations</artifactId>
       <version>13.0</version>
+    </dependency>
+
+    <!--Google guava-->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>23.0</version>
     </dependency>
     
     <!--jOOQ-->
@@ -110,6 +116,14 @@
       <artifactId>jdk8</artifactId>
       <version>2.2.2</version>
     </dependency>
+
+    <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.codehaus.jackson/jackson-mapper-asl &ndash;&gt;-->
+    <!--<dependency>-->
+      <!--<groupId>org.codehaus.jackson</groupId>-->
+      <!--<artifactId>jackson-mapper-asl</artifactId>-->
+      <!--<version>1.9.13</version>-->
+    <!--</dependency>-->
+
   </dependencies>
   
   <build>
@@ -188,23 +202,25 @@
       </plugin>
 
       <!--This packs all the classes into a single jar-->
-      <!--<plugin>-->
-        <!--<artifactId>maven-assembly-plugin</artifactId>-->
-        <!--<configuration>-->
-          <!--<archive>-->
-            <!--<manifest>-->
-              <!--<mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>-->
-            <!--</manifest>-->
-          <!--</archive>-->
-          <!--<descriptorRefs>-->
-            <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
-          <!--</descriptorRefs>-->
-          <!--&lt;!&ndash;This remove the "with-dependencies" from the name, so it ends with ".jar"&ndash;&gt;-->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <!--This "appendAssemblyId" tag removes the "with-dependencies" from the name.-->
+	        <!--This is commented out because it overwrites the other jar file.-->
+	        <!--That interferes with the creation of the Mac App Bundle.-->
           <!--<appendAssemblyId>false</appendAssemblyId>-->
-        <!--</configuration>-->
-      <!--</plugin>-->
+        </configuration>
+      </plugin>
 
-      <!--This is the Maven dependency plugin. I don't know what it does but it's apparently needed.-->
+      <!--This is the Maven dependency plugin.-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -226,23 +242,23 @@
       </plugin>
 
       <!--This creates an executable jar file.-->
-      <!--<plugin>-->
-        <!--<groupId>org.apache.maven.plugins</groupId>-->
-        <!--<artifactId>maven-jar-plugin</artifactId>-->
-        <!--<version>2.6</version>-->
-        <!--<configuration>-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.6</version>
+        <configuration>
           <!--<detail>-->
             <!--<derby.system.home>${user.home}/.skeleton</derby.system.home>-->
           <!--</detail>-->
-          <!--<archive>-->
-            <!--<manifest>-->
-              <!--<mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>-->
-            <!--</manifest>-->
-          <!--</archive>-->
-        <!--</configuration>-->
-      <!--</plugin>-->
+          <archive>
+            <manifest>
+              <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
       
-      <!--This one will bundle everything into a Mac Application bundle, I hope.-->
+      <!--This one will bundle everything into a Mac Application bundle.-->
       <plugin>
         <!-- https://github.com/federkasten/appbundle-maven-plugin -->
         <groupId>sh.tak.appbundler</groupId>
@@ -253,7 +269,7 @@
           <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
           <!--<dictionaryFile>YourCustomInfo.plist</dictionaryFile>-->
           <iconFile>Earth_Neptune.icns</iconFile>
-          <jrePath>/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk</jrePath>
+          <jrePath>/Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk</jrePath>
         </configuration>
         <executions>
           <execution>
@@ -289,7 +305,7 @@
           </execution>
         </executions>
 
-        <!-- Manage the plugin's dependency. In this example, we'll use a PostgreSQL database -->
+        <!-- Manage the plugin's dependency. -->
         <dependencies>
           <dependency>
             <!--<groupId>org.apache.derby</groupId>-->
@@ -310,7 +326,7 @@
             <!--<driver>org.apache.derby.jdbc.EmbeddedDriver</driver>-->
             <!--<url>jdbc:derby:skeleton;create=true;collation=TERRITORY_BASED:PRIMARY</url>-->
             <driver>org.sqlite.JDBC</driver>
-            <url>jdbc:sqlite:/Users/miguelmunoz/.sqlite.master.skeleton/skeleton.db</url>
+            <url>jdbc:sqlite:src/main/resources/sql/generateFromSkeleton.db</url>
             <!--<user>postgres</user>-->
             <!--<password>test</password>-->
           </jdbc>
@@ -330,7 +346,7 @@
             </database>
             <target>
               <packageName>com.neptunedreams.skeleton.gen</packageName>
-              <directory>/Users/miguelmunoz/Documents/Skeleton2/src/main/java</directory>
+              <directory>src/main/java</directory>
             </target>
           </generator>
         </configuration>

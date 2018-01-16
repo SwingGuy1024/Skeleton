@@ -8,7 +8,7 @@ import com.neptunedreams.skeleton.data.AbstractDatabaseInfo;
 import com.neptunedreams.skeleton.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.gen.DefaultSchema;
-import com.neptunedreams.skeleton.gen.tables.records.RecordRecord;
+import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import org.jooq.DSLContext;
 import org.jooq.Query;
 import org.jooq.exception.DataAccessException;
@@ -26,9 +26,10 @@ import static org.jooq.SQLDialect.SQLITE;
 @SuppressWarnings({"StringConcatenation", "HardCodedStringLiteral"})
 public class SQLiteInfo extends AbstractDatabaseInfo {
 
-  private static final Class<RecordRecord> RECORD_RECORD_CLASS = RecordRecord.class;
+  private static final Class<SiteRecord> RECORD_RECORD_CLASS = SiteRecord.class;
 
   public SQLiteInfo() throws SQLException, IOException {
+    //noinspection HardcodedFileSeparator
     this("/.sqlite.skeleton");
   }
   
@@ -47,7 +48,7 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
     //noinspection EqualityOperatorComparesObjects
     if (entityClass == RECORD_RECORD_CLASS) {
       //noinspection unchecked
-      return (Dao<T, PK>) new SQLiteRecordDao(source);
+      return (Dao<T, PK>) SQLiteRecordDao.create(source);
     }
     throw new IllegalArgumentException(String.valueOf(entityClass));
   }
@@ -72,7 +73,12 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
         throw new IOException("Failed to create database file at " + databaseFile.getAbsolutePath());
       }
     }
-    initialize();
+    try {
+      Class.forName("org.sqlite.JDBC"); // Not needed for Mac bundle. Needed for execution from a single jar file.
+      initialize();
+    } catch (ClassNotFoundException e) {
+      throw new IOException(e);
+    }
   }
 
   @Override
@@ -82,6 +88,7 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
 
   @Override
   public void createSchema() {
+    //noinspection resource
     DSLContext dslContext = DSL.using(getConnectionSource().getConnection(), SQLITE);
     System.out.printf("DSLContext of %s%n", dslContext.getClass());
     DefaultSchema schema = DefaultSchema.DEFAULT_SCHEMA;
@@ -92,6 +99,7 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
     for (Query q : queries) {
       System.out.printf("Query: %s%n", q);
       if (q.toString().contains("sqlite_sequence")) {
+        //noinspection HardcodedLineSeparator
         System.out.println(("(Not Executed)\n"));
       } else {
         try {
