@@ -68,7 +68,8 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   // at src/main/resources/sql/generateFromSkeleton.db anc re-create it using the revised CREATE statement.
   // Also, this statement specifies the primary key as a property, instead of as a constraint at the end of the 
   // statement. This is necessary so a null id will cause the database to generate a new valid id. If it's specified
-  // in a CONSTRAINT clause, a null id will throw an exception instead.
+  // in a CONSTRAINT clause, a null id will throw an exception instead. In fact, even if I specify the collate nocase
+  // constraints as named constraints, a null ID will still throw an exception.
   private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS site (" +
       "id INTEGER NOT NULL PRIMARY KEY," + 
       "source VARCHAR(256) NOT NULL collate noCase," +
