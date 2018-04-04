@@ -70,8 +70,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JButton last = new JButton(Resource.getLast());
   private JLabel infoLine = new JLabel("");
   private final EnumGroup<SearchOption> optionsGroup = new EnumGroup<>();
-  private final JLayer<RecordView<R>> layer;
-  private @MonotonicNonNull SwipeView<R> swipeView=null;
+  private @MonotonicNonNull SwipeView<RecordView<R>> swipeView=null;
 
   private final HidingPanel searchOptionsPanel = makeSearchOptionsPanel(optionsGroup);
 
@@ -98,7 +97,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   public RecordUI(@NonNull RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
     super(new BorderLayout());
     recordModel = model;
-    layer = wrapInLayer(theView);
+    final JLayer<RecordView<R>> layer = wrapInLayer(theView);
     add(layer, BorderLayout.CENTER);
     add(createControlPanel(), BorderLayout.PAGE_START);
     add(createTrashPanel(), BorderLayout.PAGE_END);
@@ -217,7 +216,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
 //    buttons.add(importBtn);
     
     add.addActionListener((e)->addBlankRecord());
-    SwipeView<R> sView = Objects.requireNonNull(swipeView);
+    SwipeView<RecordView<R>> sView = Objects.requireNonNull(swipeView);
     sView.assignMouseDownAction(prev, recordModel::goPrev, true);
     sView.assignMouseDownAction(next, recordModel::goNext, false);
     first.addActionListener((e) -> sView.swipeLeft(recordModel::goFirst));

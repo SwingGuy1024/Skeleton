@@ -27,19 +27,19 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * @author Miguel Mu\u00f1oz
  */
-public final class SwipeView<R> extends LayerUI<RecordView<R>> {
+public final class SwipeView<C extends JComponent> extends LayerUI<C> {
 @SuppressWarnings("WeakerAccess")
-public static <R> SwipeView<R> wrap(RecordView<R> recordView) {
-    JLayer<RecordView<R>> jLayer = new JLayer<>(recordView);
-    final SwipeView<R> ui = new SwipeView<>(recordView, jLayer);
+public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
+    JLayer<J> jLayer = new JLayer<>(recordView);
+    final SwipeView<J> ui = new SwipeView<>(recordView, jLayer);
     jLayer.setUI(ui);
     return ui;
   }
   
-  private final RecordView<R> recordView;
+  private final C recordView;
   private @Nullable Image priorScreen=null;
   private @Nullable Image upcomingScreen= null;
-  private final JLayer<RecordView<R>> layer;
+  private final JLayer<C> layer;
   
   private boolean isAnimating = false;
   private boolean swipeRight = true;
@@ -50,20 +50,37 @@ public static <R> SwipeView<R> wrap(RecordView<R> recordView) {
   private static final int frameMillis = animationDurationMillis/maxFrames;
   private int frame = 0;
   
-  private SwipeView(RecordView<R> view, JLayer<RecordView<R>> theLayer) {
+  private SwipeView(C view, JLayer<C> theLayer) {
     super();
     recordView = view;
     layer = theLayer;
   }
 
   @SuppressWarnings("WeakerAccess")
-  public JLayer<RecordView<R>> getLayer() { return layer; }
+  public JLayer<C> getLayer() { return layer; }
 
+  /**
+   * Perform the specified operation with a swipe-right special effect. This is often used in an ActionListener:
+   * <pre>
+   *   first.addActionListener((e) -> swipeView.swipeRight(recordModel::goFirst));
+   * </pre>
+   * Here, the Action listener will perform a Swipe-right after executing the goFirst() method of recordModel.
+   * @param operation The operation
+   */
   @SuppressWarnings("WeakerAccess")
   public void swipeRight(Runnable operation) {
     swipe(operation,true);
   }
 
+  /**
+   * Perform the specified operation with a swipe-left special effect. This is often used in an ActionListener:
+   * <pre>
+   *   first.addActionListener((e) -> swipeView.swipeLeft(recordModel::goFirst));
+   * </pre>
+   * Here, the Action listener will perform a Swipe-Left after executing the goFirst() method of recordModel.
+   *
+   * @param operation The operation
+   */
   @SuppressWarnings("WeakerAccess")
   public void swipeLeft(Runnable operation) {
     swipe(operation, false);
