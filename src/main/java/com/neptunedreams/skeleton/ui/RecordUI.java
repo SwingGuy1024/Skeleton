@@ -5,10 +5,12 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Consumer;
 import javax.swing.ButtonModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JLayer;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -29,6 +31,7 @@ import com.neptunedreams.skeleton.event.MasterEventBus;
 import com.neptunedreams.skeleton.task.ParameterizedCallable;
 import com.neptunedreams.skeleton.task.QueuedTask;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -67,6 +70,8 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JButton last = new JButton(Resource.getLast());
   private JLabel infoLine = new JLabel("");
   private final EnumGroup<SearchOption> optionsGroup = new EnumGroup<>();
+  private final JLayer<RecordView<R>> layer;
+  private @MonotonicNonNull SwipeView<R> swipeView=null;
 
   private final HidingPanel searchOptionsPanel = makeSearchOptionsPanel(optionsGroup);
 
@@ -93,7 +98,8 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   public RecordUI(@NonNull RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
     super(new BorderLayout());
     recordModel = model;
-    add(theView, BorderLayout.CENTER);
+    layer = wrapInLayer(theView);
+    add(layer, BorderLayout.CENTER);
     add(createControlPanel(), BorderLayout.PAGE_START);
     add(createTrashPanel(), BorderLayout.PAGE_END);
     controller = theController;
@@ -120,6 +126,11 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     
     MasterEventBus.registerMasterEventHandler(this);
     queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
+  }
+  
+  private JLayer<RecordView<R>> wrapInLayer(RecordView<R> recordView) {
+    swipeView = SwipeView.wrap(recordView);
+    return swipeView.getLayer();
   }
   
   public void launchInitialSearch() {
@@ -206,10 +217,11 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
 //    buttons.add(importBtn);
     
     add.addActionListener((e)->addBlankRecord());
-    prev.addActionListener((e)->recordModel.goPrev());
-    next.addActionListener((e)->recordModel.goNext());
-    first.addActionListener((e) -> recordModel.goFirst());
-    last.addActionListener((e) -> recordModel.goLast());
+    SwipeView<R> sView = Objects.requireNonNull(swipeView);
+    sView.assignMouseDownAction(prev, recordModel::goPrev, true);
+    sView.assignMouseDownAction(next, recordModel::goNext, false);
+    first.addActionListener((e) -> sView.swipeLeft(recordModel::goFirst));
+    last.addActionListener((e)  -> sView.swipeRight(recordModel::goLast));
 //    importBtn.addActionListener((e) -> doImport());
     JPanel flowPanel = new JPanel(new FlowLayout());
     flowPanel.add(buttons);
