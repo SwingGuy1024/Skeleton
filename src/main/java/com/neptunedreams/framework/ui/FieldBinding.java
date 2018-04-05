@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.util.Objects;
 import java.util.function.Function;
 import javax.swing.JLabel;
+import javax.swing.JTextArea;
 import javax.swing.text.JTextComponent;
 import com.neptunedreams.Setter;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -148,7 +149,14 @@ public abstract class FieldBinding<R, T, C extends Component> {
 
     @Override
     protected void prepareEditor(final String editorValue) {
-      getEditor().setText(clean(editorValue));
+      final JTextComponent editor = getEditor();
+      editor.setText(clean(editorValue));
+      
+      // Don't scroll to the end on multi-line text components. This makes the animation smoother.
+      if (editor instanceof JTextArea) {
+        editor.setSelectionStart(0);
+        editor.setSelectionEnd(0);
+      }
     }
 
     @Override

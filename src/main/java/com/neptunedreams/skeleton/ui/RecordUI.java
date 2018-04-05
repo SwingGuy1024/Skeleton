@@ -56,6 +56,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   // todo   is easier to maintain. This will also allow me to implement instant response to changing the sort order.
   // todo   Maybe the way to do this would be to create a UIModel class that keeps track of all the UI state. Maybe 
   // todo   that way, the controller won't need to keep an instance of RecordView.
+  
+  // Todo:  Add keyboard listener to JLayer to handle left and right arrow keys. They should only activate when the 
+  // todo   focus is not held by a JTextComponent.
 
   private static final long DELAY = 1000L;
 
