@@ -31,6 +31,7 @@ import com.neptunedreams.skeleton.event.MasterEventBus;
 import com.neptunedreams.skeleton.task.ParameterizedCallable;
 import com.neptunedreams.skeleton.task.QueuedTask;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
+//import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -81,6 +82,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private final Consumer<Collection<R>> recordConsumer = createRecordConsumer();
   private @NonNull QueuedTask<String, Collection<R>> queuedTask;
 
+  @SuppressWarnings("methodref.inference.unimplemented")
   private HidingPanel makeSearchOptionsPanel(@UnderInitialization RecordUI<R> this, EnumGroup<SearchOption> optionsGroup) {
     JPanel optionsPanel = new JPanel(new GridLayout(1, 0));
     JRadioButton findExact = optionsGroup.add(SearchOption.findExact);
@@ -90,8 +92,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     optionsPanel.add(findAll);
     optionsPanel.add(findAny);
     optionsGroup.setSelected(SearchOption.findAny);
-    
-    optionsGroup.addButtonGroupListener(this::selectionChanged);
+
+//    optionsGroup.addButtonGroupListener(selectedButtonModel -> selectionChanged(selectedButtonModel));
+    optionsGroup.addButtonGroupListener(this::selectionChanged); // Using a lambda is an error. This is a warning. 
 
     return HidingPanel.create(optionsPanel);
   }
@@ -128,9 +131,10 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     
     MasterEventBus.registerMasterEventHandler(this);
     queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
+    queuedTask.launch();
   }
   
-  private JLayer<RecordView<R>> wrapInLayer(RecordView<R> recordView) {
+  private JLayer<RecordView<R>> wrapInLayer(@UnderInitialization RecordUI<R> this, RecordView<R> recordView) {
     swipeView = SwipeView.wrap(recordView);
     return swipeView.getLayer();
   }
@@ -220,10 +224,10 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     
     add.addActionListener((e)->addBlankRecord());
     SwipeView<RecordView<R>> sView = Objects.requireNonNull(swipeView);
-    sView.assignMouseDownAction(prev, recordModel::goPrev, true);
-    sView.assignMouseDownAction(next, recordModel::goNext, false);
-    first.addActionListener((e) -> sView.swipeLeft(recordModel::goFirst));
-    last.addActionListener((e)  -> sView.swipeRight(recordModel::goLast));
+    sView.assignMouseDownAction(prev, () -> recordModel.goPrev(), true);
+    sView.assignMouseDownAction(next, () -> recordModel.goNext(), false);
+    first.addActionListener((e) -> sView.swipeLeft(() -> recordModel.goFirst()));
+    last.addActionListener((e)  -> sView.swipeRight(() -> recordModel.goLast()));
 //    importBtn.addActionListener((e) -> doImport());
     JPanel flowPanel = new JPanel(new FlowLayout());
     flowPanel.add(buttons);

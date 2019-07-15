@@ -130,7 +130,7 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
   }
   
   private void animate() {
-    @SuppressWarnings("argument.type.incompatible")
+    @SuppressWarnings("argument.type.incompatible")    // Stub this out!
     Timer timer = new Timer(frameMillis, null);
     final ActionListener actionListener = (evt) -> {
       frame++;
@@ -166,7 +166,7 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
   private class MouseTracker extends MouseAdapter {
     private boolean active = false;
     private boolean tracking = false;
-    @SuppressWarnings("argument.type.incompatible")
+    @SuppressWarnings("argument.type.incompatible") // Stub this out!
     private final Timer timer = new Timer(frameMillis, null);
 
     MouseTracker(Runnable operation, boolean goRight) {

@@ -9,6 +9,7 @@ import com.ErrorReport;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.event.MasterEventBus;
+import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -28,6 +29,7 @@ public class RecordController<R, PK> implements RecordModelListener {
   // TODO:  RecordController and RecordView have references to each other. Replace this with a listener system
   // todo   This shouldn't be too hard. There are very few calls made to the RecordView.
   private final RecordSelectionModel<R> recordSelectionModel;
+  @NotOnlyInitialized
   private final RecordModel<R> model;
 
   @SuppressWarnings("argument.type.incompatible")

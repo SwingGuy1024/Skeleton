@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.5.1-SNAPSHOT</version>
+  <version>0.6.1-SNAPSHOT</version>
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -145,11 +145,12 @@
           <compilerArguments>
             <Xmaxerrs>10000</Xmaxerrs>
             <Xmaxwarns>10000</Xmaxwarns>
+            <AsuppressWarnings>uninitialized</AsuppressWarnings>
           </compilerArguments>
           <compilerArgs>
             <arg>-AprintErrorStack</arg>
             <!--NullChecker needs this turned on-->
-            <arg>-AassumeAssertionsAreEnabled</arg>
+            <arg>-AassumeAssertionsAreEnabled</arg> <!-- -Aassume... is spelled correctly. -->
             <!-- location of the annotated JDK, which comes from a Maven dependency -->
             <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
             <!-- Uncomment the following line to use the type annotations compiler. -->
@@ -227,8 +228,8 @@
         </configuration>
       </plugin>
 
-      <!--This is the Maven dependency plugin.-->
       <plugin>
+        <!--This is the Maven dependency plugin.-->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
@@ -248,7 +249,7 @@
         </executions>
       </plugin>
 
-      <!--This creates an executable jar file.-->
+      <!--This creates an executable jar file. It should be used with the maven-dependency-plugin-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>

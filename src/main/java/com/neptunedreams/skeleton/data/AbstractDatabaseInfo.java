@@ -1,12 +1,14 @@
 package com.neptunedreams.skeleton.data;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
+//import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.Nullable;
+//import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -19,7 +21,7 @@ public abstract class AbstractDatabaseInfo implements DatabaseInfo {
   private @Nullable ConnectionSource connectionSource;
   private final String homeDirectory;
   
-  protected AbstractDatabaseInfo(String homeDir) throws IOException {
+  protected AbstractDatabaseInfo(String homeDir) { // throws IOException {
     String userHome = System.getProperty("user.home");
     //noinspection StringConcatenation,StringConcatenationMissingWhitespace
     homeDirectory = userHome + homeDir;
@@ -50,12 +52,13 @@ public abstract class AbstractDatabaseInfo implements DatabaseInfo {
     return homeDirectory;
   }
 
+  @EnsuresNonNull("connectionSource")
   protected void initialize() throws SQLException {
     connectionSource = connect();
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  private void ensureHomeExists(@UnderInitialization AbstractDatabaseInfo this, String databaseHome) throws IOException {
+  private void ensureHomeExists(@UnderInitialization AbstractDatabaseInfo this, String databaseHome) { //throws IOException {
 //    System.setProperty(DERBY_SYSTEM_HOME, databaseHome);
 //    final String databaseHome = System.getProperty("derby.system.home");
 //    final String databaseHome = props.getProperty(DERBY_SYSTEM_HOME);

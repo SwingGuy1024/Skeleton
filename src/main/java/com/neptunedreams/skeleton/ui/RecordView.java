@@ -7,9 +7,9 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
@@ -24,12 +24,16 @@ import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.JTextComponent;
 import com.google.common.eventbus.Subscribe;
-import com.neptunedreams.Setter;
 import com.neptunedreams.framework.ui.FieldBinding;
+import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.event.ChangeRecord;
 import com.neptunedreams.skeleton.event.MasterEventBus;
+//import org.checkerframework.checker.initialization.qual.Initialized;
+import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
+//import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -50,21 +54,25 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   @SuppressWarnings("HardCodedStringLiteral")
   private R currentRecord; // = new Record("D", "D", "D", "D");
   
-  private RecordController<R, ?> controller;
+  @NotOnlyInitialized
+  private RecordController<R, Integer> controller;
   private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
   private final JTextComponent sourceField;
 
   @SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible", "method.invocation.invalid", "HardCodedStringLiteral"})
   private RecordView(R record,
                      SiteField initialSort,
-                     Function<R, Integer> getIdFunction, Setter<R, Integer> setIdFunction,
-                     Function<R, String> getSourceFunction, Setter<R, String> setSourceFunction,
-                     Function<R, String> getUserNameFunction, Setter<R, String> setUserNameFunction,
-                     Function<R, String> getPasswordFunction, Setter<R, String> setPasswordFunction,
-                     Function<R, String> getNotesFunction, Setter<R, String> setNotesFunction
+                     Dao<R, Integer> dao,
+                     Function<Void, R> recordConstructor,
+                     Function<R, Integer> getIdFunction, BiConsumer<R, Integer> setIdFunction,
+                     Function<R, String> getSourceFunction, BiConsumer<R, String> setSourceFunction,
+                     Function<R, String> getUserNameFunction, BiConsumer<R, String> setUserNameFunction,
+                     Function<R, String> getPasswordFunction, BiConsumer<R, String> setPasswordFunction,
+                     Function<R, String> getNotesFunction, BiConsumer<R, String> setNotesFunction
    ) {
     super(new BorderLayout());
     currentRecord = record;
+    controller = makeController(initialSort, dao, recordConstructor);
     final JLabel idField = (JLabel) addField("ID", false, SiteField.ID, initialSort);
     sourceField = (JTextComponent) addField("Source", true, SiteField.Source, initialSort);
     final JTextComponent usernameField = (JTextComponent) addField("User Name", true, SiteField.Username, initialSort);
@@ -81,19 +89,33 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     
     // currentRecord has null values for lots of non-null fields. This should clean those fields up.
     for (FieldBinding<R, ?, ?> b : allBindings) {
-      cleanValue(b, currentRecord);
+      cleanValue(b, record); // somehow, Nullness Checker doesn't recognize currentRecord as non-null, but record is ok
     }
-    idBinding.setValue(currentRecord, 0);
-    add(makeTopPanel(), BorderLayout.PAGE_START);
+    idBinding.setValue(record, 0); // same here. TODO: Ask StackOverflow about this
+
+    makeTopPanel();
 
     installStandardCaret(sourceField);
     installStandardCaret(usernameField);
     installStandardCaret(pwField);
     installStandardCaret(notesField);
-    MasterEventBus.registerMasterEventHandler(this);
     
     // Put a line at the top, one pixel wide.
-    setBorder(new MatteBorder(1, 0, 0, 0, Color.black));
+
+  }
+
+  @SuppressWarnings("method.invocation.invalid")
+  private RecordController<R, Integer> makeController(final SiteField initialSort, final Dao<R, Integer> dao, final Function<Void, R> recordConstructor) {
+    return new RecordController<>(
+        dao,
+        this,
+        initialSort,
+        recordConstructor
+    );
+  }
+
+  private void register() {
+    MasterEventBus.registerMasterEventHandler(this);
   }
 
   /**
@@ -108,18 +130,24 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     binding.setValue(record, binding.getValue(record));
   }
 
-  private JPanel makeTopPanel() {
+  @SuppressWarnings("method.invocation.invalid")
+  @RequiresNonNull({"labelPanel", "fieldPanel", "checkBoxPanel"})
+  private void makeTopPanel(@UnderInitialization RecordView<R> this) {
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(labelPanel, BorderLayout.LINE_START);
     topPanel.add(fieldPanel, BorderLayout.CENTER);
     topPanel.add(checkBoxPanel, BorderLayout.LINE_END);
-    return topPanel;
+    add(topPanel, BorderLayout.PAGE_START);
+//    return topPanel;
+    setBorder(new MatteBorder(1, 0, 0, 0, Color.black));
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
-  public void setController(RecordController<R, ?> theController) {
-    controller = theController;
-  }
+//  @SuppressWarnings("HardCodedStringLiteral")
+//  public void setController(RecordController<R, Integer> theController) {
+//    controller = theController;
+//  }
+//  
+  public RecordController<R, Integer> getController() { return controller; }
 
   /**
    * On the Mac, the AquaCaret will get installed. This caret has an annoying feature of selecting all the text on a
@@ -141,7 +169,8 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     caret.setBlinkRate(blinkRate); // Starts the new caret blinking.
   }
 
-  private JComponent addField(final String labelText, final boolean editable, final SiteField orderField, SiteField initialSort) {
+  @RequiresNonNull({"labelPanel", "fieldPanel", "buttonGroup", "checkBoxPanel", "controller"})
+  private JComponent addField(@UnderInitialization RecordView<R> this, final String labelText, final boolean editable, final SiteField orderField, SiteField initialSort) {
     //noinspection StringConcatenation,MagicCharacter
     JLabel label = new JLabel(labelText + ':');
     labelPanel.add(label);
@@ -158,18 +187,22 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       orderBy.setSelected(true);
     }
     checkBoxPanel.add(orderBy);
-    ItemListener checkBoxListener = (itemEvent) -> {
-      if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
-        controller.specifyOrder(orderField);
-        // Here's where I want to call RecordUI.searchNow(). The code needs to be restructured before I can do that.
-        MasterEventBus.postSearchNowEvent();
-      }
-    };
+    @SuppressWarnings("method.invocation.invalid") // We are under initialization when we create this, not when calling
+    ItemListener checkBoxListener = (itemEvent) -> itemStateChanged(orderField, itemEvent);
     orderBy.addItemListener(checkBoxListener);
     return field;
   }
-  
-  private JTextComponent addNotesField() {
+
+  private void itemStateChanged(final SiteField orderField, final ItemEvent itemEvent) {
+    if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
+      controller.specifyOrder(orderField);
+      // Here's where I want to call RecordUI.searchNow(). The code needs to be restructured before I can do that.
+      MasterEventBus.postSearchNowEvent();
+    }
+  }
+
+  @SuppressWarnings("method.invocation.invalid")
+  private JTextComponent addNotesField(@UnderInitialization RecordView<R> this) {
     final JTextArea wrappedField = new JTextArea(TEXT_ROWS, TEXT_COLUMNS);
     wrappedField.setWrapStyleWord(true);
     wrappedField.setLineWrap(true);
@@ -178,7 +211,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     return wrappedField;
   }
 
-  private JComponent wrap(JComponent wrapped) {
+  private JComponent wrap(@UnderInitialization RecordView<R> this, JComponent wrapped) {
     return new JScrollPane(wrapped, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
   }
   
@@ -202,7 +235,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     return false;
   }
   
-  public boolean saveOnExit() throws SQLException {
+  public boolean saveOnExit() {// throws SQLException {
     // Test four cases:
     // 1. New Record with data
     // 2. New Record with no data
@@ -248,60 +281,76 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       private RR record;
       private SiteField initialSort;
       private Function<RR, Integer> getId;
-      private Setter<RR, Integer> setId;
+      private BiConsumer<RR, Integer> setId;
       private Function<RR, String> getSource;
-      private Setter<RR, String> setSource;
+      private BiConsumer<RR, String> setSource;
       private Function<RR, String> getUserName;
-      private Setter<RR, String> setUserName;
+      private BiConsumer<RR, String> setUserName;
       private Function<RR, String> getPassword;
-      private Setter<RR, String> setPassword;
+      private BiConsumer<RR, String> setPassword;
       private Function<RR, String> getNotes;
-      private Setter<RR, String> setNotes;
+      private BiConsumer<RR, String> setNotes;
+      private Dao<RR, Integer> dao;
+      private Function<Void, RR> recordConstructor;
       public Builder(RR record, SiteField initialSort) {
         this.record = record;
         this.initialSort = initialSort;
       }
   
-    public Builder<RR> id(Function<RR, Integer> getter, Setter<RR, Integer> setter) {
+    public Builder<RR> id(Function<RR, Integer> getter, BiConsumer<RR, Integer> setter) {
       getId = getter;
       setId = setter;
       return this;
     }
   
-    public Builder<RR> source(Function<RR, String> getter, Setter<RR, String> setter) {
+    public Builder<RR> source(Function<RR, String> getter, BiConsumer<RR, String> setter) {
       getSource = getter;
       setSource = setter;
       return this;
     }
   
-    public Builder<RR> userName(Function<RR, String> getter, Setter<RR, String> setter) {
+    public Builder<RR> userName(Function<RR, String> getter, BiConsumer<RR, String> setter) {
       getUserName = getter;
       setUserName = setter;
       return this;
     }
   
-    public Builder<RR> password(Function<RR, String> getter, Setter<RR, String> setter) {
+    public Builder<RR> password(Function<RR, String> getter, BiConsumer<RR, String> setter) {
       getPassword = getter;
       setPassword = setter;
       return this;
     }
   
-    public Builder<RR> notes(Function<RR, String> getter, Setter<RR, String> setter) {
+    public Builder<RR> notes(Function<RR, String> getter, BiConsumer<RR, String> setter) {
       getNotes = getter;
       setNotes = setter;
       return this;
     }
     
+    public Builder<RR> withDao(Dao<RR, Integer> dao) {
+        this.dao = dao;
+        return this;
+    }
+    
+    public Builder<RR> withConstructor(Function<Void, RR> constructor) {
+        recordConstructor = constructor;
+        return this;
+    }
+    
     public RecordView<RR> build() {
-      return new RecordView<>(
-          record, 
+      final RecordView<RR> view = new RecordView<>(
+          record,
           initialSort,
-          getId, setId, 
-          getSource, setSource, 
-          getUserName, setUserName, 
-          getPassword, setPassword, 
+          dao,
+          recordConstructor,
+          getId, setId,
+          getSource, setSource,
+          getUserName, setUserName,
+          getPassword, setPassword,
           getNotes, setNotes
       );
+      view.register();
+      return view;
     }
   }
 }

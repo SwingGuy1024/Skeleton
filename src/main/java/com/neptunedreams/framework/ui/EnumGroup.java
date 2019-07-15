@@ -11,7 +11,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
 import javax.swing.JComponent;
 import javax.swing.JRadioButton;
-import javax.swing.event.ChangeEvent;
 
 // TODO:  Remove the DisplayEnum requirement by checking if the constant implements it, and using toString() otherwise.
 
@@ -39,7 +38,7 @@ public final class EnumGroup<E extends DisplayEnum> {
    * @param button The JRadioButton
    * @param enumValue The value to link with the button
    */
-  @SuppressWarnings("methodref.inference.unimplemented") // Null checking is unimplemented for method references (this::fireButtonChange)
+//  @SuppressWarnings("methodref.inference.unimplemented") // Null checking is unimplemented for method references (this::fireButtonChange)
   public void add(JRadioButton button, E enumValue) {
     group.add(button);
     final String display = enumValue.getDisplay();
@@ -47,7 +46,7 @@ public final class EnumGroup<E extends DisplayEnum> {
     final ButtonModel model = button.getModel();
     model.setActionCommand(display);
     buttonMap.put(enumValue, model);
-    model.addItemListener(this::fireButtonChange);
+    model.addItemListener(evt -> fireButtonChange(evt)); // converting to lambda bypasses the nullness checker
   }
   
   /**

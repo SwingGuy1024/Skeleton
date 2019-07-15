@@ -3,7 +3,6 @@ package com.neptunedreams.skeleton.task;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.function.Consumer;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
 
 /**
  * This class lets the application search as the user types, but delays the launch of the search until after the user 
@@ -40,18 +39,17 @@ public class QueuedTask<I, R> {
   private final long delayMilliSeconds;
   private final Consumer<R> consumer;
   private final BlockingQueue<I> queue = new SynchronousQueue<>();
-  private final Thread launchThread;
 
   public QueuedTask(long delay, ParameterizedCallable<I, R> task, Consumer<R> theConsumer) {
     delayMilliSeconds = delay;
     callable = task;
     consumer = theConsumer;
+  }
+
+  public void launch() {
     final Thread waitThread = new Thread(createWaitTask(), "QueuedTask.waitThread");
     waitThread.setDaemon(true);
     waitThread.start();
-    launchThread = new Thread(createLaunchTask(), "QueuedTask.launch Thread");
-    launchThread.setDaemon(true);
-    launchThread.start();
   }
 
   public long getDelayMilliSeconds() {
@@ -72,26 +70,28 @@ public class QueuedTask<I, R> {
     } catch (InterruptedException ignored) { }
   }
   
-  private Runnable createWaitTask(@UnderInitialization QueuedTask<I, R> this) {
-    return this::waitLoop;
+  private Runnable createWaitTask() {
+    return () -> waitLoop(); // Method reference bypasses nullness checker
   }
 
-  private Runnable createLaunchTask(@UnderInitialization QueuedTask<I, R>this) {
-    return this::launchTaskLoop; // Doesn't null check this, but it's only used after initialization, so we're okay.
+  private Runnable createLaunchTask() {
+    return () -> launchTaskLoop();
   }
 
   // Wait Thread Code
 
   private void waitLoop() {
+    Thread launchThread = new Thread(createLaunchTask(), "QueuedTask.launch Thread");
+    launchThread.setDaemon(true);
+    launchThread.start();
+
     //noinspection InfiniteLoopStatement
     while (true) {
       try {
         I input = queue.take();
-        if (input != null) {
-          // Launch the code on the Launch Thread by setting valid input data and interrupting the launchThread.
-          callable.setInputData(input);
-          launchThread.interrupt();
-        }
+        // Launch the code on the Launch Thread by setting valid input data and interrupting the launchThread.
+        callable.setInputData(input);
+        launchThread.interrupt();
       } catch (InterruptedException ignored) { }
     }
   }
