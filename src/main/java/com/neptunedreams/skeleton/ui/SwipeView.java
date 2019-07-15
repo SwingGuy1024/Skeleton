@@ -19,7 +19,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * SwipeView adds a swipe special effect to a Component. This draws a swipe-right or swipe-left effect on a chosen 
  * action. It also optionally supports a repeated action when the mouse is held down.
- * <p/>
+ * <p>
  * This class is very specific right now, but I hope to generalize it for other special effects later.
  * <p>Created by IntelliJ IDEA.
  * <p>Date: 4/4/18
@@ -28,8 +28,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Miguel Mu\u00f1oz
  */
 public final class SwipeView<C extends JComponent> extends LayerUI<C> {
-@SuppressWarnings("WeakerAccess")
-public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
+  @SuppressWarnings({"WeakerAccess", "JavaDoc"})
+  public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
     JLayer<J> jLayer = new JLayer<>(recordView);
     final SwipeView<J> ui = new SwipeView<>(recordView, jLayer);
     jLayer.setUI(ui);
@@ -42,7 +42,7 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
   private final JLayer<C> layer;
   
   private boolean isAnimating = false;
-  private boolean swipeRight = true;
+  private SwipeDirection swipeDirection = SwipeDirection.SWIPE_RIGHT;
   private static final int animationDurationMillis = 500;
   private static final int maxFrames = 15;
   // Calculated:
@@ -69,7 +69,7 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
    */
   @SuppressWarnings("WeakerAccess")
   public void swipeRight(Runnable operation) {
-    swipe(operation,true);
+    swipe(operation,SwipeDirection.SWIPE_RIGHT);
   }
 
   /**
@@ -83,11 +83,11 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
    */
   @SuppressWarnings("WeakerAccess")
   public void swipeLeft(Runnable operation) {
-    swipe(operation, false);
+    swipe(operation, SwipeDirection.SWIPE_LEFT);
   }
 
-  private void swipe(Runnable operation, boolean goRight) {
-    prepareToAnimate(goRight);
+  private void swipe(Runnable operation, SwipeDirection swipeDirection) {
+    prepareToAnimate(swipeDirection);
     operation.run();
     animate();
   }
@@ -96,7 +96,7 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
   public void paint(final Graphics g, final JComponent c) {
     if (isAnimating) {
       int xLimit = (c.getWidth() * frame) / maxFrames;
-      if (!swipeRight) {
+      if (swipeDirection == SwipeDirection.SWIPE_LEFT) {
         xLimit = c.getWidth() - xLimit;
       }
       int width = c.getWidth();
@@ -105,7 +105,7 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
       assert upcomingScreen != null;
       assert priorScreen != null;
       Image pScreen = Objects.requireNonNull(priorScreen);
-      if (swipeRight) {
+      if (swipeDirection == SwipeDirection.SWIPE_RIGHT) {
         g.drawImage(upcomingScreen, 0, 0, xLimit, height, 0, 0, xLimit, height, c);
         g.drawImage(pScreen, xLimit, 0, width, height, xLimit, 0, width, height, c);
       } else {
@@ -117,8 +117,8 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
     }
   }
   
-  private void prepareToAnimate(boolean goRight) {
-    swipeRight = goRight;
+  private void prepareToAnimate(SwipeDirection swipeDirection) {
+    this.swipeDirection = swipeDirection;
     isAnimating = true;
     frame = 0;
 
@@ -128,7 +128,7 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
     recordView.paint(graphics2D);
     graphics2D.dispose();
   }
-  
+
   private void animate() {
     @SuppressWarnings("argument.type.incompatible")    // Stub this out!
     Timer timer = new Timer(frameMillis, null);
@@ -156,10 +156,11 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
    * This method effectively replaces a call to addActionListener. Don't use that method if you're using this one.
    * @param button The button to apply the mouseDown action to
    * @param operation The code to execute when the mouse is down.
+   * @param swipeRight True for swipeRight, false for swipe left
    */
   @SuppressWarnings("WeakerAccess")
-  public void assignMouseDownAction(AbstractButton button, Runnable operation, boolean goRight) {
-    MouseTracker mouseTracker = new MouseTracker(operation, goRight);
+  public void assignMouseDownAction(AbstractButton button, Runnable operation, SwipeDirection swipeRight) {
+    MouseTracker mouseTracker = new MouseTracker(operation, swipeRight);
     button.addMouseListener(mouseTracker);
   }
   
@@ -169,7 +170,7 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
     @SuppressWarnings("argument.type.incompatible") // Stub this out!
     private final Timer timer = new Timer(frameMillis, null);
 
-    MouseTracker(Runnable operation, boolean goRight) {
+    MouseTracker(Runnable operation, SwipeDirection goRight) {
       super();
       ActionListener listener = (e) -> {
         if (active && ! isAnimating) {
@@ -210,5 +211,11 @@ public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
         active = true;
       }
     }
+  }
+  
+  @SuppressWarnings("JavaDoc")
+  public enum SwipeDirection {
+    SWIPE_RIGHT,
+    SWIPE_LEFT
   }
 }

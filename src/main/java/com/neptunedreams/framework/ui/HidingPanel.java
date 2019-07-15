@@ -40,7 +40,7 @@ public final class HidingPanel extends JPanel {
   }
 
   /**
-   * Create a HidingPanel with the specified content and initial visibility
+   * Create a HidingPanel with the specified content and initial visibility.
    * @param content The content
    * @param visible The initial visibility
    * @return the properly configured content panel

@@ -3,18 +3,27 @@ package com.neptunedreams.skeleton.ui;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.ButtonModel;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayer;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
@@ -72,6 +81,12 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JButton next = new JButton(Resource.getRightArrow());
   private JButton first = new JButton(Resource.getFirst());
   private JButton last = new JButton(Resource.getLast());
+
+  private Action prevAction;
+  private Action nextAction;
+  private Action firstAction;
+  private Action lastAction;
+
   private JLabel infoLine = new JLabel("");
   private final EnumGroup<SearchOption> optionsGroup = new EnumGroup<>();
   private @MonotonicNonNull SwipeView<RecordView<R>> swipeView=null;
@@ -99,7 +114,8 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     return HidingPanel.create(optionsPanel);
   }
 
-  @SuppressWarnings({"method.invocation.invalid","argument.type.incompatible"}) // add(), setBorder(), etc not properly annotated in JDK.
+  @SuppressWarnings({"method.invocation.invalid", "argument.type.incompatible", "JavaDoc"})
+  // add(), setBorder(), etc not properly annotated in JDK.
   public RecordUI(@NonNull RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
     super(new BorderLayout());
     recordModel = model;
@@ -134,11 +150,39 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     queuedTask.launch();
   }
   
+  private void setupActions(SwipeView<RecordView<R>> swipeView) {
+//    prevAction = new ButtonAction("Previous", m -> m.goPrev(), KeyEvent.VK_LEFT, 0);
+    prevAction = new ButtonAction("Previous", KeyEvent.VK_LEFT, 0, ()-> swipeView.swipeRight(() -> recordModel.goPrev()));
+    nextAction = new ButtonAction("Next", KeyEvent.VK_RIGHT, 0, ()-> swipeView.swipeLeft(() -> recordModel.goNext()));
+    firstAction = new ButtonAction("First Record", KeyEvent.VK_LEFT, InputEvent.META_DOWN_MASK, () -> swipeView.swipeRight(() -> recordModel.goFirst()));
+    lastAction = new ButtonAction("Last Record", KeyEvent.VK_RIGHT, InputEvent.META_DOWN_MASK, () -> swipeView.swipeLeft(() -> recordModel.goLast()));
+  }
+
+  @SuppressWarnings("CloneableClassWithoutClone")
+  private final class ButtonAction extends AbstractAction {
+//    private final Consumer<RecordModel> action;
+    private final Runnable action;
+
+    private ButtonAction(final String name, int key, int modifiers, final Runnable theAction) {
+      super(name);
+      action = theAction;
+      KeyStroke keyStroke = KeyStroke.getKeyStroke(key, modifiers);
+      putValue(Action.ACCELERATOR_KEY, keyStroke);
+    }
+
+    @Override
+    public void actionPerformed(final ActionEvent e) {
+      action.run();
+    }
+  }
+
+
   private JLayer<RecordView<R>> wrapInLayer(@UnderInitialization RecordUI<R> this, RecordView<R> recordView) {
     swipeView = SwipeView.wrap(recordView);
     return swipeView.getLayer();
   }
   
+  @SuppressWarnings("JavaDoc")
   public void launchInitialSearch() {
     SwingUtilities.invokeLater(() -> {
       findField.setText(""); // This fires the initial search in queuedTask.
@@ -224,13 +268,15 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     
     add.addActionListener((e)->addBlankRecord());
     SwipeView<RecordView<R>> sView = Objects.requireNonNull(swipeView);
-    sView.assignMouseDownAction(prev, () -> recordModel.goPrev(), true);
-    sView.assignMouseDownAction(next, () -> recordModel.goNext(), false);
+    sView.assignMouseDownAction(prev, () -> recordModel.goPrev(), SwipeView.SwipeDirection.SWIPE_RIGHT);
+    sView.assignMouseDownAction(next, () -> recordModel.goNext(), SwipeView.SwipeDirection.SWIPE_LEFT);
     first.addActionListener((e) -> sView.swipeLeft(() -> recordModel.goFirst()));
     last.addActionListener((e)  -> sView.swipeRight(() -> recordModel.goLast()));
 //    importBtn.addActionListener((e) -> doImport());
     JPanel flowPanel = new JPanel(new FlowLayout());
     flowPanel.add(buttons);
+    setupActions(sView);
+
     return flowPanel;
   }
 
@@ -345,13 +391,14 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     return controller.retrieveNow(buttonGroup.getSelected(), getSearchOption(), text);
   }
   
+  @SuppressWarnings("JavaDoc")
   @Subscribe
   public void doSearchNow(MasterEventBus.SearchNowEvent searchNowEvent) {
     searchNow();
   }
 
   // This is public because I expect other classes to use it in the future. 
-  @SuppressWarnings("WeakerAccess")
+  @SuppressWarnings({"WeakerAccess", "JavaDoc"})
   public void searchNow() {
     assert SwingUtilities.isEventDispatchThread();
     assert findField != null;
@@ -373,4 +420,19 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   }
 
   private void selectionChanged(@SuppressWarnings("unused") ButtonModel selectedButtonModel) { searchNow(); }
+
+  /**
+   * Install the menus for keyboard actions.
+   * @param frame The JFrame to get the menus.
+   */
+  public void installMenus(final JFrame frame) {
+    JMenu navigateMenu = new JMenu("Navigate");
+    navigateMenu.add(nextAction);
+    navigateMenu.add(prevAction);
+    navigateMenu.add(firstAction);
+    navigateMenu.add(lastAction);
+    JMenuBar menuBar = new JMenuBar();
+    menuBar.add(navigateMenu);
+    frame.setJMenuBar(menuBar);
+  }
 }
