@@ -36,7 +36,7 @@ public final class SwipeView<C extends JComponent> extends LayerUI<C> {
     return ui;
   }
   
-  private final C recordView;
+  private final C liveComponent;
   private @Nullable Image priorScreen=null;
   private @Nullable Image upcomingScreen= null;
   private final JLayer<C> layer;
@@ -52,7 +52,7 @@ public final class SwipeView<C extends JComponent> extends LayerUI<C> {
   
   private SwipeView(C view, JLayer<C> theLayer) {
     super();
-    recordView = view;
+    liveComponent = view;
     layer = theLayer;
   }
 
@@ -123,9 +123,9 @@ public final class SwipeView<C extends JComponent> extends LayerUI<C> {
     frame = 0;
 
     // Save current state
-    priorScreen = new BufferedImage(recordView.getWidth(), recordView.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    priorScreen = new BufferedImage(liveComponent.getWidth(), liveComponent.getHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D graphics2D = (Graphics2D) priorScreen.getGraphics();
-    recordView.paint(graphics2D);
+    liveComponent.paint(graphics2D);
     graphics2D.dispose();
   }
 
@@ -142,9 +142,9 @@ public final class SwipeView<C extends JComponent> extends LayerUI<C> {
       }
     };
     timer.addActionListener(actionListener);
-    upcomingScreen = new BufferedImage(recordView.getWidth(), recordView.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    upcomingScreen = new BufferedImage(liveComponent.getWidth(), liveComponent.getHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D graphics2D = (Graphics2D) upcomingScreen.getGraphics();
-    recordView.paint(graphics2D);
+    liveComponent.paint(graphics2D);
     graphics2D.dispose();
     
     timer.start();
@@ -154,6 +154,8 @@ public final class SwipeView<C extends JComponent> extends LayerUI<C> {
    * This lets you assign an action to a button that executes on mouseStillDown, but only when animation has completed.
    * This lets the user, say, hold an arrow button down and watch it page through the entries, animating each new page.
    * This method effectively replaces a call to addActionListener. Don't use that method if you're using this one.
+   * <p>
+   * Todo: Add Keystroke tracking
    * @param button The button to apply the mouseDown action to
    * @param operation The code to execute when the mouse is down.
    * @param swipeRight True for swipeRight, false for swipe left
@@ -170,15 +172,16 @@ public final class SwipeView<C extends JComponent> extends LayerUI<C> {
     @SuppressWarnings("argument.type.incompatible") // Stub this out!
     private final Timer timer = new Timer(frameMillis, null);
 
-    MouseTracker(Runnable operation, SwipeDirection goRight) {
+    MouseTracker(Runnable operation, SwipeDirection swipeDirection) {
       super();
       ActionListener listener = (e) -> {
         if (active && ! isAnimating) {
-          swipe(operation, goRight);
+          swipe(operation, swipeDirection);
         }
       };
       timer.addActionListener(listener);
     }
+    
 
     @Override
     public void mousePressed(final MouseEvent e) {
@@ -211,11 +214,5 @@ public final class SwipeView<C extends JComponent> extends LayerUI<C> {
         active = true;
       }
     }
-  }
-  
-  @SuppressWarnings("JavaDoc")
-  public enum SwipeDirection {
-    SWIPE_RIGHT,
-    SWIPE_LEFT
   }
 }

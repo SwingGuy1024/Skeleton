@@ -1,6 +1,7 @@
 package com.neptunedreams.skeleton.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -11,14 +12,13 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javax.swing.AbstractAction;
-import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.ButtonModel;
+import javax.swing.FocusManager;
+import javax.swing.InputMap;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayer;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -30,6 +30,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 import com.ErrorReport;
 import com.google.common.eventbus.Subscribe;
 import com.neptunedreams.framework.ui.ButtonGroupListener;
@@ -81,11 +82,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JButton next = new JButton(Resource.getRightArrow());
   private JButton first = new JButton(Resource.getFirst());
   private JButton last = new JButton(Resource.getLast());
-
-  private Action prevAction;
-  private Action nextAction;
-  private Action firstAction;
-  private Action lastAction;
 
   private JLabel infoLine = new JLabel("");
   private final EnumGroup<SearchOption> optionsGroup = new EnumGroup<>();
@@ -150,29 +146,39 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     queuedTask.launch();
   }
   
+  @SuppressWarnings("ResultOfObjectAllocationIgnored")
   private void setupActions(SwipeView<RecordView<R>> swipeView) {
-//    prevAction = new ButtonAction("Previous", m -> m.goPrev(), KeyEvent.VK_LEFT, 0);
-    prevAction = new ButtonAction("Previous", KeyEvent.VK_LEFT, 0, ()-> swipeView.swipeRight(() -> recordModel.goPrev()));
-    nextAction = new ButtonAction("Next", KeyEvent.VK_RIGHT, 0, ()-> swipeView.swipeLeft(() -> recordModel.goNext()));
-    firstAction = new ButtonAction("First Record", KeyEvent.VK_LEFT, InputEvent.META_DOWN_MASK, () -> swipeView.swipeRight(() -> recordModel.goFirst()));
-    lastAction = new ButtonAction("Last Record", KeyEvent.VK_RIGHT, InputEvent.META_DOWN_MASK, () -> swipeView.swipeLeft(() -> recordModel.goLast()));
+    new ButtonAction("Previous", KeyEvent.VK_LEFT, 0, ()-> swipeView.swipeRight(() -> recordModel.goPrev()));
+    new ButtonAction("Next", KeyEvent.VK_RIGHT, 0, ()-> swipeView.swipeLeft(() -> recordModel.goNext()));
+    new ButtonAction("First Record", KeyEvent.VK_LEFT, InputEvent.META_DOWN_MASK, () -> swipeView.swipeRight(() -> recordModel.goFirst()));
+    new ButtonAction("Last Record", KeyEvent.VK_RIGHT, InputEvent.META_DOWN_MASK, () -> swipeView.swipeLeft(() -> recordModel.goLast()));
   }
 
   @SuppressWarnings("CloneableClassWithoutClone")
   private final class ButtonAction extends AbstractAction {
-//    private final Consumer<RecordModel> action;
-    private final Runnable action;
+    private final Runnable operation;
+    private FocusManager focusManager = FocusManager.getCurrentManager();
 
-    private ButtonAction(final String name, int key, int modifiers, final Runnable theAction) {
+
+    private ButtonAction(final String name, int key, int modifiers, final Runnable theOp) {
       super(name);
-      action = theAction;
+      operation = theOp;
       KeyStroke keyStroke = KeyStroke.getKeyStroke(key, modifiers);
-      putValue(Action.ACCELERATOR_KEY, keyStroke);
+      
+      InputMap inputMap = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      ActionMap actionMap = getActionMap();
+      inputMap.put(keyStroke, name);
+      actionMap.put(name, this);
     }
 
     @Override
     public void actionPerformed(final ActionEvent e) {
-      action.run();
+      final Component owner = focusManager.getPermanentFocusOwner();
+      // The second half of this conditional doesn't work. It may be because the text components already have
+      // KeyStrokes mapped to arrow keys.
+      if ((!(owner instanceof JTextComponent)) || (((JTextComponent) owner).getText().isEmpty())) {
+        operation.run();
+      }
     }
   }
 
@@ -233,7 +239,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     assert infoLine != null;
     trashPanel.add(infoLine, BorderLayout.LINE_START);
     assert recordModel != null;
-//    recordModel.addModelListener(this);
     return trashPanel;
   }
 
@@ -243,7 +248,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
         "Delete Record", 
         JOptionPane.YES_NO_OPTION,
         JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION
-        ) {
+    ) {
       R selectedRecord = recordModel.getFoundRecord();
       try {
         controller.delete(selectedRecord); // Removes from database
@@ -268,10 +273,10 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     
     add.addActionListener((e)->addBlankRecord());
     SwipeView<RecordView<R>> sView = Objects.requireNonNull(swipeView);
-    sView.assignMouseDownAction(prev, () -> recordModel.goPrev(), SwipeView.SwipeDirection.SWIPE_RIGHT);
-    sView.assignMouseDownAction(next, () -> recordModel.goNext(), SwipeView.SwipeDirection.SWIPE_LEFT);
-    first.addActionListener((e) -> sView.swipeLeft(() -> recordModel.goFirst()));
-    last.addActionListener((e)  -> sView.swipeRight(() -> recordModel.goLast()));
+    sView.assignMouseDownAction(prev, () -> recordModel.goPrev(), SwipeDirection.SWIPE_RIGHT);
+    sView.assignMouseDownAction(next, () -> recordModel.goNext(), SwipeDirection.SWIPE_LEFT);
+    first.addActionListener((e) -> sView.swipeRight(() -> recordModel.goFirst()));
+    last.addActionListener((e)  -> sView.swipeLeft(() -> recordModel.goLast()));
 //    importBtn.addActionListener((e) -> doImport());
     JPanel flowPanel = new JPanel(new FlowLayout());
     flowPanel.add(buttons);
@@ -420,19 +425,4 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   }
 
   private void selectionChanged(@SuppressWarnings("unused") ButtonModel selectedButtonModel) { searchNow(); }
-
-  /**
-   * Install the menus for keyboard actions.
-   * @param frame The JFrame to get the menus.
-   */
-  public void installMenus(final JFrame frame) {
-    JMenu navigateMenu = new JMenu("Navigate");
-    navigateMenu.add(nextAction);
-    navigateMenu.add(prevAction);
-    navigateMenu.add(firstAction);
-    navigateMenu.add(lastAction);
-    JMenuBar menuBar = new JMenuBar();
-    menuBar.add(navigateMenu);
-    frame.setJMenuBar(menuBar);
-  }
 }

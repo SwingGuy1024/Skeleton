@@ -163,17 +163,9 @@ public final class Skeleton extends JPanel
           .withDao(dao)
           .withConstructor(this::recordConstructor)
           .build();
-//      controller = new RecordController<>(
-//          dao, 
-//          view, 
-//          SiteField.Source,
-//          this::recordConstructor
-//      );
-//      view.setController(controller);
       controller = view.getController();
       final RecordModel<SiteRecord> model = controller.getModel();
       mainPanel = new RecordUI<>(model, view, controller); // RecordUI launches the initial search
-      mainPanel.installMenus(frame);
 
       if ((model.getSize() == 1) && (model.getRecordAt(0).getId() == 0) && doImport) {
         importFromFile(dao, controller); // throws ClassNotFoundException
