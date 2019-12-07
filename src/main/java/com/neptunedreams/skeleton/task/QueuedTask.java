@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 /**
  * This class lets the application search as the user types, but delays the launch of the search until after the user 
  * has stopped typing for a long enough time. It doesn't handle text or searching directly, so it may feasibly be
- * adapted to other tasks and data types. Here's how it works. <p/>
+ * adapted to other tasks and data types. Here's how it works. <p>
  * The class gets instantiated with a ParameterizedCallable task and a Consumer. For every change in the text of a 
  * text field, the UI calls the {@code feedData()} method, which puts the input (the text) onto the queue and the clock 
  * starts. When any subsequent change gets put on the queue, the previous text gets thrown out, and the clock gets 
@@ -15,13 +15,13 @@ import java.util.function.Consumer;
  * ParameterizedCallable task, and calls its {@code call()} method. Then it sends the results to the Consumer.
  * It is the responsibility of the caller to define a ParameterizedCallable task that launches the search function, and
  * a Consumer that sends the search results to the proper user interface component.
- * <p/>This class is divided into two Threads because it calls two methods that are interruptable. If I did it in a
+ * <p>This class is divided into two Threads because it calls two methods that are interruptable. If I did it in a
  * single task, it would be impossible to know which method I'm interrupting. The two methods are Thread.sleep() and
  * Queue.take().
- * <p/>
+ * <p>
  * This class launches two Daemon Threads. It's grouped into three sections, depending on which Thread executes the 
  * code.
- * <p/>
+ * <p>
  * Masters of multi-threaded code may question why I don't re-interrupt my Threads when I catch InterruptedException.
  * This should always be done when using interrupt to cancel a Thread. But in this case I keep my Threads running. And
  * the code in each Thread is so simple that I know there are no other methods up in the call stack that also need to
@@ -34,7 +34,7 @@ import java.util.function.Consumer;
  * @param <I> Input type
  * @param <R> Result type
  */
-public class QueuedTask<I, R> {
+public final class QueuedTask<I, R> {
   private final ParameterizedCallable<I, R> callable;
   private final long delayMilliSeconds;
   private final Consumer<R> consumer;

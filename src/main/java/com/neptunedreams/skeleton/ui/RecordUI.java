@@ -76,7 +76,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   // We set the initial text to a space, so we can fire the initial search by setting the text to the empty String.
   private JTextField findField = new JTextField(" ",10);
   private final RecordController<R, Integer> controller;
-  private EnumGroup<SiteField> buttonGroup = new EnumGroup<>();
+  private EnumGroup<SiteField> searchFieldGroup = new EnumGroup<>();
   private final @NonNull RecordModel<R> recordModel;
   private JButton prev = new JButton(Resource.getLeftArrow());
   private JButton next = new JButton(Resource.getRightArrow());
@@ -96,7 +96,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   @SuppressWarnings("methodref.inference.unimplemented")
   private HidingPanel makeSearchOptionsPanel(@UnderInitialization RecordUI<R> this, EnumGroup<SearchOption> optionsGroup) {
     JPanel optionsPanel = new JPanel(new GridLayout(1, 0));
-    JRadioButton findExact = optionsGroup.add(SearchOption.findExact);
+    JRadioButton findExact = optionsGroup.add(SearchOption.findWhole);
     JRadioButton findAll = optionsGroup.add(SearchOption.findAll);
     JRadioButton findAny = optionsGroup.add(SearchOption.findAny);
     optionsPanel.add(findExact);
@@ -107,7 +107,9 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
 //    optionsGroup.addButtonGroupListener(selectedButtonModel -> selectionChanged(selectedButtonModel));
     optionsGroup.addButtonGroupListener(this::selectionChanged); // Using a lambda is an error. This is a warning. 
 
-    return HidingPanel.create(optionsPanel);
+    final HidingPanel hidingPanel = HidingPanel.create(optionsPanel);
+    hidingPanel.setDisableInsteadOfHide(true);
+    return hidingPanel;
   }
 
   @SuppressWarnings({"method.invocation.invalid", "argument.type.incompatible", "JavaDoc"})
@@ -308,7 +310,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   }
   
   private void findText() {
-    SiteField field = buttonGroup.getSelected();
+    SiteField field = searchFieldGroup.getSelected();
     final SearchOption searchOption = getSearchOption();
     if (field.isField()) {
       controller.findTextInField(findField.getText(), field, searchOption);
@@ -320,16 +322,16 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   // I don't know why I don't need @UnknownInitialization or @UnderInitialization here.
   private JPanel createSearchRadioPanel() {
     JPanel radioPanel = new JPanel(new GridLayout(0, 1));
-    assert buttonGroup != null;
-    buttonGroup.add(SiteField.All, radioPanel);
-    buttonGroup.add(SiteField.Source, radioPanel);
-    buttonGroup.add(SiteField.Username, radioPanel);
-    buttonGroup.add(SiteField.Password, radioPanel);
-    buttonGroup.add(SiteField.Notes, radioPanel);
-    buttonGroup.setSelected(SiteField.All);
+    assert searchFieldGroup != null;
+    searchFieldGroup.add(SiteField.All, radioPanel);
+    searchFieldGroup.add(SiteField.Source, radioPanel);
+    searchFieldGroup.add(SiteField.Username, radioPanel);
+    searchFieldGroup.add(SiteField.Password, radioPanel);
+    searchFieldGroup.add(SiteField.Notes, radioPanel);
+    searchFieldGroup.setSelected(SiteField.All);
 
     ButtonGroupListener changeListener = e -> searchNow();
-    buttonGroup.addButtonGroupListener(changeListener);
+    searchFieldGroup.addButtonGroupListener(changeListener);
 
     return radioPanel;
   }
@@ -392,8 +394,8 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   
   private Collection<R> retrieveNow(String text) {
     assert controller != null;
-    assert buttonGroup != null;
-    return controller.retrieveNow(buttonGroup.getSelected(), getSearchOption(), text);
+    assert searchFieldGroup != null;
+    return controller.retrieveNow(searchFieldGroup.getSelected(), getSearchOption(), text);
   }
   
   @SuppressWarnings("JavaDoc")
@@ -411,7 +413,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   }
 
   private SearchOption getSearchOption() {
-    return searchOptionsPanel.isContentVisible() ? optionsGroup.getSelected() : SearchOption.findExact;
+    return searchOptionsPanel.isContentVisible() ? optionsGroup.getSelected() : SearchOption.findWhole;
   }
 
   @SuppressWarnings("dereference.of.nullable") // controller is null when we call this, but not when we call the lambda.

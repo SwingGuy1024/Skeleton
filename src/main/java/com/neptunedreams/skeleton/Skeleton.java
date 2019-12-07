@@ -66,7 +66,13 @@ public final class Skeleton extends JPanel
   // Done: BUG: Key Queue in QueuedTask never reads the keys it saves. Can we get rid of it?
   // TODO:  Fix bug on adding: If I add a record, then do a find all by hitting return in the find field, it finds
   // todo   all the records except the one I just added. Doing another find all finds everything.
-  // TODO: Replace CountDownDoor with CyclicBarrier.
+  // TODO: Replace CountDownDoor with CyclicBarrier?
+  // TODO: On changing sort column, search for previously selected card. (Search by id)
+  // TODO: Redo layout: 
+  // todo  1. Put Search Option Panel (in RecordUI) to the right of search field.
+  // done  2. Dim instead of hide search options. (I had forgotten all about them!)
+  // todo  3. Put search field options in a new sidebar. Allow show/hide.
+  // todo  4. Add column header to sort buttons.
   
   // https://db.apache.org/ojb/docu/howtos/howto-use-db-sequences.html
   // https://db.apache.org/derby/docs/10.8/ref/rrefsqljcreatesequence.html 
@@ -219,7 +225,7 @@ public final class Skeleton extends JPanel
         dao.insert(model.getRecordAt(ii));
       }
     }
-    controller.findTextAnywhere("", SearchOption.findExact);
+    controller.findTextAnywhere("", SearchOption.findWhole);
   }
 
   @SuppressWarnings("unused")

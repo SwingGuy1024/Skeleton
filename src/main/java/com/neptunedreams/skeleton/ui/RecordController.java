@@ -120,7 +120,7 @@ public class RecordController<R, PK> implements RecordModelListener {
       return dao.getAll(getOrder());
     } else {
       switch (searchOption) {
-        case findExact:
+        case findWhole:
           return dao.findInField(text, field, getOrder());
         case findAll:
           return dao.findAllInField(field, getOrder(), parseText(text));
@@ -165,7 +165,7 @@ public class RecordController<R, PK> implements RecordModelListener {
       return dao.getAll(getOrder());
     } else {
       switch (searchOption) {
-        case findExact:
+        case findWhole:
           return dao.find(text, getOrder());
         case findAll:
           return dao.findAll(getOrder(), parseText(text));
