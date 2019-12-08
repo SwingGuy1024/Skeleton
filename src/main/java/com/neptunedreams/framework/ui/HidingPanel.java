@@ -80,6 +80,7 @@ public final class HidingPanel extends JPanel {
     return visible;
   }
 
+  @SuppressWarnings("unused")
   public boolean isDisableInsteadOfHide() {
     return isDisableInsteadOfHide;
   }

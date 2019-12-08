@@ -154,8 +154,8 @@ public final class Skeleton extends JPanel
   private Skeleton(boolean doImport) throws IOException, ClassNotFoundException {
     super();
 
+    info = new SQLiteInfo();
     try {
-      info = new SQLiteInfo();
       info.init();
       final ConnectionSource connectionSource = info.getConnectionSource();
       Dao<SiteRecord, Integer> dao = info.getDao(SiteRecord.class, connectionSource);

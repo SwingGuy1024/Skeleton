@@ -20,6 +20,10 @@ Once the code has been generated, it need not be generated again unless the sche
 
 `mvn clean install`
 
+This does not build the OSX executable. For that, you should run
+
+`mvn clean assembly:assembly`
+
 ## Why?
 
 For more information on the purpose of this project, see the [project wiki](https://github.com/SwingGuy1024/Skeleton/wiki/Skeleton-Key-Application).

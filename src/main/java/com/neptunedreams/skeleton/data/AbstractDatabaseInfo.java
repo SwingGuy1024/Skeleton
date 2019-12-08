@@ -21,6 +21,7 @@ public abstract class AbstractDatabaseInfo implements DatabaseInfo {
   private @Nullable ConnectionSource connectionSource;
   private final String homeDirectory;
   
+  @SuppressWarnings("JavaDoc")
   protected AbstractDatabaseInfo(String homeDir) { // throws IOException {
     String userHome = System.getProperty("user.home");
     //noinspection StringConcatenation,StringConcatenationMissingWhitespace
@@ -52,6 +53,7 @@ public abstract class AbstractDatabaseInfo implements DatabaseInfo {
     return homeDirectory;
   }
 
+  @SuppressWarnings("JavaDoc")
   @EnsuresNonNull("connectionSource")
   protected void initialize() throws SQLException {
     connectionSource = connect();

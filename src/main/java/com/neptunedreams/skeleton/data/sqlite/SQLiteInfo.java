@@ -28,12 +28,14 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
 
   private static final Class<SiteRecord> RECORD_RECORD_CLASS = SiteRecord.class;
 
-  public SQLiteInfo() throws SQLException, IOException {
+  @SuppressWarnings("JavaDoc")
+  public SQLiteInfo() {
     //noinspection HardcodedFileSeparator
     this("/.sqlite.skeleton");
   }
-  
-  public SQLiteInfo(String homeDir) throws IOException, SQLException {
+
+  @SuppressWarnings("JavaDoc")
+  public SQLiteInfo(String homeDir) {
     super(homeDir);
 //    init();
   }
@@ -86,6 +88,7 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
     return true;
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @Override
   public void createSchema() {
     //noinspection resource

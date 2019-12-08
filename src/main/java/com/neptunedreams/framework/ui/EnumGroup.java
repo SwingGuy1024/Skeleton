@@ -17,7 +17,7 @@ import javax.swing.JRadioButton;
 /**
  * A specialized kind of ButtonGroup that maps radio buttons to enum or constant values. The getSelected() method
  * will return the enum value for the selected JRadioButton.
- * <p/>
+ * <p>
  * This class will also help reduce the boilerplate code in setting up your radio buttons.
  * <p>Created by IntelliJ IDEA.
  * <p>Date: 12/28/17
@@ -34,7 +34,7 @@ public final class EnumGroup<E extends DisplayEnum> {
   private final AtomicReference<ButtonModel> selectedModelRef = new AtomicReference<>(); 
 
   /**
-   * Add a JRadioButton to the button group, linking it to the specified constant value
+   * Add a JRadioButton to the button group, linking it to the specified constant value.
    * @param button The JRadioButton
    * @param enumValue The value to link with the button
    */
@@ -50,7 +50,7 @@ public final class EnumGroup<E extends DisplayEnum> {
   }
   
   /**
-   * Add a JRadioButton to the button group, linking it to the specified constant value, and adding it to the panel
+   * Add a JRadioButton to the button group, linking it to the specified constant value, and adding it to the panel.
    * @param button The JRadioButton
    * @param enumValue The constant value
    * @param panel The panel to add the JRadioButton to.
@@ -91,6 +91,7 @@ public final class EnumGroup<E extends DisplayEnum> {
    * add(JRadioButton, E, JComponent), except it creates the JRadioButton.
    *
    * @param enumValue The constant value
+   * @param panel The panel to get the button
    * @return the JRadioButton created by this method.
    * @see #add(JRadioButton, E, JComponent) 
    */
@@ -116,11 +117,12 @@ public final class EnumGroup<E extends DisplayEnum> {
     group.setSelected(Objects.requireNonNull(buttonMap.get(selectedValue)), true);
   }
   
+  @SuppressWarnings("JavaDoc")
   public void addButtonGroupListener(ButtonGroupListener listener) {
     listenerList.add(listener);
   }
   
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "JavaDoc"})
   public void removeButtonGroupListener(ButtonGroupListener listener) {
     listenerList.remove(listener);
   }

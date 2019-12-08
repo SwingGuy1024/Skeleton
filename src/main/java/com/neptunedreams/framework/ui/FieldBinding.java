@@ -23,6 +23,7 @@ public abstract class FieldBinding<R, T, C extends Component> {
   private C editor;
   private final boolean isEditable;
 
+  @SuppressWarnings("JavaDoc")
   FieldBinding(Function<R, T> aGetter, BiConsumer<R, T> aSetter, C aField, boolean editable) {
     getter = aGetter;
     setter = aSetter;
@@ -40,7 +41,7 @@ public abstract class FieldBinding<R, T, C extends Component> {
   }
 
   /**
-   * Retrieves the data field value from the dataModel and loads it into the editor
+   * Retrieves the data field value from the dataModel and loads it into the editor.
    * @param dataRecord The dataModel record.
    */
   public void prepareEditor(R dataRecord) {
@@ -73,8 +74,8 @@ public abstract class FieldBinding<R, T, C extends Component> {
   }
 
   /**
-   * Uses the getter to retrieve the value from the dataModel record, and cleans it
-   * @param record The dataModel record.
+   * Uses the getter to retrieve the value from the dataModel record, and cleans it.
+   * @param record The dataModel record
    * @return The cleaned value from the dataModel
    */
   public T getValue(R record) {
@@ -138,6 +139,7 @@ public abstract class FieldBinding<R, T, C extends Component> {
    * @param <D> The DataModel type.
    */
   public static class StringEditableBinding<D> extends FieldBinding<D, String, JTextComponent> {
+    @SuppressWarnings("JavaDoc")
     StringEditableBinding(Function<D, String> aGetter, BiConsumer<D, String> aSetter, JTextComponent aField) {
       super(aGetter, aSetter, aField, true);
     }
@@ -169,6 +171,7 @@ public abstract class FieldBinding<R, T, C extends Component> {
    */
   public static class IntegerBinding<D> extends FieldBinding<D, Integer, JLabel> {
     private Integer loadedValue = 0;
+    @SuppressWarnings("JavaDoc")
     IntegerBinding(final Function<D, Integer> aGetter, final BiConsumer<D, Integer> aSetter, final JLabel aField) {
       super(aGetter, aSetter, aField, false);
     }
@@ -191,10 +194,12 @@ public abstract class FieldBinding<R, T, C extends Component> {
     }
   }
   
+  @SuppressWarnings("JavaDoc")
   public static <R> StringEditableBinding<R> bindEditableString(Function<R, String> getter, BiConsumer<R, String> setter, JTextComponent field) {
     return new StringEditableBinding<>(getter, setter, field);
   }
 
+  @SuppressWarnings("JavaDoc")
   public static <R> IntegerBinding<R> bindInteger(Function<R, Integer> getter, BiConsumer<R, Integer> setter, JLabel field) {
     return new IntegerBinding<>(getter, setter, field);
   }

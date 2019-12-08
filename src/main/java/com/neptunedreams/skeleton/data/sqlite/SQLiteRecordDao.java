@@ -101,7 +101,8 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
     }
     return this;
   }
-  
+
+  @SuppressWarnings("JavaDoc")
   static SQLiteRecordDao create(ConnectionSource source) {
     return new SQLiteRecordDao(source).launch();
   }
