@@ -7,7 +7,7 @@ import com.google.common.eventbus.Subscribe;
 /**
  * This class serves as a facade for the event bus. The event bus instance is private, and all methods to post an event
  * are static methods in this class. This makes it easier to keep track of the events.
- * <p/>
+ * <p>
  * Under no circumstances should the EventBus instance be made available to other classes. By requiring all posts
  * to be done by static methods, we make it possible to use multiple EventBusses in a project, each with its own 
  * set of post methods. This design guarantee that a message can't get posted to the wrong EventBus.
