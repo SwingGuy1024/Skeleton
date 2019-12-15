@@ -28,6 +28,8 @@ import java.util.concurrent.Executor;
  */
 public class ConnectionWrapper implements Connection {
   private final Connection w;
+
+  @SuppressWarnings("JavaDoc")
   public ConnectionWrapper(Connection wrapped) {
     w = wrapped;
   }

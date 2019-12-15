@@ -9,6 +9,7 @@ import com.ErrorReport;
 import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.event.MasterEventBus;
+import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -28,9 +29,10 @@ public class RecordController<R, PK> implements RecordModelListener {
   // TODO:  RecordController and RecordView have references to each other. Replace this with a listener system
   // todo   This shouldn't be too hard. There are very few calls made to the RecordView.
   private final RecordSelectionModel<R> recordSelectionModel;
+  @NotOnlyInitialized
   private final RecordModel<R> model;
 
-  @SuppressWarnings("argument.type.incompatible")
+  @SuppressWarnings({"argument.type.incompatible", "JavaDoc"})
   public RecordController(
       Dao<R, PK> theDao, 
       RecordSelectionModel<R> recordSelectionModel, 
@@ -50,6 +52,7 @@ public class RecordController<R, PK> implements RecordModelListener {
   
   public Dao<R, PK> getDao() { return dao; }
 
+  @SuppressWarnings("JavaDoc")
   public void specifyOrder(SiteField theOrder) {
     order = theOrder;
   }
@@ -74,6 +77,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     MasterEventBus.postChangeRecordEvent(record);
   }
 
+  @SuppressWarnings("JavaDoc")
   public void addBlankRecord() {
     // If the last record is already blank, just go to it
     final int lastIndex = model.getSize() - 1;
@@ -101,6 +105,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
 
+  @SuppressWarnings("JavaDoc")
   public void findTextInField(String dirtyText, final SiteField field, SearchOption searchOption) {
     //noinspection TooBroadScope
     String text = dirtyText.trim();
@@ -113,12 +118,13 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
 
+  @SuppressWarnings("JavaDoc")
   Collection<R> findRecordsInField(final String text, final SiteField field, SearchOption searchOption) throws SQLException {
     if (text.trim().isEmpty()) {
       return dao.getAll(getOrder());
     } else {
       switch (searchOption) {
-        case findExact:
+        case findWhole:
           return dao.findInField(text, field, getOrder());
         case findAll:
           return dao.findAllInField(field, getOrder(), parseText(text));
@@ -130,6 +136,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
 
+  @SuppressWarnings("JavaDoc")
   String[] parseText(@NonNull String text) {
     //noinspection EqualsReplaceableByObjectsCall
     assert text.trim().equals(text); // text should already be trimmed
@@ -145,6 +152,7 @@ public class RecordController<R, PK> implements RecordModelListener {
   /**
    * Find text in any field of the database.
    * @param dirtyText The text to find, without cleaning or wildcards
+   * @param searchOption The search option (Find all, find any, etc)
    */
   public void findTextAnywhere(String dirtyText, SearchOption searchOption) {
     //noinspection TooBroadScope
@@ -158,12 +166,13 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
   
+  @SuppressWarnings("JavaDoc")
   Collection<R> findRecordsAnywhere(final String text, SearchOption searchOption) throws SQLException {
     if (text.isEmpty()) {
       return dao.getAll(getOrder());
     } else {
       switch (searchOption) {
-        case findExact:
+        case findWhole:
           return dao.find(text, getOrder());
         case findAll:
           return dao.findAll(getOrder(), parseText(text));
@@ -180,6 +189,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     
   }
 
+  @SuppressWarnings("JavaDoc")
   public Collection<R> retrieveNow(final SiteField searchField, final SearchOption searchOption, final String searchText) {
     try {
       if (searchField.isField()) {
@@ -198,6 +208,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     loadNewRecord(model.getFoundRecord());
   }
 
+  @SuppressWarnings("JavaDoc")
   public void delete(final R selectedRecord) throws SQLException {
     dao.delete(selectedRecord);
   }

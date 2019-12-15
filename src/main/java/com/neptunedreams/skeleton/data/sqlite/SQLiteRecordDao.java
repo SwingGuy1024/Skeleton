@@ -20,6 +20,7 @@ import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.ResultQuery;
 import org.jooq.SelectConditionStep;
+import org.jooq.SelectSeekStep1;
 import org.jooq.SelectSelectStep;
 import org.jooq.SelectWhereStep;
 import org.jooq.TableField;
@@ -68,7 +69,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   // at src/main/resources/sql/generateFromSkeleton.db anc re-create it using the revised CREATE statement.
   // Also, this statement specifies the primary key as a property, instead of as a constraint at the end of the 
   // statement. This is necessary so a null id will cause the database to generate a new valid id. If it's specified
-  // in a CONSTRAINT clause, a null id will throw an exception instead. In fact, even if I specify the collate nocase
+  // in a CONSTRAINT clause, a null id will throw an exception instead. In fact, even if I specify the collate noCase
   // constraints as named constraints, a null ID will still throw an exception.
   private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS site (" +
       "id INTEGER NOT NULL PRIMARY KEY," + 
@@ -100,7 +101,8 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
     }
     return this;
   }
-  
+
+  @SuppressWarnings("JavaDoc")
   static SQLiteRecordDao create(ConnectionSource source) {
     return new SQLiteRecordDao(source).launch();
   }
@@ -109,7 +111,6 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   public boolean createTableIfNeeded() throws SQLException {
     /* All my efforts to generate the table using jOOQ failed, so I had to resort to direct SQL. */
 
-    //noinspection resource
     DSLContext dslContext = getDslContext();
 
     // Creates the table using the sql statement
@@ -148,26 +149,28 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   @Override
   public Collection<SiteRecord> getAll(final @Nullable SiteField orderBy) throws SQLException {
 
-    //noinspection resource
     DSLContext dslContext = getDslContext();
-    try (
-        SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
+    try (SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
       if (orderBy == null) {
         return siteRecords.fetch();
       } else {
-        //noinspection resource
-        return siteRecords.orderBy(getField(orderBy)).fetch();
+        return getOrderedSiteRecords(orderBy, siteRecords);
       }
     }
   }
 
+  private Collection<SiteRecord> getOrderedSiteRecords(final @NonNull SiteField orderBy, final SelectWhereStep<SiteRecord> siteRecords) {
+    try (final SelectSeekStep1<SiteRecord, ?> foundRecords = siteRecords.orderBy(getField(orderBy))) {
+      return foundRecords.fetch();
+    }
+  }
+
   @Override
-  @SuppressWarnings("cast.unsafe")
   public Collection<SiteRecord> find(final String text, final @Nullable SiteField orderBy) throws SQLException {
     final String wildCardText = wrapWithWildCards(text);
-    //noinspection resource
+
     DSLContext dslContext = getDslContext();
-    //noinspection resource
+
     try (
         final SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE);
         SelectConditionStep<SiteRecord> where = siteRecords.where(
@@ -177,7 +180,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
           SITE.NOTES.like(wildCardText)))));
         final ResultQuery<SiteRecord> query = (orderBy == null) ? 
           where : 
-          where.orderBy(getField(orderBy)) // unsafe cast
+          where.orderBy(getField(orderBy))
     ) {
       return query.fetch();
     }
@@ -189,7 +192,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
    * @param orderBy The orderBy field
    * @return A Field{@literal <String>} to pass to the orderBy() method to support case insensitive ordering.
    */
-  @SuppressWarnings("unchecked")
+//  @SuppressWarnings("unchecked")
   private @NonNull TableField<SiteRecord, ?> getField(final @Nullable SiteField orderBy) {
     return Objects.requireNonNull(fieldMap.get(orderBy));
   }
@@ -200,10 +203,10 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
 
   @Override
   public Collection<SiteRecord> findAny(final @Nullable SiteField orderBy, final String... text) throws SQLException {
-    //noinspection resource
+
     DSLContext dslContext = getDslContext();
     Condition condition = SITE.SOURCE.lt(""); // Should always be false
-    //noinspection resource
+
     try (final SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE))
     {
       for (String txt : text) {
@@ -220,7 +223,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
 
   @Override
   public Collection<SiteRecord> findAll(final @Nullable SiteField orderBy, final String... text) throws SQLException {
-    //noinspection resource
+
     DSLContext dslContext = getDslContext();
     Condition condition = SITE.SOURCE.ge(""); // Should always be true
     try (final SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
@@ -237,14 +240,13 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   }
 
   @Override
-  @SuppressWarnings("cast.unsafe")
   public Collection<SiteRecord> findInField(
       final String text, 
       final @NonNull SiteField findBy, 
       final @Nullable SiteField orderBy
   ) throws SQLException {
     String wildCardText = wrapWithWildCards(text);
-    //noinspection resource
+
     DSLContext dslContext = getDslContext();
 
     final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
@@ -262,7 +264,6 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
 
   @Override
   public Collection<SiteRecord> findAnyInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
-    //noinspection resource
     DSLContext dslContext = getDslContext();
 
     final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
@@ -278,7 +279,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
 
   @Override
   public Collection<SiteRecord> findAllInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
-    //noinspection resource
+
     DSLContext dslContext = getDslContext();
 
     final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
@@ -307,7 +308,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   }
 
   @Override
-  public void update(final SiteRecord entity) throws SQLException {
+  public void update(final SiteRecord entity) { // throws SQLException {
     entity.store();
   }
 
@@ -324,7 +325,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   @Override
   @SuppressWarnings("argument.type.incompatible")
   public void insert(final SiteRecord entity) throws SQLException {
-    //noinspection resource
+
     DSLContext dslContext = getDslContext();
     //noinspection ConstantConditions
     entity.setId(null); // argument.type.incompatible null assumed not allowed in generated code.
@@ -335,14 +336,13 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
   }
 
   @Override
-  public void delete(final SiteRecord entity) throws SQLException {
+  public void delete(final SiteRecord entity) { // throws SQLException {
     entity.delete();
   }
   
   @Override
   public Integer getNextId() throws SQLException {
 
-    //noinspection resource
     DSLContext dslContext = getDslContext();
     try (
         final SelectSelectStep<Record1<Integer>> select = dslContext.select(max(Site.SITE.ID))
@@ -364,7 +364,6 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
 
   @Override
   public int getTotal() throws SQLException {
-    //noinspection resource
     DSLContext dslContext = getDslContext();
     return dslContext.fetchCount(Tables.SITE);
   }

@@ -14,10 +14,13 @@ import org.checkerframework.checker.initialization.qual.UnderInitialization;
  */
 public class AbstractDaoFactory {
   private final Map<Class<?>, Dao<?, ?>> daoMap = new HashMap<>();
+
+  @SuppressWarnings("JavaDoc")
   protected final <T, PK> void addDao(@UnderInitialization AbstractDaoFactory this, Class<T> tClass, Dao<T, PK> tDao) {
     daoMap.put(tClass, tDao);
   }
-  
+
+  @SuppressWarnings("JavaDoc")
   public <T, PK> Dao<T, PK> getDao(Class<T> tClass) {
     //noinspection unchecked
     return Objects.requireNonNull((Dao<T, PK>) daoMap.get(tClass));

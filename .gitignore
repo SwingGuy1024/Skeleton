@@ -8,6 +8,12 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 .idea/
+.DS_Store
+release History/
+skeleton/
+skeleton2/
+skeleton-derby/
+docs/
 
 #Generated source files
 src/main/java/com/neptunedreams/skeleton/gen

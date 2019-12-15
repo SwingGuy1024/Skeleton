@@ -11,14 +11,17 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  */
 //@Entity
 public class Record {
+//  @Column(name="ID")
   private int id = 0;
   private @NonNull String source="";
   private @NonNull String userName="";
   private @NonNull String password="";
   private @NonNull String notes="";
 
+  @SuppressWarnings("JavaDoc")
   public Record() { }
 
+  @SuppressWarnings("JavaDoc")
   public Record(@NonNull String s, @NonNull String un, @NonNull String pw, @NonNull String nts) {
     source = s;
     userName = un;
@@ -66,8 +69,8 @@ public class Record {
     this.notes = notes;
   }
 
-  @Override
   @SuppressWarnings("HardCodedStringLiteral")
+  @Override
   public @NonNull String toString() {
     //noinspection ConstantConditions
     return String.format("{%n  id: %d,%n  source: %s,%n  username: %s,%n  password: %s,%n  notes: %s%n}", id, source, userName, password, notes);

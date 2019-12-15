@@ -24,6 +24,7 @@ public class RecordModel<R> implements Serializable {
   private transient int recordIndex = 0;
   private final transient Function<Void, R> constructor;
   
+  @SuppressWarnings("JavaDoc")
   RecordModel(Function<Void, R> theConstructor) {
     constructor = theConstructor;
   }
@@ -34,11 +35,12 @@ public class RecordModel<R> implements Serializable {
   
   public int getSize() { return foundItems.size(); }
 
+  @SuppressWarnings("JavaDoc")
   public void addModelListener(RecordModelListener listener) {
     listenerList.add(listener);
   }
   
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "JavaDoc"})
   public void removeModelListener(RecordModelListener listener) {
     listenerList.remove(listener);
   }
@@ -54,12 +56,14 @@ public class RecordModel<R> implements Serializable {
     fireModelListChanged();
   }
 
+  @SuppressWarnings("JavaDoc")
   public @NonNull R createNewEmptyRecord() {
     final R emptyRecord = constructor.apply(null);
     assert emptyRecord != null;
     return emptyRecord;
   }
 
+  @SuppressWarnings("JavaDoc")
   public void goNext() {
     assert !foundItems.isEmpty();
     int size = foundItems.size();
@@ -70,6 +74,7 @@ public class RecordModel<R> implements Serializable {
     setRecordIndex(nextRecord);
   }
 
+  @SuppressWarnings("JavaDoc")
   public void goPrev() {
     assert !foundItems.isEmpty();
     int nextRecord = recordIndex - 1;
@@ -79,11 +84,13 @@ public class RecordModel<R> implements Serializable {
     setRecordIndex(nextRecord);
   }
   
+  @SuppressWarnings("JavaDoc")
   public void goFirst() {
     assert !foundItems.isEmpty();
     setRecordIndex(0);
   }
 
+  @SuppressWarnings("JavaDoc")
   public void goLast() {
     assert !foundItems.isEmpty();
     setRecordIndex(foundItems.size()-1);
@@ -103,6 +110,7 @@ public class RecordModel<R> implements Serializable {
     }
   }
 
+  @SuppressWarnings("JavaDoc")
   public void append(R insertedRecord) {
     final int newIndex = foundItems.size();
     foundItems.add(insertedRecord);
@@ -122,6 +130,7 @@ public class RecordModel<R> implements Serializable {
     return emptyRecord;
   }
   
+  @SuppressWarnings("JavaDoc")
   public R getRecordAt(int index) {
     return foundItems.get(index);
   }

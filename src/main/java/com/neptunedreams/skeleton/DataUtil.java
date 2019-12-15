@@ -1,33 +1,12 @@
 package com.neptunedreams.skeleton;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.RandomAccess;
-import java.util.function.Function;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -36,7 +15,7 @@ import java.util.function.Function;
  *
  * @author Miguel Mu\u00f1oz
  */
-@SuppressWarnings({"ConstantConditions", "ReturnOfNull", "ZeroLengthArrayAllocation", "MagicConstant", "MagicCharacter", "UseOfSystemOutOrSystemErr"})
+//@SuppressWarnings({"ConstantConditions", "ReturnOfNull", "ZeroLengthArrayAllocation", "MagicConstant", "MagicCharacter", "UseOfSystemOutOrSystemErr"})
 public enum DataUtil {
   ;
 
@@ -47,6 +26,7 @@ public enum DataUtil {
   }
   */
 
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "MagicCharacter"})
   public static void printResultSet(final ResultSet resultSet) throws SQLException {
     ResultSetMetaData metaData = resultSet.getMetaData();
     int columnCount = metaData.getColumnCount();
@@ -135,7 +115,9 @@ public enum DataUtil {
   private static void pack(StringBuilder line, final String value, final int width, String spaces) {
     line.append(value);
     // Pad spaces at the end of the value, including a column-separator space.
-    line.append(spaces.substring(0, (width - value.length()) + 1));
-//    line.append(spaces.substring(value.length(), width+1)); // alternate way, works too.
+//    line.append(spaces.substring(0, (width - value.length()) + 1));
+    line.append(spaces, 0, (width - value.length()) + 1);
+//    line.append(spaces, value.length(), width+1); // alternate way, works too.
+//    line.append(spaces.substring((width - value.length()) + 1)); // probably works fine, too. Untested.
   }
 }

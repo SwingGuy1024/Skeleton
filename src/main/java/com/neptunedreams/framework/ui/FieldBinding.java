@@ -2,10 +2,11 @@ package com.neptunedreams.framework.ui;
 
 import java.awt.Component;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.swing.JLabel;
+import javax.swing.JTextArea;
 import javax.swing.text.JTextComponent;
-import com.neptunedreams.Setter;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -18,11 +19,12 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public abstract class FieldBinding<R, T, C extends Component> {
   private Function<R, T> getter;
-  private Setter<R, T> setter;
+  private BiConsumer<R, T> setter;
   private C editor;
   private final boolean isEditable;
 
-  FieldBinding(Function<R, T> aGetter, Setter<R, T> aSetter, C aField, boolean editable) {
+  @SuppressWarnings("JavaDoc")
+  FieldBinding(Function<R, T> aGetter, BiConsumer<R, T> aSetter, C aField, boolean editable) {
     getter = aGetter;
     setter = aSetter;
     editor = aField;
@@ -39,7 +41,7 @@ public abstract class FieldBinding<R, T, C extends Component> {
   }
 
   /**
-   * Retrieves the data field value from the dataModel and loads it into the editor
+   * Retrieves the data field value from the dataModel and loads it into the editor.
    * @param dataRecord The dataModel record.
    */
   public void prepareEditor(R dataRecord) {
@@ -72,8 +74,8 @@ public abstract class FieldBinding<R, T, C extends Component> {
   }
 
   /**
-   * Uses the getter to retrieve the value from the dataModel record, and cleans it
-   * @param record The dataModel record.
+   * Uses the getter to retrieve the value from the dataModel record, and cleans it.
+   * @param record The dataModel record
    * @return The cleaned value from the dataModel
    */
   public T getValue(R record) {
@@ -88,11 +90,11 @@ public abstract class FieldBinding<R, T, C extends Component> {
   public void setValue(R record, T value) {
     assert record != null : "Null record";
     assert value != null : "Null value";
-    setter.setValue(record, clean(value));
+    setter.accept(record, clean(value));
   }
 
   /**
-   * Prepare the editor by setting the editor or display component to the specified value. This is delcared as a String
+   * Prepare the editor by setting the editor or display component to the specified value. This is declared as a String
    * because that's how both text and numerical data is displayed, but this may be revisited later.
    * Subclasses should implement this for their particular editor component.
    * @param editorValue The editor value, expressed as a String.
@@ -120,7 +122,7 @@ public abstract class FieldBinding<R, T, C extends Component> {
    * @param record The record to receive the editor's value
    */
   public void saveEdit(R record) {
-    setter.setValue(record, readFieldValue());
+    setter.accept(record, readFieldValue());
   }
 
   /**
@@ -137,7 +139,8 @@ public abstract class FieldBinding<R, T, C extends Component> {
    * @param <D> The DataModel type.
    */
   public static class StringEditableBinding<D> extends FieldBinding<D, String, JTextComponent> {
-    StringEditableBinding(Function<D, String> aGetter, Setter<D, String> aSetter, JTextComponent aField) {
+    @SuppressWarnings("JavaDoc")
+    StringEditableBinding(Function<D, String> aGetter, BiConsumer<D, String> aSetter, JTextComponent aField) {
       super(aGetter, aSetter, aField, true);
     }
 
@@ -148,7 +151,14 @@ public abstract class FieldBinding<R, T, C extends Component> {
 
     @Override
     protected void prepareEditor(final String editorValue) {
-      getEditor().setText(clean(editorValue));
+      final JTextComponent editor = getEditor();
+      editor.setText(clean(editorValue));
+      
+      // Don't scroll to the end on multi-line text components. This makes the animation smoother.
+      if (editor instanceof JTextArea) {
+        editor.setSelectionStart(0);
+        editor.setSelectionEnd(0);
+      }
     }
 
     @Override
@@ -161,7 +171,8 @@ public abstract class FieldBinding<R, T, C extends Component> {
    */
   public static class IntegerBinding<D> extends FieldBinding<D, Integer, JLabel> {
     private Integer loadedValue = 0;
-    IntegerBinding(final Function<D, Integer> aGetter, final Setter<D, Integer> aSetter, final JLabel aField) {
+    @SuppressWarnings("JavaDoc")
+    IntegerBinding(final Function<D, Integer> aGetter, final BiConsumer<D, Integer> aSetter, final JLabel aField) {
       super(aGetter, aSetter, aField, false);
     }
 
@@ -183,11 +194,13 @@ public abstract class FieldBinding<R, T, C extends Component> {
     }
   }
   
-  public static <R> StringEditableBinding<R> bindEditableString(Function<R, String> getter, Setter<R, String> setter, JTextComponent field) {
+  @SuppressWarnings("JavaDoc")
+  public static <R> StringEditableBinding<R> bindEditableString(Function<R, String> getter, BiConsumer<R, String> setter, JTextComponent field) {
     return new StringEditableBinding<>(getter, setter, field);
   }
 
-  public static <R> IntegerBinding<R> bindInteger(Function<R, Integer> getter, Setter<R, Integer> setter, JLabel field) {
+  @SuppressWarnings("JavaDoc")
+  public static <R> IntegerBinding<R> bindInteger(Function<R, Integer> getter, BiConsumer<R, Integer> setter, JLabel field) {
     return new IntegerBinding<>(getter, setter, field);
   }
 }

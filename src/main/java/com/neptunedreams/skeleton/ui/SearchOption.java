@@ -11,9 +11,18 @@ import com.neptunedreams.framework.ui.DisplayEnum;
  */
 @SuppressWarnings("HardCodedStringLiteral")
 public enum SearchOption implements DisplayEnum {
+  /**
+   * Find any word in the search text.
+   */
   findAny("Find Any"),
+  /**
+   * Find all words.
+   */
   findAll("Find All"),
-  findExact("Find Exact");
+  /**
+   * find whole string as a single word.
+   */
+  findWhole("Find Whole");
   private final String display;
 
   SearchOption(String display) {

@@ -11,5 +11,9 @@ import javax.swing.ButtonModel;
  */
 @FunctionalInterface
 public interface ButtonGroupListener {
+  /**
+   * Called when the selection for the group has changed.
+   * @param selectedButtonModel The button model
+   */
   void selectionChanged(ButtonModel selectedButtonModel);
 }

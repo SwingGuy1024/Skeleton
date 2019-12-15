@@ -12,6 +12,7 @@ import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
  * @author Miguel Mu\u00f1oz
  */
 public class SqLiteDaoFactory extends AbstractDaoFactory {
+  @SuppressWarnings("JavaDoc")
   SqLiteDaoFactory(ConnectionSource connectionSource) {
     super();
     //noinspection UnnecessaryLocalVariable

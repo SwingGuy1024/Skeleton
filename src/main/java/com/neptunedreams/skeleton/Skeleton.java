@@ -32,7 +32,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Skeleton Key Application
- * <p/>
+ * <p>
  * Optional Arguments: <br>
  *   -export Upon launching, export all data to an xml file. <br>
  *   -import Upon launching, if there is no data, import all data from the same .xml file that you previously exported. <br>
@@ -65,7 +65,14 @@ public final class Skeleton extends JPanel
   // Done: BUG: Search that produces one result gives the user an entry screen that gets treated as a new record 
   // Done: BUG: Key Queue in QueuedTask never reads the keys it saves. Can we get rid of it?
   // TODO:  Fix bug on adding: If I add a record, then do a find all by hitting return in the find field, it finds
-  // todo   all the records except the on I just added. Doing another find all finds everything.
+  // todo   all the records except the one I just added. Doing another find all finds everything.
+  // TODO: Replace CountDownDoor with CyclicBarrier?
+  // TODO: On changing sort column, search for previously selected card. (Search by id)
+  // TODO: Redo layout: 
+  // todo  1. Put Search Option Panel (in RecordUI) to the right of search field.
+  // done  2. Dim instead of hide search options. (I had forgotten all about them!)
+  // todo  3. Put search field options in a new sidebar. Allow show/hide.
+  // todo  4. Add column header to sort buttons.
   
   // https://db.apache.org/ojb/docu/howtos/howto-use-db-sequences.html
   // https://db.apache.org/derby/docs/10.8/ref/rrefsqljcreatesequence.html 
@@ -75,6 +82,26 @@ public final class Skeleton extends JPanel
 
 //  private static final String DERBY_SYSTEM_HOME = "derby.system.home";
 //  private Connection connection;
+  
+  /*
+  TODO: Fix Arrow-Key Support
+  I have implemented keyboard arrow support, but it has 2 problems.
+  
+  1. It works properly when a text component has the focus, in that it moves among the text characters. But the menu 
+  flickers each time an arrow key is struck, even though it's not performing the menu function. Somehow, it knows to
+  swallow the menu operation before it gets executed. 
+  
+  2. Holding down the arrow key will move the cards quickly, bypassing any swipe effect. To move and swipe at the same
+  time, hold the mouse button down on one of the arrow keys.
+  
+  I'm not sure what the best approach is to fix each of these problems. One idea is to write an AWTEventListener to 
+  respond to the arrow keystrokes, instead of using the menu accelerator mechanism. This would be a lot more work, 
+  since I would need to take care that it only gets executed when the proper components have the focus. 
+  
+  Also, I should add support to the swipe feature to handle keystroke events, delaying processing until a swipe is 
+  done. I'm not sure how these two solutions should be integrated together.
+   */
+  
   private RecordUI<SiteRecord> mainPanel;
   //    org.jooq.util.JavaGenerator generator;
   private static JFrame frame = new JFrame("Skeleton");
@@ -82,8 +109,8 @@ public final class Skeleton extends JPanel
   private final @NonNull RecordController<SiteRecord, Integer> controller;
   //  private RecordController<>
 
-  @SuppressWarnings("OverlyBroadThrowsClause")
-  public static void main(String[] args ) throws IOException, ClassNotFoundException {
+  @SuppressWarnings({"OverlyBroadThrowsClause", "JavaDoc"})
+  public static void main(String[] args) throws IOException, ClassNotFoundException {
     boolean doImport = (args.length > 0) && Objects.equals(args[0], "-import");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.setLocationByPlatform(true);
@@ -127,8 +154,8 @@ public final class Skeleton extends JPanel
   private Skeleton(boolean doImport) throws IOException, ClassNotFoundException {
     super();
 
+    info = new SQLiteInfo();
     try {
-      info = new SQLiteInfo();
       info.init();
       final ConnectionSource connectionSource = info.getConnectionSource();
       Dao<SiteRecord, Integer> dao = info.getDao(SiteRecord.class, connectionSource);
@@ -139,14 +166,10 @@ public final class Skeleton extends JPanel
           .userName(SiteRecord::getUsername, SiteRecord::setUsername)
           .password(SiteRecord::getPassword, SiteRecord::setPassword)
           .notes   (SiteRecord::getNotes,    SiteRecord::setNotes)
+          .withDao(dao)
+          .withConstructor(this::recordConstructor)
           .build();
-      controller = new RecordController<>(
-          dao, 
-          view, 
-          SiteField.Source,
-          this::recordConstructor
-      );
-      view.setController(controller);
+      controller = view.getController();
       final RecordModel<SiteRecord> model = controller.getModel();
       mainPanel = new RecordUI<>(model, view, controller); // RecordUI launches the initial search
 
@@ -202,7 +225,7 @@ public final class Skeleton extends JPanel
         dao.insert(model.getRecordAt(ii));
       }
     }
-    controller.findTextAnywhere("", SearchOption.findExact);
+    controller.findTextAnywhere("", SearchOption.findWhole);
   }
 
   @SuppressWarnings("unused")
