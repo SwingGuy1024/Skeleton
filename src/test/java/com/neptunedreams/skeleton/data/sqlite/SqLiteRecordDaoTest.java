@@ -9,8 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import com.neptunedreams.skeleton.data.ConnectionSource;
-import com.neptunedreams.skeleton.data.DatabaseInfo;
+import com.neptunedreams.framework.data.ConnectionSource;
+import com.neptunedreams.framework.data.DatabaseInfo;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -44,7 +44,7 @@ public class SqLiteRecordDaoTest {
     final DatabaseInfo info = new SQLiteInfo("/.sqlite.skeletonTest");
     info.init();
     connectionSource = info.getConnectionSource();
-    dao = (SQLiteRecordDao) info.<SiteRecord, Integer>getDao(SiteRecord.class, connectionSource);
+    dao = (SQLiteRecordDao) info.<SiteRecord, Integer, SiteField>getDao(SiteRecord.class, connectionSource);
   }
   
   @After
@@ -57,7 +57,7 @@ public class SqLiteRecordDaoTest {
     }
   }
 
-  private void doTestDao(SQLiteRecordDao dao, ConnectionSource connectionSource) throws IOException, SQLException {
+  private void doTestDao(SQLiteRecordDao dao, ConnectionSource connectionSource) throws SQLException {
     assertNotNull(connectionSource);
 //    ensureHomeExists(info.getHomeDir());
     assertNotNull(dao);
@@ -414,7 +414,7 @@ public class SqLiteRecordDaoTest {
 
   @Test
   @SuppressWarnings({"HardCodedStringLiteral", "unused", "HardcodedLineSeparator"})
-  public void testDao() throws SQLException, IOException {
+  public void testDao() throws SQLException {
     System.err.println("testDao");
     assert dao != null;
     assert connectionSource != null;

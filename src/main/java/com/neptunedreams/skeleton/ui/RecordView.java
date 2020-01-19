@@ -24,11 +24,12 @@ import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.JTextComponent;
 import com.google.common.eventbus.Subscribe;
+import com.neptunedreams.framework.data.Dao;
+import com.neptunedreams.framework.data.RecordSelectionModel;
+import com.neptunedreams.framework.event.ChangeRecord;
+import com.neptunedreams.framework.event.MasterEventBus;
 import com.neptunedreams.framework.ui.FieldBinding;
-import com.neptunedreams.skeleton.data.Dao;
 import com.neptunedreams.skeleton.data.SiteField;
-import com.neptunedreams.skeleton.event.ChangeRecord;
-import com.neptunedreams.skeleton.event.MasterEventBus;
 //import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
@@ -42,7 +43,7 @@ import org.checkerframework.checker.nullness.qual.RequiresNonNull;
  *
  * @author Miguel Mu\u00f1oz
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "HardCodedStringLiteral"})
 public final class RecordView<R> extends JPanel implements RecordSelectionModel<R> {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
@@ -55,14 +56,14 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   private R currentRecord; // = new Record("D", "D", "D", "D");
   
   @NotOnlyInitialized
-  private RecordController<R, Integer> controller;
+  private RecordController<R, Integer, SiteField> controller;
   private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
   private final JTextComponent sourceField;
 
-  @SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible", "method.invocation.invalid", "HardCodedStringLiteral"})
+  @SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible", "method.invocation.invalid"})
   private RecordView(R record,
                      SiteField initialSort,
-                     Dao<R, Integer> dao,
+                     Dao<R, Integer, SiteField> dao,
                      Function<Void, R> recordConstructor,
                      Function<R, Integer> getIdFunction, BiConsumer<R, Integer> setIdFunction,
                      Function<R, String> getSourceFunction, BiConsumer<R, String> setSourceFunction,
@@ -105,7 +106,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   }
 
   @SuppressWarnings("method.invocation.invalid")
-  private RecordController<R, Integer> makeController(final SiteField initialSort, final Dao<R, Integer> dao, final Function<Void, R> recordConstructor) {
+  private RecordController<R, Integer, SiteField> makeController(final SiteField initialSort, final Dao<R, Integer, SiteField> dao, final Function<Void, R> recordConstructor) {
     return new RecordController<>(
         dao,
         this,
@@ -147,7 +148,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
 //    controller = theController;
 //  }
 //  
-  public RecordController<R, Integer> getController() { return controller; }
+  public RecordController<R, Integer, SiteField> getController() { return controller; }
 
   /**
    * On the Mac, the AquaCaret will get installed. This caret has an annoying feature of selecting all the text on a
@@ -290,7 +291,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       private BiConsumer<RR, String> setPassword;
       private Function<RR, String> getNotes;
       private BiConsumer<RR, String> setNotes;
-      private Dao<RR, Integer> dao;
+      private Dao<RR, Integer, SiteField> dao;
       private Function<Void, RR> recordConstructor;
       public Builder(RR record, SiteField initialSort) {
         this.record = record;
@@ -327,7 +328,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       return this;
     }
     
-    public Builder<RR> withDao(Dao<RR, Integer> dao) {
+    public Builder<RR> withDao(Dao<RR, Integer, SiteField> dao) {
         this.dao = dao;
         return this;
     }

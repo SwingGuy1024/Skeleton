@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
-import com.neptunedreams.skeleton.data.ConnectionSource;
-import com.neptunedreams.skeleton.data.Dao;
+import com.neptunedreams.framework.data.ConnectionSource;
+import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.gen.Tables;
 import com.neptunedreams.skeleton.gen.tables.Site;
@@ -48,7 +48,7 @@ import static org.jooq.impl.DSL.*;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "HardCodedStringLiteral"})
-public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
+public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, SiteField> {
 
   private static final Map<SiteField, @NonNull TableField<SiteRecord, ?>> fieldMap = makeFieldMap();
   private final ConnectionSource connectionSource;

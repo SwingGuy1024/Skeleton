@@ -14,18 +14,18 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
-import com.ErrorReport;
-import com.neptunedreams.skeleton.data.ConnectionSource;
-import com.neptunedreams.skeleton.data.Dao;
-import com.neptunedreams.skeleton.data.DatabaseInfo;
+import com.neptunedreams.framework.ErrorReport;
+import com.neptunedreams.framework.data.ConnectionSource;
+import com.neptunedreams.framework.data.Dao;
+import com.neptunedreams.framework.data.DatabaseInfo;
+import com.neptunedreams.framework.data.RecordModel;
+import com.neptunedreams.framework.data.SearchOption;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.data.sqlite.SQLiteInfo;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import com.neptunedreams.skeleton.ui.RecordController;
-import com.neptunedreams.skeleton.ui.RecordModel;
 import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
-import com.neptunedreams.skeleton.ui.SearchOption;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -106,7 +106,7 @@ public final class Skeleton extends JPanel
   //    org.jooq.util.JavaGenerator generator;
   private static JFrame frame = new JFrame("Skeleton");
   private final @NonNull DatabaseInfo info;
-  private final @NonNull RecordController<SiteRecord, Integer> controller;
+  private final @NonNull RecordController<SiteRecord, Integer, SiteField> controller;
   //  private RecordController<>
 
   @SuppressWarnings({"OverlyBroadThrowsClause", "JavaDoc"})
@@ -158,7 +158,7 @@ public final class Skeleton extends JPanel
     try {
       info.init();
       final ConnectionSource connectionSource = info.getConnectionSource();
-      Dao<SiteRecord, Integer> dao = info.getDao(SiteRecord.class, connectionSource);
+      Dao<SiteRecord, Integer, SiteField> dao = info.getDao(SiteRecord.class, connectionSource);
       SiteRecord dummyRecord = new SiteRecord(0, "", "", "", "");
       final RecordView<SiteRecord> view = new RecordView.Builder<>(dummyRecord, SiteField.Source)
           .source  (SiteRecord::getSource,   SiteRecord::setSource)
@@ -213,8 +213,8 @@ public final class Skeleton extends JPanel
   }
 
   private static void importFromFile(
-      final Dao<SiteRecord, Integer> dao, 
-      RecordController<SiteRecord, Integer> controller)
+      final Dao<SiteRecord, Integer, SiteField> dao, 
+      RecordController<SiteRecord, Integer, ?> controller)
       throws SQLException, IOException, ClassNotFoundException {
     //noinspection StringConcatenation,StringConcatenationMissingWhitespace
     String exportPath = System.getProperty("user.home") + EXPORT_FILE;

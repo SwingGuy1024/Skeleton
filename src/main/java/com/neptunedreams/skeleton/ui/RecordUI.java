@@ -31,15 +31,20 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
-import com.ErrorReport;
 import com.google.common.eventbus.Subscribe;
+import com.neptunedreams.framework.ErrorReport;
+import com.neptunedreams.framework.data.RecordModel;
+import com.neptunedreams.framework.data.RecordModelListener;
+import com.neptunedreams.framework.data.SearchOption;
+import com.neptunedreams.framework.event.MasterEventBus;
+import com.neptunedreams.framework.task.ParameterizedCallable;
+import com.neptunedreams.framework.task.QueuedTask;
 import com.neptunedreams.framework.ui.ButtonGroupListener;
 import com.neptunedreams.framework.ui.EnumGroup;
 import com.neptunedreams.framework.ui.HidingPanel;
+import com.neptunedreams.framework.ui.SwipeDirection;
+import com.neptunedreams.framework.ui.SwipeView;
 import com.neptunedreams.skeleton.data.SiteField;
-import com.neptunedreams.skeleton.event.MasterEventBus;
-import com.neptunedreams.skeleton.task.ParameterizedCallable;
-import com.neptunedreams.skeleton.task.QueuedTask;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 //import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -75,7 +80,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
 
   // We set the initial text to a space, so we can fire the initial search by setting the text to the empty String.
   private JTextField findField = new JTextField(" ",10);
-  private final RecordController<R, Integer> controller;
+  private final RecordController<R, Integer, SiteField> controller;
   private EnumGroup<SiteField> searchFieldGroup = new EnumGroup<>();
   private final @NonNull RecordModel<R> recordModel;
   private JButton prev = new JButton(Resource.getLeftArrow());
@@ -114,7 +119,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
 
   @SuppressWarnings({"method.invocation.invalid", "argument.type.incompatible", "JavaDoc"})
   // add(), setBorder(), etc not properly annotated in JDK.
-  public RecordUI(@NonNull RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
+  public RecordUI(@NonNull RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer, SiteField> theController) {
     super(new BorderLayout());
     recordModel = model;
     final JLayer<RecordView<R>> layer = wrapInLayer(theView);

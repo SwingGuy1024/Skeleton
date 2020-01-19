@@ -1,5 +1,6 @@
 package com.neptunedreams.skeleton.data;
 
+import com.neptunedreams.framework.data.DBField;
 import com.neptunedreams.framework.ui.DisplayEnum;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 
@@ -10,7 +11,7 @@ import org.checkerframework.checker.nullness.qual.KeyFor;
  *
  * @author Miguel Mu\u00f1oz
  */
-public enum SiteField implements DisplayEnum {
+public enum SiteField implements DisplayEnum, DBField {
   @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") ID,
   @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") Source,
   @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") Username,
@@ -28,6 +29,7 @@ public enum SiteField implements DisplayEnum {
     isField = field;
   }
 
+  @Override
   public boolean isField() {
     return isField;
   }

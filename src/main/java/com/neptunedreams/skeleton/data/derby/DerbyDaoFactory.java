@@ -1,7 +1,7 @@
 package com.neptunedreams.skeleton.data.derby;
 
-import com.neptunedreams.skeleton.data.AbstractDaoFactory;
-import com.neptunedreams.skeleton.data.ConnectionSource;
+import com.neptunedreams.framework.data.AbstractDaoFactory;
+import com.neptunedreams.framework.data.ConnectionSource;
 import com.neptunedreams.skeleton.data.Record;
 
 /**
