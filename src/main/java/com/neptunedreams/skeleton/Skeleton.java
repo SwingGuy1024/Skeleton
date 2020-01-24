@@ -1,5 +1,6 @@
 package com.neptunedreams.skeleton;
 
+import com.neptunedreams.skeleton.ui.RecordModel;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -22,7 +23,6 @@ import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.data.sqlite.SQLiteInfo;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import com.neptunedreams.skeleton.ui.RecordController;
-import com.neptunedreams.skeleton.ui.RecordModel;
 import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
 import com.neptunedreams.skeleton.ui.SearchOption;
@@ -109,7 +109,7 @@ public final class Skeleton extends JPanel
   private final @NonNull RecordController<SiteRecord, Integer> controller;
   //  private RecordController<>
 
-  @SuppressWarnings({"OverlyBroadThrowsClause", "JavaDoc"})
+  @SuppressWarnings({"OverlyBroadThrowsClause"})
   public static void main(String[] args) throws IOException, ClassNotFoundException {
     boolean doImport = (args.length > 0) && Objects.equals(args[0], "-import");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -136,7 +136,7 @@ public final class Skeleton extends JPanel
 
       SwingUtilities.invokeLater(() -> {
         RecordModel<SiteRecord> model = skeleton.controller.getModel();
-        //noinspection StringConcatenation,StringConcatenationMissingWhitespace
+        //noinspection StringConcatenation
         String exportPath = System.getProperty("user.home") + EXPORT_FILE;
         System.err.printf("Exporting %d records to %s%n", model.getSize(), exportPath); // NON-NLS
         //noinspection OverlyBroadCatchBlock
@@ -184,6 +184,7 @@ public final class Skeleton extends JPanel
           //noinspection ErrorNotRethrown
           try {
             if (view.saveOnExit()) {
+              //noinspection ConstantConditions
               assert controller != null;
               controller.getDao().insertOrUpdate(view.getCurrentRecord());
             }
@@ -207,16 +208,16 @@ public final class Skeleton extends JPanel
 //      }
     } catch (SQLException e) {
       e.printStackTrace();
-      shutDownDatabase();
+      shutDownDatabase(info);
       throw new IOException(e); // don't even open the window!
     }
   }
 
   private static void importFromFile(
-      final Dao<SiteRecord, Integer> dao, 
+      final Dao<? super SiteRecord, Integer> dao, 
       RecordController<SiteRecord, Integer> controller)
       throws SQLException, IOException, ClassNotFoundException {
-    //noinspection StringConcatenation,StringConcatenationMissingWhitespace
+    //noinspection StringConcatenation
     String exportPath = System.getProperty("user.home") + EXPORT_FILE;
     try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(exportPath))) {
       @SuppressWarnings("unchecked")
@@ -229,8 +230,7 @@ public final class Skeleton extends JPanel
   }
 
   @SuppressWarnings("unused")
-  private SiteRecord recordConstructor(@UnderInitialization Skeleton this, Void ignored) {
-    //noinspection ConstantConditions
+  private SiteRecord recordConstructor(@UnderInitialization Skeleton this) {
     return new SiteRecord(0, "", "", "", "");
   }
   
@@ -264,14 +264,13 @@ public final class Skeleton extends JPanel
     return new WindowAdapter() {
       @Override
       public void windowClosed(final WindowEvent e) {
-        shutDownDatabase();
+        shutDownDatabase(info);
       }
     };
   }
 
-  private void shutDownDatabase(@UnknownInitialization Skeleton this) {
-    assert info != null;
-    info.shutdown();
+  private void shutDownDatabase(@UnknownInitialization Skeleton this, DatabaseInfo dInfo) {
+    dInfo.shutdown();
   }
 }
 

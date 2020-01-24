@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -63,7 +64,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   private RecordView(R record,
                      SiteField initialSort,
                      Dao<R, Integer> dao,
-                     Function<Void, R> recordConstructor,
+                     Supplier<R> recordConstructor,
                      Function<R, Integer> getIdFunction, BiConsumer<R, Integer> setIdFunction,
                      Function<R, String> getSourceFunction, BiConsumer<R, String> setSourceFunction,
                      Function<R, String> getUserNameFunction, BiConsumer<R, String> setUserNameFunction,
@@ -105,7 +106,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   }
 
   @SuppressWarnings("method.invocation.invalid")
-  private RecordController<R, Integer> makeController(final SiteField initialSort, final Dao<R, Integer> dao, final Function<Void, R> recordConstructor) {
+  private RecordController<R, Integer> makeController(final SiteField initialSort, final Dao<R, Integer> dao, final Supplier<R> recordConstructor) {
     return new RecordController<>(
         dao,
         this,
@@ -126,7 +127,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
    * @param record The record to clean
    * @param <T> The type of the record.
    */
-  private <T> void cleanValue(@UnderInitialization RecordView<R> this, FieldBinding<R, T, ?> binding, R record) {
+  private <T> void cleanValue(@UnderInitialization RecordView<R> this, FieldBinding<? super R, T, ?> binding, R record) {
     binding.setValue(record, binding.getValue(record));
   }
 
@@ -216,7 +217,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   }
   
   @Subscribe
-  public void setCurrentRecord(ChangeRecord<R> recordEvent) {
+  public void setCurrentRecord(@SuppressWarnings("BoundedWildcard") ChangeRecord<R> recordEvent) {
     R newRecord = recordEvent.getNewRecord();
     assert newRecord != null;
     currentRecord = newRecord;
@@ -276,7 +277,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     sourceField.requestFocus();
   }
 
-    @SuppressWarnings("initialization.fields.uninitialized")
+    @SuppressWarnings({"initialization.fields.uninitialized", "InstanceVariableMayNotBeInitialized"})
     public static class Builder<RR> {
       private RR record;
       private SiteField initialSort;
@@ -291,7 +292,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       private Function<RR, String> getNotes;
       private BiConsumer<RR, String> setNotes;
       private Dao<RR, Integer> dao;
-      private Function<Void, RR> recordConstructor;
+      private Supplier<RR> recordConstructor;
       public Builder(RR record, SiteField initialSort) {
         this.record = record;
         this.initialSort = initialSort;
@@ -332,7 +333,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
         return this;
     }
     
-    public Builder<RR> withConstructor(Function<Void, RR> constructor) {
+    public Builder<RR> withConstructor(Supplier<RR> constructor) {
         recordConstructor = constructor;
         return this;
     }

@@ -11,12 +11,12 @@ import org.checkerframework.checker.nullness.qual.KeyFor;
  * @author Miguel Mu\u00f1oz
  */
 public enum SiteField implements DisplayEnum {
-  @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") ID,
-  @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") Source,
-  @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") Username,
-  @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") Password,
-  @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") Notes,
-  @KeyFor("com.neptunedreams.skeleton.data.sqlite.SQLiteRecordDao.fieldMap") All(false);
+  ID,
+  Source,
+  Username,
+  Password,
+  Notes,
+  All(false);
 
   private final boolean isField;
 

@@ -1,6 +1,7 @@
 package com.neptunedreams.framework.ui;
 
 import javax.swing.ButtonModel;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -15,5 +16,5 @@ public interface ButtonGroupListener {
    * Called when the selection for the group has changed.
    * @param selectedButtonModel The button model
    */
-  void selectionChanged(ButtonModel selectedButtonModel);
+  void selectionChanged(@NonNull ButtonModel selectedButtonModel);
 }

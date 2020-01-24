@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.neptunedreams.skeleton.data.ConnectionSource;
@@ -22,8 +23,6 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.*;
 
-//import com.neptunedreams.skeleton.data.Record;
-
 /**
  * <p>Created by IntelliJ IDEA.
  * <p>Date: 11/27/17
@@ -34,8 +33,10 @@ import static org.junit.Assert.*;
 @SuppressWarnings({"HardCodedStringLiteral", "HardcodedLineSeparator", "MagicNumber"})
 public class SqLiteRecordDaoTest {
 
+  @SuppressWarnings("StaticVariableMayNotBeInitialized")
   private static @MonotonicNonNull ConnectionSource connectionSource;
-  private static @MonotonicNonNull SQLiteRecordDao dao;
+  @SuppressWarnings("StaticVariableMayNotBeInitialized")
+  private static SQLiteRecordDao dao;
 
   @BeforeClass
   public static void setup() throws SQLException, IOException {
@@ -51,13 +52,14 @@ public class SqLiteRecordDaoTest {
   public void tearDown() throws SQLException {
     System.err.printf("After%n%n"); // NON-NLS
     assert dao != null;
+    Objects.requireNonNull(dao);
     Collection<SiteRecord> results = dao.findAll(null);
     for (SiteRecord siteRecord : results) {
       siteRecord.delete();
     }
   }
 
-  private void doTestDao(SQLiteRecordDao dao, ConnectionSource connectionSource) throws IOException, SQLException {
+  private void doTestDao(SQLiteRecordDao dao, ConnectionSource connectionSource) throws SQLException {
     assertNotNull(connectionSource);
 //    ensureHomeExists(info.getHomeDir());
     assertNotNull(dao);
@@ -170,8 +172,10 @@ public class SqLiteRecordDaoTest {
     System.err.println("testFindAny()");
     assert connectionSource != null;
     assert dao != null;
+    Objects.requireNonNull(dao);
+    
     //noinspection resource
-    assertFalse(connectionSource.getConnection().isClosed());
+    assertFalse(Objects.requireNonNull(connectionSource).getConnection().isClosed());
     Collection<SiteRecord> allRecords = showAllRecords(dao, 0);
     assertEquals(0, allRecords.size());
     setupFindTests();
@@ -269,7 +273,7 @@ public class SqLiteRecordDaoTest {
     assertTrue(arraysMatch(getIds(results), 4, 18, 17));
   }
   
-  private List<Integer> getIds(Collection<SiteRecord> records) {
+  private List<Integer> getIds(Collection<? extends SiteRecord> records) {
     List<Integer> ids = new LinkedList<>();
     for (SiteRecord r : records) {
       ids.add(r.getId());
@@ -314,6 +318,7 @@ public class SqLiteRecordDaoTest {
         new SiteRecord(18, "qCharlieSource", "xDeltaName", "pw", "zBravoNotes"),
     };
     assert dao != null;
+    Objects.requireNonNull(dao);
     for (SiteRecord r: records) {
       dao.insert(r);
     }
@@ -341,6 +346,7 @@ public class SqLiteRecordDaoTest {
         new SiteRecord(18, "ICharlieSource aDeltaX bBravoX", "xDeltaName aBravoX bCharlieZ", "bEcho", "zBravoNotes"),
     };
     assert dao != null;
+    Objects.requireNonNull(dao);
     for (SiteRecord r : records) {
       dao.insert(r);
     }
@@ -350,6 +356,7 @@ public class SqLiteRecordDaoTest {
   public void findAllInFieldTest() throws SQLException {
     Collection<SiteRecord> results;
     assert dao != null;
+    Objects.requireNonNull(dao);
     setUpFindAllTests();
 
     // Find All In Field
@@ -414,13 +421,14 @@ public class SqLiteRecordDaoTest {
 
   @Test
   @SuppressWarnings({"HardCodedStringLiteral", "unused", "HardcodedLineSeparator"})
-  public void testDao() throws SQLException, IOException {
+  public void testDao() throws SQLException {
     System.err.println("testDao");
     assert dao != null;
+    Objects.requireNonNull(dao);
     assert connectionSource != null;
     //noinspection HardcodedFileSeparator
     try {
-      doTestDao(dao, connectionSource);
+      doTestDao(dao, Objects.requireNonNull(connectionSource));
     } finally {
 
       // cleanup even on failure.

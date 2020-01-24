@@ -58,7 +58,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings("HardCodedStringLiteral")
-public class RecordUI<R> extends JPanel implements RecordModelListener {
+public final class RecordUI<R> extends JPanel implements RecordModelListener {
 
   // TODO:  The QueuedTask is terrific, but it doesn't belong in this class. It belongs in the Controller. That way,
   // todo   it can be accessed by other UI classes like RecordView. To do this, I also need to move the SearchOption
@@ -77,7 +77,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private JTextField findField = new JTextField(" ",10);
   private final RecordController<R, Integer> controller;
   private EnumGroup<SiteField> searchFieldGroup = new EnumGroup<>();
-  private final @NonNull RecordModel<R> recordModel;
+  private final @NonNull RecordModel<? extends R> recordModel;
   private JButton prev = new JButton(Resource.getLeftArrow());
   private JButton next = new JButton(Resource.getRightArrow());
   private JButton first = new JButton(Resource.getFirst());
@@ -93,28 +93,35 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
   private final Consumer<Collection<R>> recordConsumer = createRecordConsumer();
   private @NonNull QueuedTask<String, Collection<R>> queuedTask;
 
-  @SuppressWarnings("methodref.inference.unimplemented")
-  private HidingPanel makeSearchOptionsPanel(@UnderInitialization RecordUI<R> this, EnumGroup<SearchOption> optionsGroup) {
+  private HidingPanel makeSearchOptionsPanel(@UnderInitialization RecordUI<R> this, @SuppressWarnings("BoundedWildcard") EnumGroup<SearchOption> searchOptionsGroup) {
     JPanel optionsPanel = new JPanel(new GridLayout(1, 0));
-    JRadioButton findExact = optionsGroup.add(SearchOption.findWhole);
-    JRadioButton findAll = optionsGroup.add(SearchOption.findAll);
-    JRadioButton findAny = optionsGroup.add(SearchOption.findAny);
+    JRadioButton findExact = searchOptionsGroup.add(SearchOption.findWhole);
+    JRadioButton findAll = searchOptionsGroup.add(SearchOption.findAll);
+    JRadioButton findAny = searchOptionsGroup.add(SearchOption.findAny);
     optionsPanel.add(findExact);
     optionsPanel.add(findAll);
     optionsPanel.add(findAny);
-    optionsGroup.setSelected(SearchOption.findAny);
+    searchOptionsGroup.setSelected(SearchOption.findAny);
 
 //    optionsGroup.addButtonGroupListener(selectedButtonModel -> selectionChanged(selectedButtonModel));
-    optionsGroup.addButtonGroupListener(this::selectionChanged); // Using a lambda is an error. This is a warning. 
+    @SuppressWarnings("methodref.receiver.bound.invalid")
+    ButtonGroupListener selectionChanged = this::selectionChanged;
+    searchOptionsGroup.addButtonGroupListener(selectionChanged); // Using a lambda is an error. This is a warning. 
 
     final HidingPanel hidingPanel = HidingPanel.create(optionsPanel);
     hidingPanel.setDisableInsteadOfHide(true);
     return hidingPanel;
   }
 
-  @SuppressWarnings({"method.invocation.invalid", "argument.type.incompatible", "JavaDoc"})
+//  @SuppressWarnings("methodref.inference.unimplemented")
+////  @SuppressWarnings("methodref.receiver.bound.invalid")
+//  private void addListenerForButton(EnumGroup<SearchOption> searchOptionsGroup) {
+//    addGroupListener(searchOptionsGroup);
+//  } 
+//
+  @SuppressWarnings({"method.invocation.invalid", "argument.type.incompatible"})
   // add(), setBorder(), etc not properly annotated in JDK.
-  public RecordUI(@NonNull RecordModel<R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
+  public RecordUI(@NonNull RecordModel<? extends R> model, RecordView<R> theView, RecordController<R, Integer> theController) {
     super(new BorderLayout());
     recordModel = model;
     final JLayer<RecordView<R>> layer = wrapInLayer(theView);
@@ -123,6 +130,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     add(createTrashPanel(), BorderLayout.PAGE_END);
     controller = theController;
     setBorder(new MatteBorder(4, 4, 4, 4, getBackground()));
+    //noinspection ThisEscapedInObjectConstruction
     recordModel.addModelListener(this); // argument.type.incompatible checker error suppressed
     
     findField.getDocument().addDocumentListener(new DocumentListener() {
@@ -142,13 +150,14 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       }
       
     });
-    
+
+    //noinspection ThisEscapedInObjectConstruction
     MasterEventBus.registerMasterEventHandler(this);
     queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
     queuedTask.launch();
   }
   
-  @SuppressWarnings("ResultOfObjectAllocationIgnored")
+  @SuppressWarnings({"ResultOfObjectAllocationIgnored", "Convert2MethodRef"})
   private void setupActions(SwipeView<RecordView<R>> swipeView) {
     new ButtonAction("Previous", KeyEvent.VK_LEFT, 0, ()-> swipeView.swipeRight(() -> recordModel.goPrev()));
     new ButtonAction("Next", KeyEvent.VK_RIGHT, 0, ()-> swipeView.swipeLeft(() -> recordModel.goNext()));
@@ -170,6 +179,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
       InputMap inputMap = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
       ActionMap actionMap = getActionMap();
       inputMap.put(keyStroke, name);
+      //noinspection ThisEscapedInObjectConstruction
       actionMap.put(name, this);
     }
 
@@ -190,7 +200,6 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     return swipeView.getLayer();
   }
   
-  @SuppressWarnings("JavaDoc")
   public void launchInitialSearch() {
     SwingUtilities.invokeLater(() -> {
       findField.setText(""); // This fires the initial search in queuedTask.
@@ -240,6 +249,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
 
     assert infoLine != null;
     trashPanel.add(infoLine, BorderLayout.LINE_START);
+    //noinspection ConstantConditions
     assert recordModel != null;
     return trashPanel;
   }
@@ -262,6 +272,7 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     }
   }
 
+  @SuppressWarnings("Convert2MethodRef")
   private JPanel getButtons() {
     JPanel buttons = new JPanel(new GridLayout(1, 0));
     JButton add = new JButton(Resource.getAdd());
@@ -398,14 +409,13 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     return controller.retrieveNow(searchFieldGroup.getSelected(), getSearchOption(), text);
   }
   
-  @SuppressWarnings("JavaDoc")
   @Subscribe
   public void doSearchNow(MasterEventBus.SearchNowEvent searchNowEvent) {
     searchNow();
   }
 
   // This is public because I expect other classes to use it in the future. 
-  @SuppressWarnings({"WeakerAccess", "JavaDoc"})
+  @SuppressWarnings({"WeakerAccess"})
   public void searchNow() {
     assert SwingUtilities.isEventDispatchThread();
     assert findField != null;
@@ -426,5 +436,5 @@ public class RecordUI<R> extends JPanel implements RecordModelListener {
     loadInfoLine();
   }
 
-  private void selectionChanged(@SuppressWarnings("unused") ButtonModel selectedButtonModel) { searchNow(); }
+  private void selectionChanged(@SuppressWarnings("unused") @NonNull ButtonModel selectedButtonModel) { searchNow(); }
 }

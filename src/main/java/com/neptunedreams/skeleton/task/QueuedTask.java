@@ -3,6 +3,7 @@ package com.neptunedreams.skeleton.task;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.function.Consumer;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * This class lets the application search as the user types, but delays the launch of the search until after the user 
@@ -35,12 +36,12 @@ import java.util.function.Consumer;
  * @param <R> Result type
  */
 public final class QueuedTask<I, R> {
-  private final ParameterizedCallable<I, R> callable;
+  private final ParameterizedCallable<I, ? extends R> callable;
   private final long delayMilliSeconds;
-  private final Consumer<R> consumer;
-  private final BlockingQueue<I> queue = new SynchronousQueue<>();
+  private final Consumer<? super R> consumer;
+  private final BlockingQueue<@NonNull I> queue = new SynchronousQueue<>();
 
-  public QueuedTask(long delay, ParameterizedCallable<I, R> task, Consumer<R> theConsumer) {
+  public QueuedTask(long delay, ParameterizedCallable<I, ? extends R> task, Consumer<? super R> theConsumer) {
     delayMilliSeconds = delay;
     callable = task;
     consumer = theConsumer;
@@ -64,17 +65,19 @@ public final class QueuedTask<I, R> {
    * called from any thread, including the EventDispatchThread. The wait happens on a private Thread.
    * @param data the data to process.
    */
-  public void feedData(I data) {
+  public void feedData(@NonNull I data) {
     try {
       queue.put(data); // SynchronousQueue.add() should never get called. Unnecessary and causes big problems.
     } catch (InterruptedException ignored) { }
   }
   
   private Runnable createWaitTask() {
+    //noinspection Convert2MethodRef
     return () -> waitLoop(); // Method reference bypasses nullness checker
   }
 
   private Runnable createLaunchTask() {
+    //noinspection Convert2MethodRef
     return () -> launchTaskLoop();
   }
 
@@ -103,6 +106,7 @@ public final class QueuedTask<I, R> {
     while (true) {
       // This try block gets interrupted whenever feedData() is called.
       try {
+        //noinspection BusyWait
         Thread.sleep(delayMilliSeconds);
         launchCallable();
       } catch (InterruptedException ignored) { }

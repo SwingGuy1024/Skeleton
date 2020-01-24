@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Supplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -20,12 +20,15 @@ public class RecordModel<R> implements Serializable {
   private final transient List<RecordModelListener> listenerList = new LinkedList<>();
   
   // foundItems should be a RandomAccess list
-  private List<R> foundItems = new ArrayList<>();
+  private List<@NonNull R> foundItems = new ArrayList<>();
   private transient int recordIndex = 0;
-  private final transient Function<Void, R> constructor;
-  
-  @SuppressWarnings("JavaDoc")
-  RecordModel(Function<Void, R> theConstructor) {
+  private final transient Supplier<? extends @NonNull R> constructor;
+
+  /**
+   * Instantiate a RecordModel
+   * @param theConstructor A constructor used to create a new, empty instance of R
+   */
+  RecordModel(Supplier<? extends R> theConstructor) {
     constructor = theConstructor;
   }
 
@@ -35,17 +38,16 @@ public class RecordModel<R> implements Serializable {
   
   public int getSize() { return foundItems.size(); }
 
-  @SuppressWarnings("JavaDoc")
   public void addModelListener(RecordModelListener listener) {
     listenerList.add(listener);
   }
   
-  @SuppressWarnings({"unused", "JavaDoc"})
+  @SuppressWarnings("unused")
   public void removeModelListener(RecordModelListener listener) {
     listenerList.remove(listener);
   }
  
-  public void setNewList(Collection<R> records) {
+  public void setNewList(Collection<? extends R> records) {
     foundItems = new ArrayList<>(records);
     if (foundItems.isEmpty()) {
       final R record;
@@ -56,14 +58,11 @@ public class RecordModel<R> implements Serializable {
     fireModelListChanged();
   }
 
-  @SuppressWarnings("JavaDoc")
   public @NonNull R createNewEmptyRecord() {
-    final R emptyRecord = constructor.apply(null);
-    assert emptyRecord != null;
-    return emptyRecord;
+    //    assert emptyRecord != null;
+    return constructor.get();
   }
 
-  @SuppressWarnings("JavaDoc")
   public void goNext() {
     assert !foundItems.isEmpty();
     int size = foundItems.size();
@@ -74,7 +73,6 @@ public class RecordModel<R> implements Serializable {
     setRecordIndex(nextRecord);
   }
 
-  @SuppressWarnings("JavaDoc")
   public void goPrev() {
     assert !foundItems.isEmpty();
     int nextRecord = recordIndex - 1;
@@ -84,13 +82,11 @@ public class RecordModel<R> implements Serializable {
     setRecordIndex(nextRecord);
   }
   
-  @SuppressWarnings("JavaDoc")
   public void goFirst() {
     assert !foundItems.isEmpty();
     setRecordIndex(0);
   }
 
-  @SuppressWarnings("JavaDoc")
   public void goLast() {
     assert !foundItems.isEmpty();
     setRecordIndex(foundItems.size()-1);
@@ -110,8 +106,7 @@ public class RecordModel<R> implements Serializable {
     }
   }
 
-  @SuppressWarnings("JavaDoc")
-  public void append(R insertedRecord) {
+  public void append(@NonNull R insertedRecord) {
     final int newIndex = foundItems.size();
     foundItems.add(insertedRecord);
     setRecordIndex(newIndex);
@@ -120,9 +115,9 @@ public class RecordModel<R> implements Serializable {
 
   public @NonNull R getFoundRecord() {
     if (!foundItems.isEmpty()) {
-      final R foundRecord = foundItems.get(recordIndex);
-      assert foundRecord != null;
-      return foundRecord;
+      return foundItems.get(recordIndex);
+//      assert foundRecord != null;
+//      return Objects.requireNonNull(foundRecord);
     }
     R emptyRecord = createNewEmptyRecord();
     foundItems.add(emptyRecord);
@@ -130,8 +125,7 @@ public class RecordModel<R> implements Serializable {
     return emptyRecord;
   }
   
-  @SuppressWarnings("JavaDoc")
-  public R getRecordAt(int index) {
+  public @NonNull R getRecordAt(int index) {
     return foundItems.get(index);
   }
 
@@ -140,6 +134,7 @@ public class RecordModel<R> implements Serializable {
    * @param notify Fire appropriate listeners after deleting
    * @param index The index of the record to delete. This method does nothing if index is < 0,
    */
+  @SuppressWarnings("BooleanParameter")
   public void deleteSelected(boolean notify, int index) {
     if (index >= 0) {
       foundItems.remove(index);

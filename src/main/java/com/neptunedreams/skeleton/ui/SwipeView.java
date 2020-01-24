@@ -28,7 +28,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Miguel Mu\u00f1oz
  */
 public final class SwipeView<C extends JComponent> extends LayerUI<C> {
-  @SuppressWarnings({"WeakerAccess", "JavaDoc"})
+  @SuppressWarnings({"WeakerAccess"})
   public static <J extends JComponent> SwipeView<J> wrap(J recordView) {
     JLayer<J> jLayer = new JLayer<>(recordView);
     final SwipeView<J> ui = new SwipeView<>(recordView, jLayer);
@@ -105,11 +105,12 @@ public final class SwipeView<C extends JComponent> extends LayerUI<C> {
       assert upcomingScreen != null;
       assert priorScreen != null;
       Image pScreen = Objects.requireNonNull(priorScreen);
+      Image uScreen = Objects.requireNonNull(upcomingScreen);
       if (swipeDirection == SwipeDirection.SWIPE_RIGHT) {
-        g.drawImage(upcomingScreen, 0, 0, xLimit, height, 0, 0, xLimit, height, c);
+        g.drawImage(uScreen, 0, 0, xLimit, height, 0, 0, xLimit, height, c);
         g.drawImage(pScreen, xLimit, 0, width, height, xLimit, 0, width, height, c);
       } else {
-        g.drawImage(upcomingScreen, xLimit, 0, width, height, xLimit, 0, width, height, c);
+        g.drawImage(uScreen, xLimit, 0, width, height, xLimit, 0, width, height, c);
         g.drawImage(pScreen, 0, 0, xLimit, height, 0, 0, xLimit, height, c);
       }
     } else {
