@@ -14,6 +14,7 @@ skeleton/
 skeleton2/
 skeleton-derby/
 docs/
+*.iml
 
 #Generated source files
 src/main/java/com/neptunedreams/skeleton/gen
