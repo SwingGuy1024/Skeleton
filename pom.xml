@@ -67,6 +67,7 @@
     </dependency>
     
     <!--jOOQ-->
+	  <!-- https://mvnrepository.com/artifact/org.jooq/jooq -->
     <dependency>
       <groupId>org.jooq</groupId>
       <artifactId>jooq</artifactId>
@@ -105,48 +106,51 @@
   <build>
     <plugins>
       <!--This is the standard Maven plugin-->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
+	    <plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
-        <configuration>
-          <fork>true</fork>
-          <source>1.8</source>
-          <target>1.8</target>
-          <compilerArguments>
-            <Xmaxerrs>10000</Xmaxerrs>
-            <Xmaxwarns>10000</Xmaxwarns>
-            <AsuppressWarnings>uninitialized</AsuppressWarnings>
-          </compilerArguments>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>org.checkerframework</groupId>
-              <artifactId>checker</artifactId>
-              <version>3.1.0</version>
-            </path>
-          </annotationProcessorPaths>
-          <annotationProcessors>
-            <!-- Add all the checkers you want to enable here -->
+		    <configuration>
+			    <fork>true</fork>
+			    <source>1.8</source>
+			    <target>1.8</target>
+			    <compilerArguments>
+				    <Xmaxerrs>10000</Xmaxerrs>
+				    <Xmaxwarns>10000</Xmaxwarns>
+				    <!--<AsuppressWarnings>uninitialized</AsuppressWarnings>-->
+			    </compilerArguments>
+			    <annotationProcessorPaths>
+				    <path>
+					    <groupId>org.checkerframework</groupId>
+					    <artifactId>checker</artifactId>
+					    <version>3.1.0</version>
+				    </path>
+			    </annotationProcessorPaths>
+			    <annotationProcessors>
+				    <!-- Add all the checkers you want to enable here -->
 
-            <!-- Invoke the NullnessChecker at org.checkerframework.checker.nullness.NullnessChecker -->
-            <!-- There are probably other checkers we should invoke. -->
-            <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
-          </annotationProcessors>
-          <compilerArgs>
-            <!-- If using JDK 8, use only the two arguments immediately below. -->
-            <arg>-J-Xbootclasspath/p:${errorProneJavac}</arg>
-            <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
-            <!-- If using JDK 11, remove the two arguments above, remove the
-                 space in the one below, and uncomment it. -->
-            <!-- <arg>-J- -add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg> -->
+				    <!-- Invoke the NullnessChecker at org.checkerframework.checker.nullness.NullnessChecker -->
+				    <!-- There are probably other checkers we should invoke. -->
+				    <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
+			    </annotationProcessors>
+			    <compilerArgs>
+				    <!-- If using JDK 8, use only the two arguments immediately below. -->
+				    <arg>-J-Xbootclasspath/p:${errorProneJavac}</arg>
+				    <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
+				    <!-- If using JDK 11, remove the two arguments above, remove the
+								 space in the one below, and uncomment it. -->
+				    <!-- <arg>-J- -add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg> -->
 
-            <!-- Optionally, -Awarns turns type-checking errors into warnings. -->
-<!--            <arg>-Awarns</arg>-->
-          </compilerArgs>
-        </configuration>
-      </plugin>
+				    <!-- Optionally, -Awarns turns type-checking errors into warnings. -->
+				    <!--<arg>-Awarns</arg>-->
 
-      <plugin>
+				    <!--<arg>-Astubs=checkerframework/stubs</arg> &lt;!&ndash; Suggested by https://github.com/typetools/checker-framework/issues/445 &ndash;&gt;-->
+				    <!--<arg>-AstubWarnIfNotFound</arg>-->
+			    </compilerArgs>
+		    </configuration>
+	    </plugin>
+
+	    <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.5</version>
