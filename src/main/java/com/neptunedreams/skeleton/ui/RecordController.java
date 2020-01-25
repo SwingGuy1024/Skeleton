@@ -1,10 +1,5 @@
 package com.neptunedreams.skeleton.ui;
 
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.StringTokenizer;
-import java.util.function.Function;
 import com.neptunedreams.framework.ErrorReport;
 import com.neptunedreams.framework.data.DBField;
 import com.neptunedreams.framework.data.Dao;
@@ -13,6 +8,11 @@ import com.neptunedreams.framework.data.RecordModelListener;
 import com.neptunedreams.framework.data.RecordSelectionModel;
 import com.neptunedreams.framework.data.SearchOption;
 import com.neptunedreams.framework.event.MasterEventBus;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.StringTokenizer;
+import java.util.function.Supplier;
 import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -30,20 +30,21 @@ public class RecordController<R, PK, F extends DBField> implements RecordModelLi
 //  private E order = Record.FIELD.SOURCE;
   private F order;
   private final Dao<R, PK, F> dao;
-  private final RecordSelectionModel<R> recordSelectionModel;
+  private final RecordSelectionModel<? extends R> recordSelectionModel;
   @NotOnlyInitialized
   private final RecordModel<R> model;
 
-  @SuppressWarnings({"argument.type.incompatible", "JavaDoc"})
+  @SuppressWarnings({"argument.type.incompatible"})
   public RecordController(
-      Dao<R, PK, F> theDao, 
-      RecordSelectionModel<R> recordSelectionModel, 
+      Dao<R, PK, F> theDao,
+      RecordSelectionModel<? extends R> recordSelectionModel,
       F initialOrder,
-      Function<Void, R> recordConstructor
+      Supplier<@NonNull R> recordConstructor
   ) {
     dao = theDao;
     this.recordSelectionModel = recordSelectionModel;
     model = new RecordModel<>(recordConstructor);
+    //noinspection ThisEscapedInObjectConstruction
     model.addModelListener(this); // Type checker needs "this" to be initialized, so suppress the warning.
     order = initialOrder;
   }
@@ -54,7 +55,6 @@ public class RecordController<R, PK, F extends DBField> implements RecordModelLi
   
   public Dao<R, PK, F> getDao() { return dao; }
 
-  @SuppressWarnings("JavaDoc")
   public void specifyOrder(F theOrder) {
     order = theOrder;
   }
@@ -79,12 +79,10 @@ public class RecordController<R, PK, F extends DBField> implements RecordModelLi
     MasterEventBus.postChangeRecordEvent(record);
   }
 
-  @SuppressWarnings("JavaDoc")
   public void addBlankRecord() {
     // If the last record is already blank, just go to it
     final int lastIndex = model.getSize() - 1;
-    R lastRecord = model.getRecordAt(lastIndex);
-    assert lastRecord != null;
+    @NonNull R lastRecord = model.getRecordAt(lastIndex);
     final PK lastRecordKey = dao.getPrimaryKey(lastRecord);
     
     // If we are already showing an unchanged blank record...
@@ -98,21 +96,19 @@ public class RecordController<R, PK, F extends DBField> implements RecordModelLi
     }
   }
 
-  public void setFoundRecords(final Collection<R> theFoundItems) {
+  public void setFoundRecords(final Collection<? extends R> theFoundItems) {
     model.setNewList(theFoundItems);
     if (model.getSize() > 0) {
       final R selectedRecord = model.getFoundRecord();
-      assert selectedRecord != null;
       loadNewRecord(selectedRecord);
     }
   }
 
-  @SuppressWarnings("JavaDoc")
   public void findTextInField(String dirtyText, final F field, SearchOption searchOption) {
     //noinspection TooBroadScope
     String text = dirtyText.trim();
     try {
-      Collection<R> foundItems = findRecordsInField(text, field, searchOption);
+      Collection<@NonNull R> foundItems = findRecordsInField(text, field, searchOption);
       setFoundRecords(foundItems);
       model.goFirst();
     } catch (SQLException e) {
@@ -120,8 +116,7 @@ public class RecordController<R, PK, F extends DBField> implements RecordModelLi
     }
   }
 
-  @SuppressWarnings("JavaDoc")
-  Collection<R> findRecordsInField(final String text, final F field, SearchOption searchOption) throws SQLException {
+  Collection<@NonNull R> findRecordsInField(final String text, final F field, SearchOption searchOption) throws SQLException {
     if (text.trim().isEmpty()) {
       return dao.getAll(getOrder());
     } else {
@@ -138,7 +133,6 @@ public class RecordController<R, PK, F extends DBField> implements RecordModelLi
     }
   }
 
-  @SuppressWarnings("JavaDoc")
   String[] parseText(@NonNull String text) {
     //noinspection EqualsReplaceableByObjectsCall
     assert text.trim().equals(text); // text should already be trimmed
@@ -160,7 +154,7 @@ public class RecordController<R, PK, F extends DBField> implements RecordModelLi
     //noinspection TooBroadScope
     String text = dirtyText.trim();
     try {
-      Collection<R> foundItems = findRecordsAnywhere(text, searchOption);
+      Collection<@NonNull R> foundItems = findRecordsAnywhere(text, searchOption);
       setFoundRecords(foundItems);
       model.goFirst();
     } catch (SQLException e) {
@@ -168,8 +162,7 @@ public class RecordController<R, PK, F extends DBField> implements RecordModelLi
     }
   }
   
-  @SuppressWarnings("JavaDoc")
-  Collection<R> findRecordsAnywhere(final String text, SearchOption searchOption) throws SQLException {
+  Collection<@NonNull R> findRecordsAnywhere(final String text, SearchOption searchOption) throws SQLException {
     if (text.isEmpty()) {
       return dao.getAll(getOrder());
     } else {
@@ -191,8 +184,7 @@ public class RecordController<R, PK, F extends DBField> implements RecordModelLi
     
   }
 
-  @SuppressWarnings("JavaDoc")
-  public Collection<R> retrieveNow(final F searchField, final SearchOption searchOption, final String searchText) {
+  public Collection<@NonNull R> retrieveNow(final F searchField, final SearchOption searchOption, final String searchText) {
     try {
       if (searchField.isField()) {
         return findRecordsInField(searchText, searchField, searchOption);
@@ -210,7 +202,6 @@ public class RecordController<R, PK, F extends DBField> implements RecordModelLi
     loadNewRecord(model.getFoundRecord());
   }
 
-  @SuppressWarnings("JavaDoc")
   public void delete(final R selectedRecord) throws SQLException {
     dao.delete(selectedRecord);
   }

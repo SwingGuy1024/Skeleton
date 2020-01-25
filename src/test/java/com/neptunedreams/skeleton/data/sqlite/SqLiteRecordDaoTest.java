@@ -34,8 +34,10 @@ import static org.junit.Assert.*;
 @SuppressWarnings({"HardCodedStringLiteral", "HardcodedLineSeparator", "MagicNumber"})
 public class SqLiteRecordDaoTest {
 
-  private static @MonotonicNonNull ConnectionSource connectionSource;
-  private static @MonotonicNonNull SQLiteRecordDao dao;
+  @SuppressWarnings("StaticVariableMayNotBeInitialized")
+  private static ConnectionSource connectionSource;
+  @SuppressWarnings("StaticVariableMayNotBeInitialized")
+  private static SQLiteRecordDao dao;
 
   @BeforeClass
   public static void setup() throws SQLException, IOException {
@@ -269,7 +271,7 @@ public class SqLiteRecordDaoTest {
     assertTrue(arraysMatch(getIds(results), 4, 18, 17));
   }
   
-  private List<Integer> getIds(Collection<SiteRecord> records) {
+  private List<Integer> getIds(Collection<? extends SiteRecord> records) {
     List<Integer> ids = new LinkedList<>();
     for (SiteRecord r : records) {
       ids.add(r.getId());

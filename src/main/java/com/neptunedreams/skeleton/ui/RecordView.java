@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -33,7 +34,7 @@ import com.neptunedreams.skeleton.data.SiteField;
 //import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
-//import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 
 /**
@@ -64,7 +65,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   private RecordView(R record,
                      SiteField initialSort,
                      Dao<R, Integer, SiteField> dao,
-                     Function<Void, R> recordConstructor,
+                     Supplier<@NonNull R> recordConstructor,
                      Function<R, Integer> getIdFunction, BiConsumer<R, Integer> setIdFunction,
                      Function<R, String> getSourceFunction, BiConsumer<R, String> setSourceFunction,
                      Function<R, String> getUserNameFunction, BiConsumer<R, String> setUserNameFunction,
@@ -106,7 +107,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   }
 
   @SuppressWarnings("method.invocation.invalid")
-  private RecordController<R, Integer, SiteField> makeController(final SiteField initialSort, final Dao<R, Integer, SiteField> dao, final Function<Void, R> recordConstructor) {
+  private RecordController<R, Integer, SiteField> makeController(final SiteField initialSort, final Dao<R, Integer, SiteField> dao, final Supplier<@NonNull R> recordConstructor) {
     return new RecordController<>(
         dao,
         this,
@@ -127,7 +128,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
    * @param record The record to clean
    * @param <T> The type of the record.
    */
-  private <T> void cleanValue(@UnderInitialization RecordView<R> this, FieldBinding<R, T, ?> binding, R record) {
+  private <T> void cleanValue(@UnderInitialization RecordView<R> this, FieldBinding<? super R, T, ?> binding, R record) {
     binding.setValue(record, binding.getValue(record));
   }
 
@@ -217,7 +218,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   }
   
   @Subscribe
-  public void setCurrentRecord(ChangeRecord<R> recordEvent) {
+  public void setCurrentRecord(ChangeRecord<? extends R> recordEvent) {
     R newRecord = recordEvent.getNewRecord();
     assert newRecord != null;
     currentRecord = newRecord;
@@ -277,7 +278,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     sourceField.requestFocus();
   }
 
-    @SuppressWarnings("initialization.fields.uninitialized")
+    @SuppressWarnings({"initialization.fields.uninitialized", "InstanceVariableMayNotBeInitialized"})
     public static class Builder<RR> {
       private RR record;
       private SiteField initialSort;
@@ -292,7 +293,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       private Function<RR, String> getNotes;
       private BiConsumer<RR, String> setNotes;
       private Dao<RR, Integer, SiteField> dao;
-      private Function<Void, RR> recordConstructor;
+      private Supplier<@NonNull RR> recordConstructor;
       public Builder(RR record, SiteField initialSort) {
         this.record = record;
         this.initialSort = initialSort;
@@ -333,7 +334,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
         return this;
     }
     
-    public Builder<RR> withConstructor(Function<Void, RR> constructor) {
+    public Builder<RR> withConstructor(Supplier<@NonNull RR> constructor) {
         recordConstructor = constructor;
         return this;
     }
