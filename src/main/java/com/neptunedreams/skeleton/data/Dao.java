@@ -13,17 +13,18 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Miguel Mu\u00f1oz
  */
 public interface Dao<E, PK> {
+  @SuppressWarnings("UnusedReturnValue")
   boolean createTableIfNeeded() throws SQLException;
   
-  Collection<E> getAll(@Nullable SiteField orderBy) throws SQLException;
+  Collection<@NonNull E> getAll(@Nullable SiteField orderBy) throws SQLException;
   
-  Collection<E> find(String text, @Nullable SiteField orderBy) throws SQLException;
-  Collection<E> findAny(@Nullable SiteField orderBy, String... text) throws SQLException;
-  Collection<E> findAll(@Nullable SiteField orderBy, String... text) throws SQLException;
+  Collection<@NonNull E> find(String text, @Nullable SiteField orderBy) throws SQLException;
+  Collection<@NonNull E> findAny(@Nullable SiteField orderBy, String... text) throws SQLException;
+  Collection<@NonNull E> findAll(@Nullable SiteField orderBy, String... text) throws SQLException;
 
-  Collection<E> findInField(String text, @NonNull SiteField findBy, @Nullable SiteField orderBy) throws SQLException;
-  Collection<E> findAnyInField(@NonNull SiteField findBy, @Nullable SiteField orderBy, String... text) throws SQLException;
-  Collection<E> findAllInField(@NonNull SiteField findBy, @Nullable SiteField orderBy, String... text) throws SQLException;
+  Collection<@NonNull E> findInField(String text, @NonNull SiteField findBy, @Nullable SiteField orderBy) throws SQLException;
+  Collection<@NonNull E> findAnyInField(@NonNull SiteField findBy, @Nullable SiteField orderBy, String... text) throws SQLException;
+  Collection<@NonNull E> findAllInField(@NonNull SiteField findBy, @Nullable SiteField orderBy, String... text) throws SQLException;
 
 //  E newEmptyRecord();
 

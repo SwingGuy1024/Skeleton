@@ -110,7 +110,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     //noinspection TooBroadScope
     String text = dirtyText.trim();
     try {
-      Collection<R> foundItems = findRecordsInField(text, field, searchOption);
+      Collection<@NonNull R> foundItems = findRecordsInField(text, field, searchOption);
       setFoundRecords(foundItems);
       model.goFirst();
     } catch (SQLException e) {
@@ -118,7 +118,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
 
-  Collection<R> findRecordsInField(final String text, final SiteField field, SearchOption searchOption) throws SQLException {
+  Collection<@NonNull R> findRecordsInField(final String text, final SiteField field, SearchOption searchOption) throws SQLException {
     if (text.trim().isEmpty()) {
       return dao.getAll(getOrder());
     } else {
@@ -156,7 +156,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     //noinspection TooBroadScope
     String text = dirtyText.trim();
     try {
-      Collection<R> foundItems = findRecordsAnywhere(text, searchOption);
+      Collection<@NonNull R> foundItems = findRecordsAnywhere(text, searchOption);
       setFoundRecords(foundItems);
       model.goFirst();
     } catch (SQLException e) {
@@ -164,7 +164,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     }
   }
   
-  Collection<R> findRecordsAnywhere(final String text, SearchOption searchOption) throws SQLException {
+  Collection<@NonNull R> findRecordsAnywhere(final String text, SearchOption searchOption) throws SQLException {
     if (text.isEmpty()) {
       return dao.getAll(getOrder());
     } else {
@@ -186,7 +186,7 @@ public class RecordController<R, PK> implements RecordModelListener {
     
   }
 
-  public Collection<R> retrieveNow(final SiteField searchField, final SearchOption searchOption, final String searchText) {
+  public Collection<@NonNull R> retrieveNow(final SiteField searchField, final SearchOption searchOption, final String searchText) {
     try {
       if (searchField.isField()) {
         return findRecordsInField(searchText, searchField, searchOption);

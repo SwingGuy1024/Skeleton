@@ -90,8 +90,8 @@ public final class RecordUI<R> extends JPanel implements RecordModelListener {
   private final HidingPanel searchOptionsPanel = makeSearchOptionsPanel(optionsGroup);
 
   // recordConsumer is how the QueuedTask communicates with the application code.
-  private final Consumer<Collection<R>> recordConsumer = createRecordConsumer();
-  private @NonNull QueuedTask<String, Collection<R>> queuedTask;
+  private final Consumer<Collection<@NonNull R>> recordConsumer = createRecordConsumer();
+  private @NonNull QueuedTask<String, Collection<@NonNull R>> queuedTask;
 
   private HidingPanel makeSearchOptionsPanel(@UnderInitialization RecordUI<R> this, @SuppressWarnings("BoundedWildcard") EnumGroup<SearchOption> searchOptionsGroup) {
     JPanel optionsPanel = new JPanel(new GridLayout(1, 0));
@@ -394,16 +394,16 @@ public final class RecordUI<R> extends JPanel implements RecordModelListener {
     construction completes, so it works fine. Very annoying that I need to do this, but it's a relatively clean
     solution.  
    */
-  private ParameterizedCallable<String, Collection<R>> createCallable() {
-    return new ParameterizedCallable<String, Collection<R>>(null) {
+  private ParameterizedCallable<String, Collection<@NonNull R>> createCallable() {
+    return new ParameterizedCallable<String, Collection<@NonNull R>>(null) {
       @Override
-      public Collection<R> call(String inputData) {
+      public Collection<@NonNull R> call(String inputData) {
         return retrieveNow(inputData);
       }
     };
   }
   
-  private Collection<R> retrieveNow(String text) {
+  private Collection<@NonNull R> retrieveNow(String text) {
     assert controller != null;
     assert searchFieldGroup != null;
     return controller.retrieveNow(searchFieldGroup.getSelected(), getSearchOption(), text);
@@ -427,7 +427,7 @@ public final class RecordUI<R> extends JPanel implements RecordModelListener {
   }
 
   @SuppressWarnings("dereference.of.nullable") // controller is null when we call this, but not when we call the lambda.
-  private Consumer<Collection<R>> createRecordConsumer(@UnderInitialization RecordUI<R>this) {
+  private Consumer<Collection<@NonNull R>> createRecordConsumer(@UnderInitialization RecordUI<R>this) {
     return records -> SwingUtilities.invokeLater(() -> controller.setFoundRecords(records));
   }
 
