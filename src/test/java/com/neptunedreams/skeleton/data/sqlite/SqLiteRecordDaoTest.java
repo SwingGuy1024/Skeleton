@@ -13,13 +13,12 @@ import com.neptunedreams.framework.data.ConnectionSource;
 import com.neptunedreams.framework.data.DatabaseInfo;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 //import com.neptunedreams.skeleton.data.Record;
@@ -31,7 +30,7 @@ import static org.junit.Assert.*;
  *
  * @author Miguel Mu\u00f1oz
  */
-@SuppressWarnings({"HardCodedStringLiteral", "HardcodedLineSeparator", "MagicNumber"})
+@SuppressWarnings({"HardCodedStringLiteral", "HardcodedLineSeparator", "MagicNumber", "initialization.static.fields.uninitialized"})
 public class SqLiteRecordDaoTest {
 
   @SuppressWarnings("StaticVariableMayNotBeInitialized")
@@ -415,7 +414,7 @@ public class SqLiteRecordDaoTest {
 
 
   @Test
-  @SuppressWarnings({"HardCodedStringLiteral", "unused", "HardcodedLineSeparator"})
+  @SuppressWarnings({"HardCodedStringLiteral", "unused"})
   public void testDao() throws SQLException {
     System.err.println("testDao");
     assert dao != null;

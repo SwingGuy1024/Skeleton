@@ -42,6 +42,7 @@ import com.neptunedreams.framework.task.QueuedTask;
 import com.neptunedreams.framework.ui.ButtonGroupListener;
 import com.neptunedreams.framework.ui.EnumGroup;
 import com.neptunedreams.framework.ui.HidingPanel;
+import com.neptunedreams.framework.ui.RecordController;
 import com.neptunedreams.framework.ui.SwipeDirection;
 import com.neptunedreams.framework.ui.SwipeView;
 import com.neptunedreams.skeleton.data.SiteField;
@@ -421,7 +422,7 @@ public final class RecordUI<R> extends JPanel implements RecordModelListener {
   }
 
   // This is public because I expect other classes to use it in the future. 
-  @SuppressWarnings({"WeakerAccess"})
+  @SuppressWarnings("WeakerAccess")
   public void searchNow() {
     assert SwingUtilities.isEventDispatchThread();
     assert findField != null;

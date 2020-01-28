@@ -20,10 +20,10 @@ import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.framework.data.DatabaseInfo;
 import com.neptunedreams.framework.data.RecordModel;
 import com.neptunedreams.framework.data.SearchOption;
+import com.neptunedreams.framework.ui.RecordController;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.data.sqlite.SQLiteInfo;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
-import com.neptunedreams.skeleton.ui.RecordController;
 import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
@@ -107,9 +107,8 @@ public final class Skeleton extends JPanel
   private static JFrame frame = new JFrame("Skeleton");
   private final @NonNull DatabaseInfo info;
   private final @NonNull RecordController<SiteRecord, Integer, SiteField> controller;
-  //  private RecordController<>
 
-  @SuppressWarnings({"OverlyBroadThrowsClause"})
+  @SuppressWarnings("OverlyBroadThrowsClause")
   public static void main(String[] args) throws IOException, ClassNotFoundException {
     boolean doImport = (args.length > 0) && Objects.equals(args[0], "-import");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -130,7 +129,6 @@ public final class Skeleton extends JPanel
       try {
         // There has to be a delay, because there's a 1-second delay built into the launchInitialSearch() method,
         // and this needs to take place after that finishes, or we won't see any records. 
-        //noinspection MagicNumber
         Thread.sleep(1000); // Yeah, this is kludgy, but it's only for the export, which is only done in development.
       } catch (InterruptedException ignored) { }
 

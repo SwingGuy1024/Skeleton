@@ -30,6 +30,7 @@ import com.neptunedreams.framework.data.RecordSelectionModel;
 import com.neptunedreams.framework.event.ChangeRecord;
 import com.neptunedreams.framework.event.MasterEventBus;
 import com.neptunedreams.framework.ui.FieldBinding;
+import com.neptunedreams.framework.ui.RecordController;
 import com.neptunedreams.skeleton.data.SiteField;
 //import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
@@ -74,7 +75,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
    ) {
     super(new BorderLayout());
     currentRecord = record;
-    controller = makeController(initialSort, dao, recordConstructor);
+    controller = makeController(initialSort, dao, recordConstructor, getIdFunction);
     final JLabel idField = (JLabel) addField("ID", false, SiteField.ID, initialSort);
     sourceField = (JTextComponent) addField("Source", true, SiteField.Source, initialSort);
     final JTextComponent usernameField = (JTextComponent) addField("User Name", true, SiteField.Username, initialSort);
@@ -101,12 +102,13 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   }
 
   @SuppressWarnings("method.invocation.invalid")
-  private RecordController<R, Integer, SiteField> makeController(final SiteField initialSort, final Dao<R, Integer, SiteField> dao, final Supplier<@NonNull R> recordConstructor) {
+  private RecordController<R, Integer, SiteField> makeController(final SiteField initialSort, final Dao<R, Integer, SiteField> dao, final Supplier<@NonNull R> recordConstructor, Function<R, Integer> getIdFunction) {
     return new RecordController<>(
         dao,
         this,
         initialSort,
-        recordConstructor
+        recordConstructor,
+        getIdFunction
     );
   }
 
