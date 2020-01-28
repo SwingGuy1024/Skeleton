@@ -82,19 +82,13 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     final JTextComponent notesField = addNotesField();
     assert getIdFunction != null : "Null id getter";
     assert setIdFunction != null : "Null id Setter";
-    final FieldBinding.IntegerBinding<R> idBinding = FieldBinding.bindInteger(getIdFunction, setIdFunction, idField);
+    final FieldBinding.IntegerBinding<R> idBinding = FieldBinding.bindInteger(getIdFunction, idField);
     final FieldBinding.StringEditableBinding<R> sourceBinding = FieldBinding.bindEditableString(getSourceFunction, setSourceFunction, sourceField);
     final FieldBinding.StringEditableBinding<R> userNameBinding = FieldBinding.bindEditableString(getUserNameFunction, setUserNameFunction, usernameField);
     final FieldBinding.StringEditableBinding<R> passwordBinding = FieldBinding.bindEditableString(getPasswordFunction, setPasswordFunction, pwField);
     final FieldBinding.StringEditableBinding<R> notesBinding = FieldBinding.bindEditableString(getNotesFunction, setNotesFunction, notesField);
     allBindings = Arrays.asList(idBinding, sourceBinding, userNameBinding, passwordBinding, notesBinding);
     
-    // currentRecord has null values for lots of non-null fields. This should clean those fields up.
-    for (FieldBinding<R, ?, ?> b : allBindings) {
-      cleanValue(b, record); // somehow, Nullness Checker doesn't recognize currentRecord as non-null, but record is ok
-    }
-    idBinding.setValue(record, 0); // same here. TODO: Ask StackOverflow about this
-
     makeTopPanel();
 
     installStandardCaret(sourceField);
@@ -118,18 +112,6 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
 
   private void register() {
     MasterEventBus.registerMasterEventHandler(this);
-  }
-
-  /**
-   * Clean the value during initialization. This needs to be a separate method because there's no way to infer the 
-   * type of T if I put this code in the original loop. Without T, there's no way for the compiler to know that the 
-   * value returned by binding.getValue() is the same type as the one we need to pass to setValue().
-   * @param binding The FieldBinding
-   * @param record The record to clean
-   * @param <T> The type of the record.
-   */
-  private <T> void cleanValue(@UnderInitialization RecordView<R> this, FieldBinding<? super R, T, ?> binding, R record) {
-    binding.setValue(record, binding.getValue(record));
   }
 
   @SuppressWarnings("method.invocation.invalid")
@@ -269,7 +251,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   private void loadUserEdits() {
     for (FieldBinding<R, ?, ?> binding : allBindings) {
       if (binding.isEditable()) {
-        binding.saveEdit(currentRecord);
+        binding.getEditableBinding().saveEdit(currentRecord);
       }
     }
   }
