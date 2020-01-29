@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.7.4-SNAPSHOT</version>
+  <version>0.7.5-SNAPSHOT</version>
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -235,8 +235,9 @@
           <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
           <!--<dictionaryFile>YourCustomInfo.plist</dictionaryFile>-->
           <iconFile>Earth_Neptune.icns</iconFile>
+          <!-- Put this line in to bundle the jdk with the app. This is untested. -->
           <!--suppress MavenModelInspection -->
-          <jrePath>${env.JAVA_HOME}/../..</jrePath>
+          <!-- <jrePath>${env.JAVA_HOME}/../..</jrePath>-->
         </configuration>
         <executions>
           <execution>
