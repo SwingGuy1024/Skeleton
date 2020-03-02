@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.7.5-SNAPSHOT</version>
+  <version>0.7.6-SNAPSHOT</version>
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -35,7 +35,7 @@
     <dependency>
       <groupId>com.neptunedreams</groupId>
       <artifactId>tango</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.0.1-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -317,6 +317,16 @@
               <directory>src/gen/java</directory>
             </target>
           </generator>
+        </configuration>
+      </plugin>
+
+      <!-- Allows user to launch from maven: mvn exec:java -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.4.0</version>
+        <configuration>
+          <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
         </configuration>
       </plugin>
 

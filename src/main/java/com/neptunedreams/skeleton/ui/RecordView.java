@@ -33,10 +33,12 @@ import com.neptunedreams.framework.ui.FieldBinding;
 import com.neptunedreams.framework.ui.RecordController;
 import com.neptunedreams.skeleton.data.SiteField;
 //import org.checkerframework.checker.initialization.qual.Initialized;
+import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.RequiresNonNull;
+import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -210,9 +212,9 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       binding.prepareEditor(newRecord);
     }
   }
-  
+
   @Override
-  public boolean recordHasChanged() {
+  public @UnknownKeyFor @Initialized boolean isRecordDataModified() {
     for (FieldBinding<R, ?, ?> binding: allBindings) {
       if (binding.isEditable() && binding.propertyHasChanged(currentRecord)) {
         return true;
@@ -227,7 +229,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     // 2. New Record with no data
     // 3. Existing record with changes
     // 4. Existing record with no changes
-    final boolean hasChanged = recordHasChanged();
+    final boolean hasChanged = isRecordDataModified();
     if (hasChanged) {
       loadUserEdits();
       return true;
