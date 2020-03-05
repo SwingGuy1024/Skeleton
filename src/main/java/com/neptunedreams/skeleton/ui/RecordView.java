@@ -32,10 +32,8 @@ import com.neptunedreams.framework.event.MasterEventBus;
 import com.neptunedreams.framework.ui.FieldBinding;
 import com.neptunedreams.framework.ui.RecordController;
 import com.neptunedreams.skeleton.data.SiteField;
-//import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
@@ -47,8 +45,8 @@ import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
  *
  * @author Miguel Mu\u00f1oz
  */
-@SuppressWarnings({"WeakerAccess", "HardCodedStringLiteral"})
-public final class RecordView<R> extends JPanel implements RecordSelectionModel<R> {
+@SuppressWarnings({"WeakerAccess", "HardCodedStringLiteral", "TypeParameterExplicitlyExtendsObject"})
+public final class RecordView<R extends @NonNull Object> extends JPanel implements RecordSelectionModel<R> {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
   private JPanel labelPanel = new JPanel(new GridLayout(0, 1));
@@ -64,7 +62,12 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
   private final JTextComponent sourceField;
 
-  @SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible", "method.invocation.invalid"})
+  // If I don't suppress the method.invocation.invalid warnings, I need to specify an @UnderInitialization implicit 
+  // parameter on all the local methods I call from the constructor. That solves a lot of problems, but creates others.
+  // If I suppress the warning, it's much easier to get this class to compile, but the implicit parameter must then be
+  // removed.
+
+  @SuppressWarnings("method.invocation.invalid")
   private RecordView(R record,
                      SiteField initialSort,
                      Dao<R, Integer, SiteField> dao,
@@ -98,13 +101,22 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     installStandardCaret(usernameField);
     installStandardCaret(pwField);
     installStandardCaret(notesField);
+//    FilterCaret.installFilterCaret(notesField);
     
     // Put a line at the top, one pixel wide.
 
   }
 
-  @SuppressWarnings("method.invocation.invalid")
-  private RecordController<R, Integer, SiteField> makeController(final SiteField initialSort, final Dao<R, Integer, SiteField> dao, final Supplier<@NonNull R> recordConstructor, Function<R, Integer> getIdFunction) {
+  // It seems to view the constructed RecordController as UnderInitialization because I'm passing it a RecordView that's
+  // in that state.
+  @SuppressWarnings("return.type.incompatible")
+  private RecordController<R, Integer, SiteField> makeController(
+//      @UnderInitialization RecordView<R> this,
+      final SiteField initialSort,
+      final Dao<R, Integer, SiteField> dao,
+      final Supplier<@NonNull R> recordConstructor,
+      Function<R, Integer> getIdFunction
+  ) {
     return new RecordController<>(
         dao,
         this,
@@ -118,9 +130,8 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     MasterEventBus.registerMasterEventHandler(this);
   }
 
-  @SuppressWarnings("method.invocation.invalid")
   @RequiresNonNull({"labelPanel", "fieldPanel", "checkBoxPanel"})
-  private void makeTopPanel(@UnderInitialization RecordView<R> this) {
+  private void makeTopPanel() {
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(labelPanel, BorderLayout.LINE_START);
     topPanel.add(fieldPanel, BorderLayout.CENTER);
@@ -135,6 +146,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
 //    controller = theController;
 //  }
 //  
+//  @UnknownInitialization
   public RecordController<R, Integer, SiteField> getController() { return controller; }
 
   /**
@@ -158,7 +170,13 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   }
 
   @RequiresNonNull({"labelPanel", "fieldPanel", "buttonGroup", "checkBoxPanel", "controller"})
-  private JComponent addField(@UnderInitialization RecordView<R> this, final String labelText, final boolean editable, final SiteField orderField, SiteField initialSort) {
+  private JComponent addField(
+//      @UnderInitialization RecordView<R> this,
+      final String labelText,
+      final boolean editable,
+      final SiteField orderField,
+      SiteField initialSort
+  ) {
     //noinspection StringConcatenation,MagicCharacter
     JLabel label = new JLabel(labelText + ':');
     labelPanel.add(label);
@@ -175,13 +193,16 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       orderBy.setSelected(true);
     }
     checkBoxPanel.add(orderBy);
-    @SuppressWarnings("method.invocation.invalid") // We are under initialization when we create this, not when calling
     ItemListener checkBoxListener = (itemEvent) -> itemStateChanged(orderField, itemEvent);
     orderBy.addItemListener(checkBoxListener);
     return field;
   }
 
-  private void itemStateChanged(final SiteField orderField, final ItemEvent itemEvent) {
+  private void itemStateChanged(
+//      @UnderInitialization RecordView<R> this,
+      final SiteField orderField,
+      final ItemEvent itemEvent
+  ) {
     if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
       controller.specifyOrder(orderField);
       // Here's where I want to call RecordUI.searchNow(). The code needs to be restructured before I can do that.
@@ -189,8 +210,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     }
   }
 
-  @SuppressWarnings("method.invocation.invalid")
-  private JTextComponent addNotesField(@UnderInitialization RecordView<R> this) {
+  private JTextComponent addNotesField() { // @UnderInitialization RecordView<R>this) {
     final JTextArea wrappedField = new JTextArea(TEXT_ROWS, TEXT_COLUMNS);
     wrappedField.setWrapStyleWord(true);
     wrappedField.setLineWrap(true);
@@ -199,7 +219,8 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     return wrappedField;
   }
 
-  private JComponent wrap(@UnderInitialization RecordView<R> this, JComponent wrapped) {
+  // TODO: Move this to SwingUtils!
+  private static JComponent wrap(JComponent wrapped) {
     return new JScrollPane(wrapped, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
   }
   
@@ -264,8 +285,9 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     sourceField.requestFocus();
   }
 
-    @SuppressWarnings({"initialization.fields.uninitialized", "InstanceVariableMayNotBeInitialized"})
-    public static class Builder<RR> {
+  // TODO: Can I get rid of this warning by clever use of @RequiresNotNull?
+  @SuppressWarnings("initialization.fields.uninitialized")
+  public static class Builder<RR extends @NonNull Object> {
       private RR record;
       private SiteField initialSort;
       private Function<RR, Integer> getId;

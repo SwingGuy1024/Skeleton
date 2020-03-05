@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.7.6-SNAPSHOT</version>
+  <version>0.7.7-SNAPSHOT</version>
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -35,7 +35,7 @@
     <dependency>
       <groupId>com.neptunedreams</groupId>
       <artifactId>tango</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>1.0.2-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -89,6 +89,11 @@
       <artifactId>checker-qual</artifactId>
       <version>3.1.0</version>
     </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.checkerframework</groupId>-->
+<!--      <artifactId>checker</artifactId>-->
+<!--      <version>3.1.0</version>-->
+<!--    </dependency>-->
     <!-- If using JDK 8, add the following additional dependencies -->
     <dependency>
       <groupId>org.checkerframework</groupId>
@@ -144,9 +149,9 @@
 				    <!-- Optionally, -Awarns turns type-checking errors into warnings. -->
 				    <!--<arg>-Awarns</arg>-->
 
-				    <!--<arg>-Astubs=checkerframework/stubs</arg> &lt;!&ndash; Suggested by https://github.com/typetools/checker-framework/issues/445 &ndash;&gt;-->
-				    <!--<arg>-AstubWarnIfNotFound</arg>-->
-			    </compilerArgs>
+            <arg>-Astubs=nullness-stub/</arg>
+            <arg>-AstubWarnIfNotFound</arg>
+          </compilerArgs>
 		    </configuration>
 	    </plugin>
 

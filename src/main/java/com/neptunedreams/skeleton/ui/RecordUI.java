@@ -65,8 +65,8 @@ import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
  * 
  * @author Miguel Mu\u00f1oz
  */
-@SuppressWarnings("HardCodedStringLiteral")
-public final class RecordUI<R> extends JPanel implements RecordModelListener {
+@SuppressWarnings({"HardCodedStringLiteral", "TypeParameterExplicitlyExtendsObject"})
+public final class RecordUI<R extends @NonNull Object> extends JPanel implements RecordModelListener {
 
   // TODO:  The QueuedTask is terrific, but it doesn't belong in this class. It belongs in the Controller. That way,
   // todo   it can be accessed by other UI classes like RecordView. To do this, I also need to move the SearchOption
@@ -101,7 +101,7 @@ public final class RecordUI<R> extends JPanel implements RecordModelListener {
   private final Consumer<Collection<@NonNull R>> recordConsumer = createRecordConsumer();
   private @NonNull QueuedTask<String, Collection<R>> queuedTask;
 
-  @SuppressWarnings("methodref.inference.unimplemented")
+//  @SuppressWarnings("methodref.inference.unimplemented")
   private HidingPanel makeSearchOptionsPanel(
       @UnderInitialization RecordUI<R> this,
       @SuppressWarnings("BoundedWildcard") EnumGroup<SearchOption> searchOptionsGroup
@@ -116,7 +116,7 @@ public final class RecordUI<R> extends JPanel implements RecordModelListener {
     searchOptionsGroup.setSelected(SearchOption.findAny);
 
 //    optionsGroup.addButtonGroupListener(selectedButtonModel -> selectionChanged(selectedButtonModel));
-    @SuppressWarnings("methodref.receiver.bound.invalid") // I don't understand why I need this.
+    @SuppressWarnings("methodref.receiver.bound.invalid") // TODO: I don't understand why I need this.
     @UnknownKeyFor @Initialized ButtonGroupListener selectionChanged = this::selectionChanged;
     searchOptionsGroup.addButtonGroupListener(selectionChanged); // Using a lambda is an error. This is a warning. 
 
@@ -125,44 +125,47 @@ public final class RecordUI<R> extends JPanel implements RecordModelListener {
     return hidingPanel;
   }
 
-  @SuppressWarnings({"method.invocation.invalid", "argument.type.incompatible"})
-  // add(), setBorder(), etc not properly annotated in JDK.
-  public RecordUI(
-      @NonNull RecordModel<? extends R> model,
-      RecordView<R> theView,
-      @SuppressWarnings("BoundedWildcard") RecordController<R, Integer, SiteField> theController
+//  @SuppressWarnings({"method.invocation.invalid", "argument.type.incompatible"})
+  public static <RR extends @NonNull Object> RecordUI<RR> makeRecordUI(
+      @NonNull RecordModel<? extends RR> model,
+      RecordView<RR> theView,
+      @SuppressWarnings("BoundedWildcard") RecordController<RR, Integer, SiteField> theController
   ) {
-    super(new BorderLayout());
-    recordModel = model;
-    final JLayer<RecordView<R>> layer = wrapInLayer(theView);
-    add(layer, BorderLayout.CENTER);
-    add(createControlPanel(), BorderLayout.PAGE_START);
-    add(createTrashPanel(), BorderLayout.PAGE_END);
-    controller = theController;
-    setBorder(new MatteBorder(4, 4, 4, 4, getBackground()));
-    //noinspection ThisEscapedInObjectConstruction
-    recordModel.addModelListener(this); // argument.type.incompatible checker error suppressed
-    
-    findField.getDocument().addDocumentListener(new DocumentListener() {
+    final RecordUI<RR> recordUI = new RecordUI<>(model, theController);
+    final JLayer<RecordView<RR>> layer = recordUI.wrapInLayer(theView);
+    recordUI.add(layer, BorderLayout.CENTER);
+    recordUI.add(recordUI.createControlPanel(), BorderLayout.PAGE_START);
+    recordUI.add(recordUI.createTrashPanel(), BorderLayout.PAGE_END);
+    recordUI.setBorder(new MatteBorder(4, 4, 4, 4, recordUI.getBackground()));
+    model.addModelListener(recordUI); // argument.type.incompatible checker error suppressed
+    recordUI.findField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(final DocumentEvent e) {
-        process(e);
+        recordUI.process(e);
       }
 
       @Override
       public void removeUpdate(final DocumentEvent e) {
-        process(e);
+        recordUI.process(e);
       }
 
       @Override
       public void changedUpdate(final DocumentEvent e) {
-        process(e);
+        recordUI.process(e);
       }
-      
-    });
 
-    //noinspection ThisEscapedInObjectConstruction
-    MasterEventBus.registerMasterEventHandler(this);
+    });
+    MasterEventBus.registerMasterEventHandler(recordUI);
+    return recordUI;
+  } 
+  
+  private RecordUI(
+      @NonNull RecordModel<? extends R> model,
+      @SuppressWarnings("BoundedWildcard") RecordController<R, Integer, SiteField> theController
+  ) {
+    super(new BorderLayout());
+    recordModel = model;
+    controller = theController;
     queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
     queuedTask.launch();
   }
@@ -205,7 +208,7 @@ public final class RecordUI<R> extends JPanel implements RecordModelListener {
   }
 
 
-  private JLayer<RecordView<R>> wrapInLayer(@UnderInitialization RecordUI<R> this, RecordView<R> recordView) {
+  private JLayer<RecordView<R>> wrapInLayer(RecordView<R> recordView) {
     swipeView = SwipeView.wrap(recordView);
     return swipeView.getLayer();
   }
@@ -316,7 +319,7 @@ public final class RecordUI<R> extends JPanel implements RecordModelListener {
 //    importDialog.setVisible(true);
 //  }
 
-  @SuppressWarnings("method.invocation.invalid")
+//  @SuppressWarnings("method.invocation.invalid")
   private JPanel getSearchField() {
     JLabel findIcon = Resource.getMagnifierLabel();
     RecordView.installStandardCaret(findField);
@@ -401,8 +404,15 @@ public final class RecordUI<R> extends JPanel implements RecordModelListener {
     construction completes, so it works fine. Very annoying that I need to do this, but it's a relatively clean
     solution.  
    */
-  private ParameterizedCallable<String, Collection<@NonNull R>> createCallable() {
+  private ParameterizedCallable<String, Collection<@NonNull R>> createCallable(@UnderInitialization RecordUI<R> this) {
     return new ParameterizedCallable<String, Collection<@NonNull R>>(null) {
+      // Originally, I didn't need to do this. Then I restructured the code to eliminate lots of other warnings, but
+      // this warning had to come back. I can't make any sense out of the comment above, although I'm sure it was
+      // clear to me at the time. But since this doesn't get called until after construction is complete, it's safe
+      // to suppress this warning. I don't understand why I had to replace the implicit parameter, but it may be because
+      // I had restore all the implicit parameters after I stopped suppressing the method.invocation.invalid and 
+      // argument.type.incompatible warnings on the constructor.
+      @SuppressWarnings("method.invocation.invalid")
       @Override
       public Collection<@NonNull R> call(String inputData) {
         return retrieveNow(inputData);

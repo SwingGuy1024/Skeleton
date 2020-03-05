@@ -102,7 +102,7 @@ public final class Skeleton extends JPanel
   done. I'm not sure how these two solutions should be integrated together.
    */
   
-  private RecordUI<SiteRecord> mainPanel;
+  private RecordUI<@NonNull SiteRecord> mainPanel;
   //    org.jooq.util.JavaGenerator generator;
   private static JFrame frame = new JFrame("Skeleton");
   private final @NonNull DatabaseInfo info;
@@ -158,7 +158,7 @@ public final class Skeleton extends JPanel
       final ConnectionSource connectionSource = info.getConnectionSource();
       Dao<SiteRecord, Integer, SiteField> dao = info.getDao(SiteRecord.class, connectionSource);
       SiteRecord dummyRecord = new SiteRecord(0, "", "", "", "");
-      final RecordView<SiteRecord> view = new RecordView.Builder<>(dummyRecord, SiteField.Source)
+      final RecordView<@NonNull SiteRecord> view = new RecordView.Builder<>(dummyRecord, SiteField.Source)
           .source  (SiteRecord::getSource,   SiteRecord::setSource)
           .id      (SiteRecord::getId,       SiteRecord::setId)
           .userName(SiteRecord::getUsername, SiteRecord::setUsername)
@@ -169,7 +169,7 @@ public final class Skeleton extends JPanel
           .build();
       controller = view.getController();
       final RecordModel<SiteRecord> model = controller.getModel();
-      mainPanel = new RecordUI<>(model, view, controller); // RecordUI launches the initial search
+      mainPanel = RecordUI.makeRecordUI(model, view, controller); // RecordUI launches the initial search
 
       if ((model.getSize() == 1) && (model.getRecordAt(0).getId() == 0) && doImport) {
         importFromFile(dao, controller); // throws ClassNotFoundException
