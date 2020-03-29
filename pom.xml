@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.7.7-SNAPSHOT</version>
+  <version>0.7.9-SNAPSHOT</version>
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -35,7 +35,7 @@
     <dependency>
       <groupId>com.neptunedreams</groupId>
       <artifactId>tango</artifactId>
-      <version>1.0.2-SNAPSHOT</version>
+      <version>1.0.5-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -87,18 +87,18 @@
     <dependency>
       <groupId>org.checkerframework</groupId>
       <artifactId>checker-qual</artifactId>
-      <version>3.1.0</version>
+      <version>3.2.0</version>
     </dependency>
 <!--    <dependency>-->
 <!--      <groupId>org.checkerframework</groupId>-->
 <!--      <artifactId>checker</artifactId>-->
-<!--      <version>3.1.0</version>-->
+<!--      <version>3.2.0</version>-->
 <!--    </dependency>-->
     <!-- If using JDK 8, add the following additional dependencies -->
     <dependency>
       <groupId>org.checkerframework</groupId>
       <artifactId>jdk8</artifactId>
-      <version>3.1.0</version>
+      <version>3.2.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.errorprone</groupId>
@@ -124,6 +124,7 @@
 				    <Xmaxwarns>10000</Xmaxwarns>
 				    <!--<AsuppressWarnings>uninitialized</AsuppressWarnings>-->
 			    </compilerArguments>
+          <showWarnings>true</showWarnings>
 			    <annotationProcessorPaths>
 				    <path>
 					    <groupId>org.checkerframework</groupId>

@@ -29,8 +29,10 @@ import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.framework.data.RecordSelectionModel;
 import com.neptunedreams.framework.event.ChangeRecord;
 import com.neptunedreams.framework.event.MasterEventBus;
+import com.neptunedreams.framework.ui.EnhancedCaret;
 import com.neptunedreams.framework.ui.FieldBinding;
 import com.neptunedreams.framework.ui.RecordController;
+import com.neptunedreams.framework.ui.SwingUtils;
 import com.neptunedreams.skeleton.data.SiteField;
 import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
@@ -97,27 +99,21 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     
     makeTopPanel();
 
-    installStandardCaret(sourceField);
-    installStandardCaret(usernameField);
-    installStandardCaret(pwField);
-    installStandardCaret(notesField);
-//    FilterCaret.installFilterCaret(notesField);
-    
-    // Put a line at the top, one pixel wide.
-
+    // On the Mac, the AquaCaret will get installed. This caret has an annoying feature of selecting all the text on a
+    // focus-gained event. If this isn't bad enough, it also fails to check temporary vs permanent focus gain, so it 
+    // gets triggered on a focused JTextComponent whenever a menu is released! This method removes the Aqua Caret and 
+    // installs a better caret. The DefaultCaret used by swing doesn't handle select-by-word using full-click-and-drag
+    // the standard way. This installs the EnhancedCaret to fix that, too.
+    SwingUtils.installCustomCaret(EnhancedCaret::new, sourceField, usernameField, pwField, notesField);
   }
 
-  // It seems to view the constructed RecordController as UnderInitialization because I'm passing it a RecordView that's
-  // in that state.
-  @SuppressWarnings("return.type.incompatible")
   private RecordController<R, Integer, SiteField> makeController(
-//      @UnderInitialization RecordView<R> this,
       final SiteField initialSort,
       final Dao<R, Integer, SiteField> dao,
       final Supplier<@NonNull R> recordConstructor,
       Function<R, Integer> getIdFunction
   ) {
-    return new RecordController<>(
+    return RecordController.createRecordController(
         dao,
         this,
         initialSort,
