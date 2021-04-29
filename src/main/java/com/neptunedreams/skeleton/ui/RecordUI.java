@@ -1,21 +1,16 @@
 package com.neptunedreams.skeleton.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
 import javax.swing.ButtonModel;
-import javax.swing.FocusManager;
-import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JLayer;
@@ -23,14 +18,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import javax.swing.text.JTextComponent;
 import com.google.common.eventbus.Subscribe;
 import com.neptunedreams.framework.ErrorReport;
 import com.neptunedreams.framework.data.RecordModel;
@@ -48,10 +42,11 @@ import com.neptunedreams.framework.ui.SwipeView;
 import com.neptunedreams.skeleton.data.SiteField;
 import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
-//import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
+
+//import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 
 /**
  * Functions
@@ -82,16 +77,16 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   private static final long DELAY = 1000L;
 
   // We set the initial text to a space, so we can fire the initial search by setting the text to the empty String.
-  private JTextField findField = new JTextField(" ",10);
+  private final JTextField findField = new JTextField(" ",10);
   private final RecordController<R, Integer, SiteField> controller;
-  private EnumGroup<SiteField> searchFieldGroup = new EnumGroup<>();
+  private final EnumGroup<SiteField> searchFieldGroup = new EnumGroup<>();
   private final @NonNull RecordModel<? extends R> recordModel;
-  private JButton prev = new JButton(Resource.getLeftArrow());
-  private JButton next = new JButton(Resource.getRightArrow());
-  private JButton first = new JButton(Resource.getFirst());
-  private JButton last = new JButton(Resource.getLast());
+  private final JButton prev = new JButton(Resource.getLeftArrow());
+  private final JButton next = new JButton(Resource.getRightArrow());
+  private final JButton first = new JButton(Resource.getFirst());
+  private final JButton last = new JButton(Resource.getLast());
 
-  private JLabel infoLine = new JLabel("");
+  private final JLabel infoLine = new JLabel("");
   private final EnumGroup<SearchOption> optionsGroup = new EnumGroup<>();
   private @MonotonicNonNull SwipeView<RecordView<R>> swipeView=null;
 
@@ -99,7 +94,8 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
 
   // recordConsumer is how the QueuedTask communicates with the application code.
   private final Consumer<Collection<@NonNull R>> recordConsumer = createRecordConsumer();
-  private @NonNull QueuedTask<String, Collection<R>> queuedTask;
+  private @NonNull
+  final QueuedTask<String, Collection<R>> queuedTask;
 
 //  @SuppressWarnings("methodref.inference.unimplemented")
   private HidingPanel makeSearchOptionsPanel(
@@ -235,7 +231,21 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
 
     assert infoLine != null;
     trashPanel.add(infoLine, BorderLayout.LINE_START);
+    trashPanel.add(makeJavaVersion(), BorderLayout.CENTER);
     return trashPanel;
+  }
+  
+  private JPanel makeJavaVersion() {
+    JLabel label = new JLabel("Java version " + System.getProperty("java.version"));
+//    label.setAlignmentX(1.0f);
+    label.setHorizontalAlignment(SwingConstants.CENTER);
+    final Font labelFont = label.getFont();
+    int textSize = labelFont.getSize();
+    Font smallFont = labelFont.deriveFont(0.75f * textSize);
+    label.setFont(smallFont);
+    JPanel centerPanel = new JPanel(new BorderLayout());
+    centerPanel.add(label, BorderLayout.PAGE_END);
+    return centerPanel;
   }
 
   private void delete() {

@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.8.1-SNAPSHOT</version>
+  <version>0.8.2-SNAPSHOT</version>
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -29,6 +29,7 @@
     <!--suppress UnresolvedMavenProperty -->
     <errorProneJavac>${com.google.errorprone:javac:jar}</errorProneJavac>
 	  <jooqVersion>3.12.3</jooqVersion>
+    <javaHome>/Library/Java/JavaVirtualMachines/jdk1.8.0_212/Contents/Home</javaHome>
   </properties>
 
   <dependencies>
@@ -241,9 +242,10 @@
           <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
           <!--<dictionaryFile>YourCustomInfo.plist</dictionaryFile>-->
           <iconFile>Earth_Neptune.icns</iconFile>
-          <!-- Put this line in to bundle the jdk with the app. This is untested. -->
+          <!-- Put this line in to bundle the jdk with the app. -->
           <!--suppress MavenModelInspection -->
-          <!-- <jrePath>${env.JAVA_HOME}/../..</jrePath>-->
+          <!--<jrePath>${javaHome}/../..</jrePath>-->
+          <!--<jrePath>${env.JAVA_HOME}/../..</jrePath>-->
         </configuration>
         <executions>
           <execution>
