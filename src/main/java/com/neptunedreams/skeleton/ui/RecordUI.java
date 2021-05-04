@@ -97,6 +97,12 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   private @NonNull
   final QueuedTask<String, Collection<R>> queuedTask;
 
+  /**
+   * Makes the Search-options panel, which holds a radio button for each of the three search modes. These are activated only
+   * when the search term contains multiple words, since they all do the same thing with just a single word.
+   * @param searchOptionsGroup The searchOptions Group, to which the radio buttons will all be added.
+   * @return The search options panel
+   */
 //  @SuppressWarnings("methodref.inference.unimplemented")
   private HidingPanel makeSearchOptionsPanel(
       @UnderInitialization RecordUI<R> this,
@@ -207,27 +213,39 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     }
   }
 
+  /**
+   * Creates the control panel, which has the search field, the search radio buttons, the search options, and the main navigation panel.
+   *
+   * @return The control panel
+   */
   private JPanel createControlPanel() {
     JPanel controlPanel = new JPanel(new BorderLayout());
     controlPanel.add(createSearchRadioPanel(), BorderLayout.LINE_END);
-    controlPanel.add(createButtonPanel(), BorderLayout.CENTER);
+    controlPanel.add(createNavigationPanel(), BorderLayout.CENTER);
     return controlPanel;
   }
 
-  private JPanel createButtonPanel() {
+  /**
+   * Creates the navigation panel, with the search field, search options, and the navigation buttons.
+   * @return The navigation panel
+   */
+  private JPanel createNavigationPanel() {
     JPanel buttonPanel = new JPanel(new BorderLayout());
     buttonPanel.add(getSearchField(), BorderLayout.PAGE_START);
     buttonPanel.add(searchOptionsPanel, BorderLayout.CENTER);
-    buttonPanel.add(getButtons(), BorderLayout.PAGE_END);
-//    buttonPanel.add(createTrashPanel(), BorderLayout.PAGE_END);
+    buttonPanel.add(getNavButtons(), BorderLayout.PAGE_END);
     return buttonPanel;
   }
 
+  /**
+   * Creates the trash panel, which has the info line, the java version, and the trash button.
+   * @return The trash panel
+   */
   private JPanel createTrashPanel() {
     JPanel trashPanel = new JPanel(new BorderLayout());
-    JButton trashRecord = new JButton(Resource.getBin());
-    trashPanel.add(trashRecord, BorderLayout.LINE_END);
-    trashRecord.addActionListener((e)->delete());
+    JButton trashRecordButton = new JButton(Resource.getBin());
+    trashPanel.add(trashRecordButton, BorderLayout.LINE_END);
+    trashRecordButton.addActionListener((e)->delete());
 
     assert infoLine != null;
     trashPanel.add(infoLine, BorderLayout.LINE_START);
@@ -241,8 +259,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     label.setHorizontalAlignment(SwingConstants.CENTER);
     final Font labelFont = label.getFont();
     int textSize = labelFont.getSize();
-    Font smallFont = labelFont.deriveFont(0.75f * textSize);
-    label.setFont(smallFont);
+    label.setFont(labelFont.deriveFont(0.75f * textSize));
     JPanel centerPanel = new JPanel(new BorderLayout());
     centerPanel.add(label, BorderLayout.PAGE_END);
     return centerPanel;
@@ -266,7 +283,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     }
   }
 
-  private JPanel getButtons() {
+  private JPanel getNavButtons() {
     JPanel buttons = new JPanel(new GridLayout(1, 0));
     JButton add = new JButton(Resource.getAdd());
 //    final JButton importBtn = new JButton("Imp");

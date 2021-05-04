@@ -1,10 +1,14 @@
 package com.neptunedreams.skeleton.ui;
 
 import java.net.URL;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import com.neptunedreams.framework.ui.SwingUtils;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -23,6 +27,16 @@ enum Resource {
   private static final String BULLET_ADD_PNG = "bullet_add.png";
   private static final String ARROW_FIRST_PNG = "arrow_first.png";
   private static final String ARROW_LAST_PNG = "arrow_last.png";
+  
+  private static final Set<String> colorShiftImages = new HashSet<>(Arrays.asList(
+      ARROW_FIRST_PNG,
+      ARROW_LAST_PNG,
+      ARROW_LEFT_PNG,
+      ARROW_RIGHT_PNG,
+      BULLET_ADD_PNG
+  ));
+  
+  private static final int COLOR_SHIFT = 93;
 
   private static Icon getIcon(String name) {
     URL resource = Objects.requireNonNull(Resource.class.getResource(name));
@@ -33,6 +47,9 @@ enum Resource {
 //      resource = Resource.class.getResource("/Users/miguelmunoz/Documents/skeleton/src/main/resource/com/skeleton/ui/" + name);
 //    }
 //    System.out.printf("Resource: %s from %s%n", resource, name);
+    if (colorShiftImages.contains(name)) {
+      return SwingUtils.shiftHue(new ImageIcon(resource), COLOR_SHIFT);
+    }
     return new ImageIcon(resource);
   }
 

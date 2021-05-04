@@ -47,7 +47,7 @@ import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
  *
  * @author Miguel Mu\u00f1oz
  */
-@SuppressWarnings({"WeakerAccess", "HardCodedStringLiteral", "TypeParameterExplicitlyExtendsObject"})
+@SuppressWarnings({"WeakerAccess", "HardCodedStringLiteral", "TypeParameterExplicitlyExtendsObject", "RedundantSuppression"})
 public final class RecordView<R extends @NonNull Object> extends JPanel implements RecordSelectionModel<R> {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
@@ -87,7 +87,8 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     sourceField = (JTextComponent) addField("Source", true, SiteField.Source, initialSort);
     final JTextComponent usernameField = (JTextComponent) addField("User Name", true, SiteField.Username, initialSort);
     final JTextComponent pwField = (JTextComponent) addField("Password", true, SiteField.Password, initialSort);
-    final JTextComponent notesField = addNotesField();
+    final JTextArea notesField = new JTextArea(TEXT_ROWS, TEXT_COLUMNS);
+    add(BorderLayout.CENTER, SwingUtils.scrollArea(notesField));
     assert getIdFunction != null : "Null id getter";
     assert setIdFunction != null : "Null id Setter";
     final FieldBinding.IntegerBinding<R> idBinding = FieldBinding.bindInteger(getIdFunction, idField);
@@ -96,8 +97,9 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     final FieldBinding.StringEditableBinding<R> passwordBinding = FieldBinding.bindEditableString(getPasswordFunction, setPasswordFunction, pwField);
     final FieldBinding.StringEditableBinding<R> notesBinding = FieldBinding.bindEditableString(getNotesFunction, setNotesFunction, notesField);
     allBindings = Arrays.asList(idBinding, sourceBinding, userNameBinding, passwordBinding, notesBinding);
-    
-    makeTopPanel();
+
+    setBorder(new MatteBorder(1, 0, 0, 0, Color.black));
+    add(BorderLayout.PAGE_START, makeFieldDisplayPanel());
 
     // On the Mac, the AquaCaret will get installed. This caret has an annoying feature of selecting all the text on a
     // focus-gained event. If this isn't bad enough, it also fails to check temporary vs permanent focus gain, so it 
@@ -126,15 +128,18 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     MasterEventBus.registerMasterEventHandler(this);
   }
 
+  /**
+   * This makes the field display panel, which has the three data fields, plus, for each field, a label on the left and a radio button
+   * (for sorting) on the right.
+   * @return The field display panel
+   */
   @RequiresNonNull({"labelPanel", "fieldPanel", "checkBoxPanel"})
-  private void makeTopPanel() {
-    JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.add(labelPanel, BorderLayout.LINE_START);
-    topPanel.add(fieldPanel, BorderLayout.CENTER);
-    topPanel.add(checkBoxPanel, BorderLayout.LINE_END);
-    add(topPanel, BorderLayout.PAGE_START);
-//    return topPanel;
-    setBorder(new MatteBorder(1, 0, 0, 0, Color.black));
+  private JPanel makeFieldDisplayPanel() {
+    JPanel fieldDisplayPanel = new JPanel(new BorderLayout());
+    fieldDisplayPanel.add(labelPanel, BorderLayout.LINE_START);
+    fieldDisplayPanel.add(fieldPanel, BorderLayout.CENTER);
+    fieldDisplayPanel.add(checkBoxPanel, BorderLayout.LINE_END);
+    return fieldDisplayPanel;
   }
 
 //  @SuppressWarnings("HardCodedStringLiteral")
@@ -165,6 +170,15 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     caret.setBlinkRate(blinkRate); // Starts the new caret blinking.
   }
 
+  /**
+   * Adds a label, text field and sorting radio button to the labelPanel, fieldPanel, and checkBoxPanel for the specified database field.
+   * @param labelText The text of the label
+   * @param editable True for editable fields
+   * @param orderField The SiteField for ordering
+   * @param initialSort The field to use for the initial sort.
+   * @return The field that will display the database value, which will be a JTextField or a JLabel depending on whether the field is
+   * editable.
+   */
   @RequiresNonNull({"labelPanel", "fieldPanel", "buttonGroup", "checkBoxPanel", "controller"})
   private JComponent addField(
 //      @UnderInitialization RecordView<R> this,
@@ -206,20 +220,6 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     }
   }
 
-  private JTextComponent addNotesField() { // @UnderInitialization RecordView<R>this) {
-    final JTextArea wrappedField = new JTextArea(TEXT_ROWS, TEXT_COLUMNS);
-    wrappedField.setWrapStyleWord(true);
-    wrappedField.setLineWrap(true);
-    JComponent scrollPane = wrap(wrappedField);
-    add(BorderLayout.CENTER, scrollPane);
-    return wrappedField;
-  }
-
-  // TODO: Move this to SwingUtils!
-  private static JComponent wrap(JComponent wrapped) {
-    return new JScrollPane(wrapped, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-  }
-  
   @Subscribe
   public void setCurrentRecord(ChangeRecord<? extends R> recordEvent) {
     R newRecord = recordEvent.getNewRecord();
