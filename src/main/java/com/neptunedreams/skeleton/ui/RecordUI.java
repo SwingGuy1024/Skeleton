@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
+import javax.swing.Box;
 import javax.swing.ButtonModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -18,6 +19,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.MatteBorder;
@@ -85,6 +87,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   private final JButton next = new JButton(Resource.getRightArrow());
   private final JButton first = new JButton(Resource.getFirst());
   private final JButton last = new JButton(Resource.getLast());
+  private final JToggleButton edit;
 
   private final JLabel infoLine = new JLabel("");
   private final EnumGroup<SearchOption> optionsGroup = new EnumGroup<>();
@@ -133,7 +136,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
       RecordView<RR> theView,
       @SuppressWarnings("BoundedWildcard") RecordController<RR, Integer, SiteField> theController
   ) {
-    final RecordUI<RR> recordUI = new RecordUI<>(model, theController);
+    final RecordUI<RR> recordUI = new RecordUI<>(model, theController, theView.getEditModel());
     final JLayer<RecordView<RR>> layer = recordUI.wrapInLayer(theView);
     recordUI.add(layer, BorderLayout.CENTER);
     recordUI.add(recordUI.createControlPanel(), BorderLayout.PAGE_START);
@@ -163,9 +166,11 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   
   private RecordUI(
       @NonNull RecordModel<? extends R> model,
-      @SuppressWarnings("BoundedWildcard") RecordController<R, Integer, SiteField> theController
+      @SuppressWarnings("BoundedWildcard") RecordController<R, Integer, SiteField> theController,
+      JToggleButton.ToggleButtonModel editModel
   ) {
     super(new BorderLayout());
+    edit = makeEditButton(editModel);
     recordModel = model;
     controller = theController;
     queuedTask = new QueuedTask<>(DELAY, createCallable(), recordConsumer);
@@ -288,10 +293,13 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     JButton add = new JButton(Resource.getAdd());
 //    final JButton importBtn = new JButton("Imp");
     buttons.add(add);
+    buttons.add(Box.createHorizontalStrut(10));
     buttons.add(first);
     buttons.add(prev);
     buttons.add(next);
     buttons.add(last);
+    buttons.add(Box.createHorizontalStrut(10));
+    buttons.add(edit);
 //    buttons.add(importBtn);
     
     add.addActionListener((e)->addBlankRecord());
@@ -300,6 +308,9 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     sView.assignMouseDownAction(next, recordModel::goNext, SwipeDirection.SWIPE_LEFT);
     first.addActionListener((e) -> sView.swipeRight(recordModel::goFirst));
     last.addActionListener((e)  -> sView.swipeLeft(recordModel::goLast));
+    edit.setSelected(true); // lets me execute the listener immediately
+    edit.addItemListener((e) -> sView.getLiveComponent().setTextEditable(edit.isSelected()));
+    edit.setSelected(false); // executes because the state changes
 //    importBtn.addActionListener((e) -> doImport());
     JPanel flowPanel = new JPanel(new FlowLayout());
     flowPanel.add(buttons);
@@ -454,4 +465,10 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   }
 
   private void selectionChanged(@SuppressWarnings("unused") ButtonModel selectedButtonModel) { searchNow(); }
+  
+  private JToggleButton makeEditButton(@UnderInitialization RecordUI<R> this, JToggleButton.ToggleButtonModel model) {
+    JToggleButton editButton = new JToggleButton(Resource.getEdit());
+    editButton.setModel(model);
+    return editButton;
+  }
 }

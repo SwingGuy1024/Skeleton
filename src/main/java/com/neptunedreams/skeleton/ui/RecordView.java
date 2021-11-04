@@ -17,9 +17,9 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.border.MatteBorder;
 import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
@@ -29,10 +29,9 @@ import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.framework.data.RecordSelectionModel;
 import com.neptunedreams.framework.event.ChangeRecord;
 import com.neptunedreams.framework.event.MasterEventBus;
-import com.neptunedreams.framework.ui.EnhancedCaret;
 import com.neptunedreams.framework.ui.FieldBinding;
 import com.neptunedreams.framework.ui.RecordController;
-import com.neptunedreams.framework.ui.SwingUtils;
+import com.neptunedreams.framework.ui.TangoUtils;
 import com.neptunedreams.skeleton.data.SiteField;
 import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
@@ -51,16 +50,17 @@ import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 public final class RecordView<R extends @NonNull Object> extends JPanel implements RecordSelectionModel<R> {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
-  private JPanel labelPanel = new JPanel(new GridLayout(0, 1));
-  private JPanel fieldPanel = new JPanel(new GridLayout(0, 1));
-  private JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
-  private ButtonGroup buttonGroup = new ButtonGroup();
+  private final JPanel labelPanel = new JPanel(new GridLayout(0, 1));
+  private final JPanel fieldPanel = new JPanel(new GridLayout(0, 1));
+  private final JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
+  private final ButtonGroup buttonGroup = new ButtonGroup();
 
   @SuppressWarnings("HardCodedStringLiteral")
   private R currentRecord; // = new Record("D", "D", "D", "D");
-  
+  private final JToggleButton.ToggleButtonModel editModel = new JToggleButton.ToggleButtonModel();
+
   @NotOnlyInitialized
-  private RecordController<R, Integer, SiteField> controller;
+  private final RecordController<R, Integer, SiteField> controller;
   private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
   private final JTextComponent sourceField;
 
@@ -88,7 +88,7 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     final JTextComponent usernameField = (JTextComponent) addField("User Name", true, SiteField.Username, initialSort);
     final JTextComponent pwField = (JTextComponent) addField("Password", true, SiteField.Password, initialSort);
     final JTextArea notesField = new JTextArea(TEXT_ROWS, TEXT_COLUMNS);
-    add(BorderLayout.CENTER, SwingUtils.scrollArea(notesField));
+    add(BorderLayout.CENTER, TangoUtils.scrollArea(notesField));
     assert getIdFunction != null : "Null id getter";
     assert setIdFunction != null : "Null id Setter";
     final FieldBinding.IntegerBinding<R> idBinding = FieldBinding.bindInteger(getIdFunction, idField);
@@ -106,7 +106,7 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     // gets triggered on a focused JTextComponent whenever a menu is released! This method removes the Aqua Caret and 
     // installs a better caret. The DefaultCaret used by swing doesn't handle select-by-word using full-click-and-drag
     // the standard way. This installs the EnhancedCaret to fix that, too.
-    SwingUtils.installCustomCaret(EnhancedCaret::new, sourceField, usernameField, pwField, notesField);
+    TangoUtils.installStandardCaret(sourceField, usernameField, pwField, notesField);
   }
 
   private RecordController<R, Integer, SiteField> makeController(
@@ -123,6 +123,18 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
         getIdFunction
     );
   }
+  
+  JToggleButton.ToggleButtonModel getEditModel() { return editModel; }
+  
+  public void setTextEditable(boolean editable) {
+    for (FieldBinding<?,?,?> binding: allBindings) {
+      if (binding.isEditable()) {
+        binding.getEditableBinding().setEditableState(editable);
+      }
+    }
+  }
+  
+  public boolean isEditable() { return editModel.isSelected(); }
 
   private void register() {
     MasterEventBus.registerMasterEventHandler(this);
@@ -225,6 +237,7 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     R newRecord = recordEvent.getNewRecord();
     assert newRecord != null;
     currentRecord = newRecord;
+    editModel.setSelected(false);
     for (FieldBinding<R, ?, ?> binding: allBindings) {
       binding.prepareEditor(newRecord);
     }
@@ -279,13 +292,14 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
 
   @Subscribe void userRequestedNewRecord(MasterEventBus.UserRequestedNewRecordEvent event) {
     sourceField.requestFocus();
+    editModel.setSelected(true);
   }
 
   // TODO: Can I get rid of this warning by clever use of @RequiresNotNull?
   @SuppressWarnings("initialization.fields.uninitialized")
   public static class Builder<RR extends @NonNull Object> {
-      private RR record;
-      private SiteField initialSort;
+      private final RR record;
+      private final SiteField initialSort;
       private Function<RR, Integer> getId;
       private BiConsumer<RR, Integer> setId;
       private Function<RR, String> getSource;
