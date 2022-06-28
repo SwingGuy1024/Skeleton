@@ -13,11 +13,11 @@ import com.neptunedreams.framework.data.ConnectionSource;
 import com.neptunedreams.framework.data.DatabaseInfo;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
@@ -69,7 +69,6 @@ public class SqLiteRecordDaoTest {
 //    }
     SiteRecord record1 = new SiteRecord(0,"TestSiteAlpha", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
 //    SiteRecord record1 = createRecord("TestSiteAlpha", "testName", "testPw", "testNotes\nNote line 2\nNoteLine 3");
-    //noinspection resource
     assertFalse(connectionSource.getConnection().isClosed());
 
     Collection<SiteRecord> allRecords = showAllRecords(dao, 0);
@@ -93,7 +92,7 @@ public class SqLiteRecordDaoTest {
         .stream()
         .map(SiteRecord::getId)
         .collect(Collectors.toSet());
-    assertThat(set2, Matchers.hasItems(r1Id, r2Id));
+    assertThat(set2, hasItems(r1Id, r2Id));
 
     allRecords = dao.getAll(SiteField.Source);
     System.out.printf("getAll() returned %d records, expecting 2%n", allRecords.size());
@@ -171,7 +170,6 @@ public class SqLiteRecordDaoTest {
     System.err.println("testFindAny()");
     assert connectionSource != null;
     assert dao != null;
-    //noinspection resource
     assertFalse(connectionSource.getConnection().isClosed());
     Collection<SiteRecord> allRecords = showAllRecords(dao, 0);
     assertEquals(0, allRecords.size());
