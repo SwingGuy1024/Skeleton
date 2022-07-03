@@ -36,6 +36,7 @@ import com.neptunedreams.framework.event.MasterEventBus;
 import com.neptunedreams.framework.task.ParameterizedCallable;
 import com.neptunedreams.framework.task.QueuedTask;
 import com.neptunedreams.framework.ui.ButtonGroupListener;
+import com.neptunedreams.framework.ui.ClearableTextField;
 import com.neptunedreams.framework.ui.EnumGroup;
 import com.neptunedreams.framework.ui.HidingPanel;
 import com.neptunedreams.framework.ui.RecordController;
@@ -79,9 +80,10 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   private static final long DELAY = 1000L;
 
   // We set the initial text to a space, so we can fire the initial search by setting the text to the empty String.
-  private final JTextField findField = new JTextField(" ",10);
-  private final RecordController<R, Integer, SiteField> controller;
-  private final EnumGroup<SiteField> searchFieldGroup = new EnumGroup<>();
+  private final JTextField findField = new JTextField(" ", 10);
+  private final ClearableTextField clearableTextField = new ClearableTextField(findField);
+  private final RecordController<R, Integer, @NonNull SiteField> controller;
+  private final EnumGroup<@NonNull SiteField> searchFieldGroup = new EnumGroup<>();
   private final @NonNull RecordModel<? extends R> recordModel;
   private final JButton prev = new JButton(Resource.getLeftArrow());
   private final JButton next = new JButton(Resource.getRightArrow());
@@ -90,15 +92,14 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   private final JToggleButton edit;
 
   private final JLabel infoLine = new JLabel("");
-  private final EnumGroup<SearchOption> optionsGroup = new EnumGroup<>();
-  private @MonotonicNonNull SwipeView<RecordView<R>> swipeView=null;
+  private final EnumGroup<@NonNull SearchOption> optionsGroup = new EnumGroup<>();
+  private @MonotonicNonNull SwipeView<@NonNull RecordView<R>> swipeView=null;
 
   private final HidingPanel searchOptionsPanel = makeSearchOptionsPanel(optionsGroup);
 
   // recordConsumer is how the QueuedTask communicates with the application code.
   private final Consumer<Collection<@NonNull R>> recordConsumer = createRecordConsumer();
-  private @NonNull
-  final QueuedTask<String, Collection<R>> queuedTask;
+  private final @NonNull QueuedTask<@NonNull String, Collection<R>> queuedTask;
 
   /**
    * Makes the Search-options panel, which holds a radio button for each of the three search modes. These are activated only
@@ -109,7 +110,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
 //  @SuppressWarnings("methodref.inference.unimplemented")
   private HidingPanel makeSearchOptionsPanel(
       @UnderInitialization RecordUI<R> this,
-      @SuppressWarnings("BoundedWildcard") EnumGroup<SearchOption> searchOptionsGroup
+      @SuppressWarnings("BoundedWildcard") EnumGroup<@NonNull SearchOption> searchOptionsGroup
   ) {
     JPanel optionsPanel = new JPanel(new GridLayout(1, 0));
     JRadioButton findExact = searchOptionsGroup.add(SearchOption.findWhole);
@@ -134,7 +135,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   public static <RR extends @NonNull Object> RecordUI<RR> makeRecordUI(
       @NonNull RecordModel<? extends RR> model,
       RecordView<RR> theView,
-      @SuppressWarnings("BoundedWildcard") RecordController<RR, Integer, SiteField> theController
+      @SuppressWarnings("BoundedWildcard") RecordController<RR, Integer, @NonNull SiteField> theController
   ) {
     final RecordUI<RR> recordUI = new RecordUI<>(model, theController, theView.getEditModel());
     final JLayer<RecordView<RR>> layer = recordUI.wrapInLayer(theView);
@@ -166,7 +167,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   
   private RecordUI(
       @NonNull RecordModel<? extends R> model,
-      @SuppressWarnings("BoundedWildcard") RecordController<R, Integer, SiteField> theController,
+      @SuppressWarnings("BoundedWildcard") RecordController<R, Integer, @NonNull SiteField> theController,
       JToggleButton.ToggleButtonModel editModel
   ) {
     super(new BorderLayout());
@@ -177,7 +178,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     queuedTask.launch();
   }
   
-  private void setupActions(SwipeView<RecordView<R>> swipeView) {
+  private void setupActions(SwipeView<@NonNull RecordView<R>> swipeView) {
     swipeView.assignRestrictedRepeatingKeystrokeAction("Previous", KeyEvent.VK_LEFT, 0, () -> recordModel.goPrev(), SwipeDirection.SWIPE_RIGHT);
     swipeView.assignRestrictedRepeatingKeystrokeAction("Next", KeyEvent.VK_RIGHT, 0, () -> recordModel.goNext(), SwipeDirection.SWIPE_LEFT);
 
@@ -264,6 +265,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     label.setHorizontalAlignment(SwingConstants.CENTER);
     final Font labelFont = label.getFont();
     int textSize = labelFont.getSize();
+    //noinspection MagicNumber
     label.setFont(labelFont.deriveFont(0.75f * textSize));
     JPanel centerPanel = new JPanel(new BorderLayout());
     centerPanel.add(label, BorderLayout.PAGE_END);
@@ -303,7 +305,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
 //    buttons.add(importBtn);
     
     add.addActionListener((e)->addBlankRecord());
-    SwipeView<RecordView<R>> sView = Objects.requireNonNull(swipeView);
+    SwipeView<@NonNull RecordView<R>> sView = Objects.requireNonNull(swipeView);
     sView.assignMouseDownAction(prev, recordModel::goPrev, SwipeDirection.SWIPE_RIGHT);
     sView.assignMouseDownAction(next, recordModel::goNext, SwipeDirection.SWIPE_LEFT);
     first.addActionListener((e) -> sView.swipeRight(recordModel::goFirst));
@@ -336,7 +338,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     RecordView.installStandardCaret(findField);
     JPanel searchPanel = new JPanel(new BorderLayout());
     searchPanel.add(findIcon, BorderLayout.LINE_START);
-    searchPanel.add(findField, BorderLayout.CENTER);
+    searchPanel.add(clearableTextField, BorderLayout.CENTER);
     findField.addActionListener((e) -> findText());
     return searchPanel;
   }
