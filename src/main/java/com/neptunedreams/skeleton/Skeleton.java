@@ -21,6 +21,8 @@ import com.neptunedreams.framework.data.DatabaseInfo;
 import com.neptunedreams.framework.data.RecordModel;
 import com.neptunedreams.framework.data.SearchOption;
 import com.neptunedreams.framework.ui.RecordController;
+import com.neptunedreams.framework.ui.StandardCaret;
+import com.neptunedreams.framework.ui.TangoUtils;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.data.sqlite.SQLiteInfo;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
@@ -120,6 +122,7 @@ public final class Skeleton extends JPanel
 //    UIMenus.Menu.installMenu(frame);
     skeleton.mainPanel.launchInitialSearch();
     frame.setVisible(true);
+    TangoUtils.replaceAllCarets(skeleton, StandardCaret::new);
 
     doExport(args, skeleton);
   }
