@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import javax.swing.Box;
 import javax.swing.ButtonModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JLayer;
 import javax.swing.JOptionPane;
@@ -100,6 +101,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   // recordConsumer is how the QueuedTask communicates with the application code.
   private final Consumer<Collection<@NonNull R>> recordConsumer = createRecordConsumer();
   private final @NonNull QueuedTask<@NonNull String, Collection<R>> queuedTask;
+  private final LFSizeAdjuster sizeAdjuster = LFSizeAdjuster.instance;
 
   /**
    * Makes the Search-options panel, which holds a radio button for each of the three search modes. These are activated only
@@ -255,10 +257,21 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
 
     assert infoLine != null;
     trashPanel.add(infoLine, BorderLayout.LINE_START);
-    trashPanel.add(makeJavaVersion(), BorderLayout.CENTER);
+
+    final JComponent comboBox = sizeAdjuster.createComboBox();
+    JPanel centerPanel = makeDualPanel(comboBox, makeJavaVersion());
+    
+    trashPanel.add(centerPanel, BorderLayout.CENTER);
     return trashPanel;
   }
   
+  private JPanel makeDualPanel(JComponent topComponent, JComponent bottomComponent) {
+    JPanel dualPanel = new JPanel(new BorderLayout());
+    dualPanel.add(topComponent, BorderLayout.PAGE_START);
+    dualPanel.add(bottomComponent, BorderLayout.PAGE_END);
+    return dualPanel;
+  }
+
   private JPanel makeJavaVersion() {
     JLabel label = new JLabel("Java version " + System.getProperty("java.version"));
 //    label.setAlignmentX(1.0f);
