@@ -71,15 +71,11 @@ public enum LFSizeAdjuster {
   private static Set<Object> extractFontKeys() {
     Set<Object> fontKeys = new HashSet<>();
     UIDefaults defaults = UIManager.getLookAndFeelDefaults();
-    for (final Map.Entry<Object, Object> entry : defaults.entrySet()) {
-      final Object key = entry.getKey();
-      Object value = entry.getValue();
-      if ((value instanceof SwingLazyValue) && key.toString().endsWith(".font")) {
-        SwingLazyValue lazyValue = (SwingLazyValue) value;
-        value = lazyValue.createValue(defaults);
-        defaults.put(key, value);
-        System.out.printf("%60s Loaded %s with %s%n", " ", key, value); // NON-NLS
-      }
+
+    // Do Not convert to EntrySet iteration. That strangely returns values of the wrong type.
+    //noinspection KeySetIterationMayUseEntrySet
+    for (Object key: defaults.keySet()) {
+      Object value = defaults.get(key);
       if (value instanceof Font) {
         fontKeys.add(key);
       }

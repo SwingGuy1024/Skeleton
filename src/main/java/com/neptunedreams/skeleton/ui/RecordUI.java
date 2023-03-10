@@ -256,12 +256,10 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     trashRecordButton.addActionListener((e)->delete());
 
     assert infoLine != null;
-    trashPanel.add(infoLine, BorderLayout.LINE_START);
+    trashPanel.add(makeDualPanel(infoLine, makeJavaVersion()), BorderLayout.LINE_START);
 
     final JComponent comboBox = sizeAdjuster.createComboBox();
-    JPanel centerPanel = makeDualPanel(comboBox, makeJavaVersion());
-    
-    trashPanel.add(centerPanel, BorderLayout.CENTER);
+    trashPanel.add(comboBox, BorderLayout.CENTER);
     return trashPanel;
   }
   
@@ -275,7 +273,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   private JPanel makeJavaVersion() {
     JLabel label = new JLabel("Java version " + System.getProperty("java.version"));
 //    label.setAlignmentX(1.0f);
-    label.setHorizontalAlignment(SwingConstants.CENTER);
+//    label.setHorizontalAlignment(SwingConstants.CENTER);
     final Font labelFont = label.getFont();
     int textSize = labelFont.getSize();
     //noinspection MagicNumber
