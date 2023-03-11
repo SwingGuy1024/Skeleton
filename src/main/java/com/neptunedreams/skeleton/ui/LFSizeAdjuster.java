@@ -109,17 +109,25 @@ public enum LFSizeAdjuster {
     return comboPanel;
   }
   
+  public JList<Object> createFontSizeList() {
+    JList<Object> jList = new JList<>(getFontSizesArray());
+    jList.setCellRenderer(getFontSizeRenderer());
+    return jList;
+  }
+  
   private JComboBox<String> makeComboBox() {
-    final int max = 11;
-    List<String> itemList = new ArrayList<>(max);
-    for (int i=0; i<max; ++i) {
-      final int size = i + defaultFontSize;
-      String s = String.format("%d Point Font", size);
-      itemList.add(s);
-    }
-    @SuppressWarnings("ZeroLengthArrayAllocation")
-    String[] sizes = itemList.toArray(new String[0]);
+    String[] sizes = getFontSizesArray();
+    ListCellRenderer<Object> renderer = getFontSizeRenderer();
     JComboBox<String> comboBox = new JComboBox<>(sizes);
+    comboBox.setRenderer(renderer);
+    comboBox.setSelectedIndex(delta);
+    comboBox.setMaximumRowCount(sizes.length);
+    comboBox.addItemListener(this::processItem);
+    return comboBox;
+  }
+
+  @NonNull
+  private ListCellRenderer<Object> getFontSizeRenderer() {
     @SuppressWarnings("unchecked")
     ListCellRenderer<Object> renderer = (ListCellRenderer<Object>) new BasicComboBoxRenderer() {
       @Override
@@ -138,21 +146,35 @@ public enum LFSizeAdjuster {
         return listCellRendererComponent;
       }
     };
-    comboBox.setRenderer(renderer);
-    comboBox.setSelectedIndex(delta);
-    comboBox.setMaximumRowCount(max);
-    comboBox.addItemListener(this::processItem);
-    return comboBox;
+    return renderer;
+  }
+
+  @NonNull
+  private String[] getFontSizesArray() {
+    final int max = 11;
+    List<String> itemList = new ArrayList<>(max);
+    for (int i=0; i<max; ++i) {
+      final int size = i + defaultFontSize;
+      String s = String.format("%d Point Font", size);
+      itemList.add(s);
+    }
+    @SuppressWarnings("ZeroLengthArrayAllocation")
+    String[] sizes = itemList.toArray(new String[0]);
+    return sizes;
   }
 
   private void processItem(final ItemEvent itemEvent) {
     // Ignore the DESELECTED event.
     if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
       String text = itemEvent.getItem().toString();
-      int size = firstWordToNumber(text);
-      delta = size - defaultFontSize;
-      Objects.requireNonNull(relaunch).accept(delta);
+      changeFontSize(text);
     }
+  }
+
+  public void changeFontSize(final String text) {
+    int size = firstWordToNumber(text);
+    delta = size - defaultFontSize;
+    Objects.requireNonNull(relaunch).accept(delta);
   }
 
   private int firstWordToNumber(final String s) {

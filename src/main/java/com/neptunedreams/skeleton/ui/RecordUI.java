@@ -10,12 +10,14 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JLayer;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -23,6 +25,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -251,18 +254,47 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
    */
   private JPanel createTrashPanel() {
     JPanel trashPanel = new JPanel(new BorderLayout());
-    JButton trashRecordButton = new JButton(Resource.getBin());
-    trashPanel.add(trashRecordButton, BorderLayout.LINE_END);
-    trashRecordButton.addActionListener((e)->delete());
+    trashPanel.add(getEndButtons(), BorderLayout.LINE_END);
 
     assert infoLine != null;
-    trashPanel.add(makeDualPanel(infoLine, makeJavaVersion()), BorderLayout.LINE_START);
-
-    final JComponent comboBox = sizeAdjuster.createComboBox();
-    trashPanel.add(comboBox, BorderLayout.CENTER);
+    trashPanel.add(infoLine, BorderLayout.LINE_START);
+    
+    trashPanel.add(makeJavaVersion(), BorderLayout.CENTER);
     return trashPanel;
   }
   
+  private JPanel getEndButtons() {
+    JPanel endPanel = new JPanel(new GridLayout(1, 0, 16, 0));
+
+    JButton fontSizeButton = new JButton(Resource.getTextSize());
+    endPanel.add(fontSizeButton);
+    fontSizeButton.addActionListener(e -> showTextSizeDialog());
+
+    JButton trashRecordButton = new JButton(Resource.getBin());
+    endPanel.add(trashRecordButton);
+    trashRecordButton.addActionListener((e) -> delete());
+    return endPanel;
+  }
+
+  private void showTextSizeDialog() {
+    final JList<Object> fontList = sizeAdjuster.createFontSizeList();
+    JLabel label = new JLabel("Choose your Font Size…");
+    Border border = BorderFactory.createMatteBorder(0, 0, 16, 0, label.getBackground());
+    label.setBorder(border);
+    
+    int result = JOptionPane.showConfirmDialog(
+        getRootPane(),
+        makeDualPanel(label, fontList),
+        "Font Size",
+        JOptionPane.OK_CANCEL_OPTION,
+        JOptionPane.PLAIN_MESSAGE
+    );
+    
+    if (result == JOptionPane.OK_OPTION) {
+      sizeAdjuster.changeFontSize(fontList.getSelectedValue().toString());
+    }
+  }
+
   private JPanel makeDualPanel(JComponent topComponent, JComponent bottomComponent) {
     JPanel dualPanel = new JPanel(new BorderLayout());
     dualPanel.add(topComponent, BorderLayout.PAGE_START);
@@ -272,8 +304,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
 
   private JPanel makeJavaVersion() {
     JLabel label = new JLabel("Java version " + System.getProperty("java.version"));
-//    label.setAlignmentX(1.0f);
-//    label.setHorizontalAlignment(SwingConstants.CENTER);
+    label.setHorizontalAlignment(SwingConstants.CENTER);
     final Font labelFont = label.getFont();
     int textSize = labelFont.getSize();
     //noinspection MagicNumber

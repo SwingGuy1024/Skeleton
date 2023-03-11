@@ -28,7 +28,8 @@ enum Resource {
   private static final String ARROW_FIRST_PNG = "arrow_first.png";
   private static final String ARROW_LAST_PNG = "arrow_last.png";
   private static final String EDIT_PNG = "bullet_edit.png";
-  
+  private static final String TEXT_SIZE_PNG = "text_smallcaps.png";
+
   private static final Set<String> colorShiftImages = new HashSet<>(Arrays.asList(
       ARROW_FIRST_PNG,
       ARROW_LAST_PNG,
@@ -78,5 +79,9 @@ enum Resource {
 
   static Icon getEdit() {
     return getIcon(EDIT_PNG);
+  }
+  
+  static Icon getTextSize() {
+    return getIcon(TEXT_SIZE_PNG);
   }
 }
