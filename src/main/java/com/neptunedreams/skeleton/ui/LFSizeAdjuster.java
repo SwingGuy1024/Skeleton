@@ -20,6 +20,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
@@ -111,6 +112,7 @@ public enum LFSizeAdjuster {
   
   public JList<Object> createFontSizeList() {
     JList<Object> jList = new JList<>(getFontSizesArray());
+    jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     jList.setCellRenderer(getFontSizeRenderer());
     jList.setSelectedIndex(delta);
     return jList;
