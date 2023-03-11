@@ -92,7 +92,7 @@ public enum LFSizeAdjuster {
       if (value instanceof Font) {
         final Font theFont = (Font) value;
         fontMap.put(key, theFont.getSize());
-        System.out.printf("From %s, found %s %d point%n", key, theFont.getFamily(), theFont.getSize()); // NON-NLS
+//        System.out.printf("From %s, found %s %d point%n", key, theFont.getFamily(), theFont.getSize()); // NON-NLS
       }
     }
     return fontMap;
@@ -112,6 +112,7 @@ public enum LFSizeAdjuster {
   public JList<Object> createFontSizeList() {
     JList<Object> jList = new JList<>(getFontSizesArray());
     jList.setCellRenderer(getFontSizeRenderer());
+    jList.setSelectedIndex(delta);
     return jList;
   }
   
