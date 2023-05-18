@@ -17,24 +17,27 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.border.MatteBorder;
 import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.JTextComponent;
 import com.google.common.eventbus.Subscribe;
+import com.neptunedreams.framework.data.Dao;
+import com.neptunedreams.framework.data.RecordSelectionModel;
+import com.neptunedreams.framework.event.ChangeRecord;
+import com.neptunedreams.framework.event.MasterEventBus;
 import com.neptunedreams.framework.ui.FieldBinding;
-import com.neptunedreams.skeleton.data.Dao;
+import com.neptunedreams.framework.ui.RecordController;
+import com.neptunedreams.framework.ui.TangoUtils;
 import com.neptunedreams.skeleton.data.SiteField;
-import com.neptunedreams.skeleton.event.ChangeRecord;
-import com.neptunedreams.skeleton.event.MasterEventBus;
-//import org.checkerframework.checker.initialization.qual.Initialized;
+import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
-//import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.RequiresNonNull;
+import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -43,28 +46,34 @@ import org.checkerframework.checker.nullness.qual.RequiresNonNull;
  *
  * @author Miguel Mu\u00f1oz
  */
-@SuppressWarnings("WeakerAccess")
-public final class RecordView<R> extends JPanel implements RecordSelectionModel<R> {
+@SuppressWarnings({"WeakerAccess", "HardCodedStringLiteral", "TypeParameterExplicitlyExtendsObject", "RedundantSuppression"})
+public final class RecordView<R extends @NonNull Object> extends JPanel implements RecordSelectionModel<R> {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
-  private JPanel labelPanel = new JPanel(new GridLayout(0, 1));
-  private JPanel fieldPanel = new JPanel(new GridLayout(0, 1));
-  private JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
-  private ButtonGroup buttonGroup = new ButtonGroup();
+  private final JPanel labelPanel = new JPanel(new GridLayout(0, 1));
+  private final JPanel fieldPanel = new JPanel(new GridLayout(0, 1));
+  private final JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
+  private final ButtonGroup buttonGroup = new ButtonGroup();
 
   @SuppressWarnings("HardCodedStringLiteral")
   private R currentRecord; // = new Record("D", "D", "D", "D");
-  
+  private final JToggleButton.ToggleButtonModel editModel = new JToggleButton.ToggleButtonModel();
+
   @NotOnlyInitialized
-  private RecordController<R, Integer> controller;
+  private final RecordController<R, Integer, SiteField> controller;
   private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
   private final JTextComponent sourceField;
 
-  @SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible", "method.invocation.invalid", "HardCodedStringLiteral"})
+  // If I don't suppress the method.invocation.invalid warnings, I need to specify an @UnderInitialization implicit 
+  // parameter on all the local methods I call from the constructor. That solves a lot of problems, but creates others.
+  // If I suppress the warning, it's much easier to get this class to compile, but the implicit parameter must then be
+  // removed.
+
+  @SuppressWarnings("method.invocation.invalid")
   private RecordView(R record,
                      SiteField initialSort,
-                     Dao<R, Integer> dao,
-                     Supplier<R> recordConstructor,
+                     Dao<R, Integer, SiteField> dao,
+                     Supplier<@NonNull R> recordConstructor,
                      Function<R, Integer> getIdFunction, BiConsumer<R, Integer> setIdFunction,
                      Function<R, String> getSourceFunction, BiConsumer<R, String> setSourceFunction,
                      Function<R, String> getUserNameFunction, BiConsumer<R, String> setUserNameFunction,
@@ -73,74 +82,76 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
    ) {
     super(new BorderLayout());
     currentRecord = record;
-    controller = makeController(initialSort, dao, recordConstructor);
+    controller = makeController(initialSort, dao, recordConstructor, getIdFunction);
     final JLabel idField = (JLabel) addField("ID", false, SiteField.ID, initialSort);
     sourceField = (JTextComponent) addField("Source", true, SiteField.Source, initialSort);
     final JTextComponent usernameField = (JTextComponent) addField("User Name", true, SiteField.Username, initialSort);
     final JTextComponent pwField = (JTextComponent) addField("Password", true, SiteField.Password, initialSort);
-    final JTextComponent notesField = addNotesField();
+    final JTextArea notesField = new JTextArea(TEXT_ROWS, TEXT_COLUMNS);
+    add(BorderLayout.CENTER, TangoUtils.scrollArea(notesField));
     assert getIdFunction != null : "Null id getter";
     assert setIdFunction != null : "Null id Setter";
-    final FieldBinding.IntegerBinding<R> idBinding = FieldBinding.bindInteger(getIdFunction, setIdFunction, idField);
+    final FieldBinding.IntegerBinding<R> idBinding = FieldBinding.bindInteger(getIdFunction, idField);
     final FieldBinding.StringEditableBinding<R> sourceBinding = FieldBinding.bindEditableString(getSourceFunction, setSourceFunction, sourceField);
     final FieldBinding.StringEditableBinding<R> userNameBinding = FieldBinding.bindEditableString(getUserNameFunction, setUserNameFunction, usernameField);
     final FieldBinding.StringEditableBinding<R> passwordBinding = FieldBinding.bindEditableString(getPasswordFunction, setPasswordFunction, pwField);
     final FieldBinding.StringEditableBinding<R> notesBinding = FieldBinding.bindEditableString(getNotesFunction, setNotesFunction, notesField);
     allBindings = Arrays.asList(idBinding, sourceBinding, userNameBinding, passwordBinding, notesBinding);
-    
-    // currentRecord has null values for lots of non-null fields. This should clean those fields up.
-    for (FieldBinding<R, ?, ?> b : allBindings) {
-      cleanValue(b, record); // somehow, Nullness Checker doesn't recognize currentRecord as non-null, but record is ok
-    }
-    idBinding.setValue(record, 0); // same here. TODO: Ask StackOverflow about this
 
-    makeTopPanel();
+    setBorder(new MatteBorder(1, 0, 0, 0, Color.black));
+    add(BorderLayout.PAGE_START, makeFieldDisplayPanel());
 
-    installStandardCaret(sourceField);
-    installStandardCaret(usernameField);
-    installStandardCaret(pwField);
-    installStandardCaret(notesField);
-    
-    // Put a line at the top, one pixel wide.
-
+    // On the Mac, the AquaCaret will get installed. This caret has an annoying feature of selecting all the text on a
+    // focus-gained event. If this isn't bad enough, it also fails to check temporary vs permanent focus gain, so it 
+    // gets triggered on a focused JTextComponent whenever a menu is released! This method removes the Aqua Caret and 
+    // installs a better caret. The DefaultCaret used by swing doesn't handle select-by-word using full-click-and-drag
+    // the standard way. This installs the EnhancedCaret to fix that, too.
+    TangoUtils.installStandardCaret(sourceField, usernameField, pwField, notesField);
   }
 
-  @SuppressWarnings("method.invocation.invalid")
-  private RecordController<R, Integer> makeController(final SiteField initialSort, final Dao<R, Integer> dao, final Supplier<R> recordConstructor) {
-    return new RecordController<>(
+  private RecordController<R, Integer, SiteField> makeController(
+      final SiteField initialSort,
+      final Dao<R, Integer, SiteField> dao,
+      final Supplier<@NonNull R> recordConstructor,
+      Function<R, Integer> getIdFunction
+  ) {
+    return RecordController.createRecordController(
         dao,
         this,
         initialSort,
-        recordConstructor
+        recordConstructor,
+        getIdFunction
     );
   }
+  
+  JToggleButton.ToggleButtonModel getEditModel() { return editModel; }
+  
+  public void setTextEditable(boolean editable) {
+    for (FieldBinding<?,?,?> binding: allBindings) {
+      if (binding.isEditable()) {
+        binding.getEditableBinding().setEditableState(editable);
+      }
+    }
+  }
+  
+  public boolean isEditable() { return editModel.isSelected(); }
 
   private void register() {
     MasterEventBus.registerMasterEventHandler(this);
   }
 
   /**
-   * Clean the value during initialization. This needs to be a separate method because there's no way to infer the 
-   * type of T if I put this code in the original loop. Without T, there's no way for the compiler to know that the 
-   * value returned by binding.getValue() is the same type as the one we need to pass to setValue().
-   * @param binding The FieldBinding
-   * @param record The record to clean
-   * @param <T> The type of the record.
+   * This makes the field display panel, which has the three data fields, plus, for each field, a label on the left and a radio button
+   * (for sorting) on the right.
+   * @return The field display panel
    */
-  private <T> void cleanValue(@UnderInitialization RecordView<R> this, FieldBinding<? super R, T, ?> binding, R record) {
-    binding.setValue(record, binding.getValue(record));
-  }
-
-  @SuppressWarnings("method.invocation.invalid")
   @RequiresNonNull({"labelPanel", "fieldPanel", "checkBoxPanel"})
-  private void makeTopPanel(@UnderInitialization RecordView<R> this) {
-    JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.add(labelPanel, BorderLayout.LINE_START);
-    topPanel.add(fieldPanel, BorderLayout.CENTER);
-    topPanel.add(checkBoxPanel, BorderLayout.LINE_END);
-    add(topPanel, BorderLayout.PAGE_START);
-//    return topPanel;
-    setBorder(new MatteBorder(1, 0, 0, 0, Color.black));
+  private JPanel makeFieldDisplayPanel() {
+    JPanel fieldDisplayPanel = new JPanel(new BorderLayout());
+    fieldDisplayPanel.add(labelPanel, BorderLayout.LINE_START);
+    fieldDisplayPanel.add(fieldPanel, BorderLayout.CENTER);
+    fieldDisplayPanel.add(checkBoxPanel, BorderLayout.LINE_END);
+    return fieldDisplayPanel;
   }
 
 //  @SuppressWarnings("HardCodedStringLiteral")
@@ -148,7 +159,8 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
 //    controller = theController;
 //  }
 //  
-  public RecordController<R, Integer> getController() { return controller; }
+//  @UnknownInitialization
+  public RecordController<R, Integer, SiteField> getController() { return controller; }
 
   /**
    * On the Mac, the AquaCaret will get installed. This caret has an annoying feature of selecting all the text on a
@@ -170,8 +182,23 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     caret.setBlinkRate(blinkRate); // Starts the new caret blinking.
   }
 
+  /**
+   * Adds a label, text field and sorting radio button to the labelPanel, fieldPanel, and checkBoxPanel for the specified database field.
+   * @param labelText The text of the label
+   * @param editable True for editable fields
+   * @param orderField The SiteField for ordering
+   * @param initialSort The field to use for the initial sort.
+   * @return The field that will display the database value, which will be a JTextField or a JLabel depending on whether the field is
+   * editable.
+   */
   @RequiresNonNull({"labelPanel", "fieldPanel", "buttonGroup", "checkBoxPanel", "controller"})
-  private JComponent addField(@UnderInitialization RecordView<R> this, final String labelText, final boolean editable, final SiteField orderField, SiteField initialSort) {
+  private JComponent addField(
+//      @UnderInitialization RecordView<R> this,
+      final String labelText,
+      final boolean editable,
+      final SiteField orderField,
+      SiteField initialSort
+  ) {
     //noinspection StringConcatenation,MagicCharacter
     JLabel label = new JLabel(labelText + ':');
     labelPanel.add(label);
@@ -188,13 +215,16 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       orderBy.setSelected(true);
     }
     checkBoxPanel.add(orderBy);
-    @SuppressWarnings("method.invocation.invalid") // We are under initialization when we create this, not when calling
     ItemListener checkBoxListener = (itemEvent) -> itemStateChanged(orderField, itemEvent);
     orderBy.addItemListener(checkBoxListener);
     return field;
   }
 
-  private void itemStateChanged(final SiteField orderField, final ItemEvent itemEvent) {
+  private void itemStateChanged(
+//      @UnderInitialization RecordView<R> this,
+      final SiteField orderField,
+      final ItemEvent itemEvent
+  ) {
     if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
       controller.specifyOrder(orderField);
       // Here's where I want to call RecordUI.searchNow(). The code needs to be restructured before I can do that.
@@ -202,32 +232,19 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     }
   }
 
-  @SuppressWarnings("method.invocation.invalid")
-  private JTextComponent addNotesField(@UnderInitialization RecordView<R> this) {
-    final JTextArea wrappedField = new JTextArea(TEXT_ROWS, TEXT_COLUMNS);
-    wrappedField.setWrapStyleWord(true);
-    wrappedField.setLineWrap(true);
-    JComponent scrollPane = wrap(wrappedField);
-    add(BorderLayout.CENTER, scrollPane);
-    return wrappedField;
-  }
-
-  private JComponent wrap(@UnderInitialization RecordView<R> this, JComponent wrapped) {
-    return new JScrollPane(wrapped, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-  }
-  
   @Subscribe
-  public void setCurrentRecord(@SuppressWarnings("BoundedWildcard") ChangeRecord<R> recordEvent) {
+  public void setCurrentRecord(ChangeRecord<? extends R> recordEvent) {
     R newRecord = recordEvent.getNewRecord();
     assert newRecord != null;
     currentRecord = newRecord;
+    editModel.setSelected(false);
     for (FieldBinding<R, ?, ?> binding: allBindings) {
       binding.prepareEditor(newRecord);
     }
   }
-  
+
   @Override
-  public boolean recordHasChanged() {
+  public @UnknownKeyFor @Initialized boolean isRecordDataModified() {
     for (FieldBinding<R, ?, ?> binding: allBindings) {
       if (binding.isEditable() && binding.propertyHasChanged(currentRecord)) {
         return true;
@@ -242,7 +259,7 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
     // 2. New Record with no data
     // 3. Existing record with changes
     // 4. Existing record with no changes
-    final boolean hasChanged = recordHasChanged();
+    final boolean hasChanged = isRecordDataModified();
     if (hasChanged) {
       loadUserEdits();
       return true;
@@ -268,19 +285,21 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
   private void loadUserEdits() {
     for (FieldBinding<R, ?, ?> binding : allBindings) {
       if (binding.isEditable()) {
-        binding.saveEdit(currentRecord);
+        binding.getEditableBinding().saveEdit(currentRecord);
       }
     }
   }
 
   @Subscribe void userRequestedNewRecord(MasterEventBus.UserRequestedNewRecordEvent event) {
     sourceField.requestFocus();
+    editModel.setSelected(true);
   }
 
-    @SuppressWarnings({"initialization.fields.uninitialized", "InstanceVariableMayNotBeInitialized"})
-    public static class Builder<RR> {
-      private RR record;
-      private SiteField initialSort;
+  // TODO: Can I get rid of this warning by clever use of @RequiresNotNull?
+  @SuppressWarnings("initialization.fields.uninitialized")
+  public static class Builder<RR extends @NonNull Object> {
+      private final RR record;
+      private final SiteField initialSort;
       private Function<RR, Integer> getId;
       private BiConsumer<RR, Integer> setId;
       private Function<RR, String> getSource;
@@ -291,8 +310,8 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       private BiConsumer<RR, String> setPassword;
       private Function<RR, String> getNotes;
       private BiConsumer<RR, String> setNotes;
-      private Dao<RR, Integer> dao;
-      private Supplier<RR> recordConstructor;
+      private Dao<RR, Integer, SiteField> dao;
+      private Supplier<@NonNull RR> recordConstructor;
       public Builder(RR record, SiteField initialSort) {
         this.record = record;
         this.initialSort = initialSort;
@@ -328,12 +347,12 @@ public final class RecordView<R> extends JPanel implements RecordSelectionModel<
       return this;
     }
     
-    public Builder<RR> withDao(Dao<RR, Integer> dao) {
+    public Builder<RR> withDao(Dao<RR, Integer, SiteField> dao) {
         this.dao = dao;
         return this;
     }
     
-    public Builder<RR> withConstructor(Supplier<RR> constructor) {
+    public Builder<RR> withConstructor(Supplier<@NonNull RR> constructor) {
         recordConstructor = constructor;
         return this;
     }

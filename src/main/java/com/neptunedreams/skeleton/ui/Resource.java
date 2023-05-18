@@ -1,10 +1,14 @@
 package com.neptunedreams.skeleton.ui;
 
 import java.net.URL;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import com.neptunedreams.framework.ui.TangoUtils;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -23,16 +27,24 @@ enum Resource {
   private static final String BULLET_ADD_PNG = "bullet_add.png";
   private static final String ARROW_FIRST_PNG = "arrow_first.png";
   private static final String ARROW_LAST_PNG = "arrow_last.png";
+  private static final String EDIT_PNG = "bullet_edit.png";
+  private static final String TEXT_SIZE_PNG = "text_smallcaps.png";
+
+  private static final Set<String> colorShiftImages = new HashSet<>(Arrays.asList(
+      ARROW_FIRST_PNG,
+      ARROW_LAST_PNG,
+      ARROW_LEFT_PNG,
+      ARROW_RIGHT_PNG,
+      BULLET_ADD_PNG
+  ));
+  
+  private static final int COLOR_SHIFT = 93;
 
   private static Icon getIcon(String name) {
     URL resource = Objects.requireNonNull(Resource.class.getResource(name));
-//    if (resource == null) {
-//      resource = Resource.class.getResource("/com/skeleton/ui/" + name);
-//    }
-//    if (resource == null) {
-//      resource = Resource.class.getResource("/Users/miguelmunoz/Documents/skeleton/src/main/resource/com/skeleton/ui/" + name);
-//    }
-//    System.out.printf("Resource: %s from %s%n", resource, name);
+    if (colorShiftImages.contains(name)) {
+      return TangoUtils.shiftHue(new ImageIcon(resource), COLOR_SHIFT);
+    }
     return new ImageIcon(resource);
   }
 
@@ -63,5 +75,13 @@ enum Resource {
   
   static Icon getLast() {
     return getIcon(ARROW_LAST_PNG);
+  }
+
+  static Icon getEdit() {
+    return getIcon(EDIT_PNG);
+  }
+  
+  static Icon getTextSize() {
+    return getIcon(TEXT_SIZE_PNG);
   }
 }

@@ -8,14 +8,15 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import com.neptunedreams.skeleton.data.ConnectionSource;
-import com.neptunedreams.skeleton.data.Dao;
+import com.neptunedreams.framework.data.ConnectionSource;
+import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.skeleton.data.Record;
 import com.neptunedreams.skeleton.data.SiteField;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import static com.neptunedreams.skeleton.DataUtil.*;
+import static com.neptunedreams.framework.data.DataUtil.printResultSet;
+
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -25,7 +26,7 @@ import static com.neptunedreams.skeleton.DataUtil.*;
  * @author Miguel Mu\u00f1oz
  */
 @SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "SqlNoDataSourceInspection", "resource", "HardCodedStringLiteral"})
-public final class DerbyRecordDao implements Dao<Record, Integer> {
+public final class DerbyRecordDao implements Dao<Record, Integer, SiteField> {
   private static final String CREATE_TABLE = "CREATE TABLE record (" +
       "id INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY," +
       "source VARCHAR(256) NOT NULL," +
@@ -155,22 +156,22 @@ public final class DerbyRecordDao implements Dao<Record, Integer> {
   }
 
   @Override
-  public Collection<Record> findAny(final @Nullable SiteField orderBy, final String... text) throws SQLException {
+  public Collection<Record> findAny(final @Nullable SiteField orderBy, final String... text) {
     throw new AssertionError("Not yet written");
   }
 
   @Override
-  public Collection<Record> findAll(final @Nullable SiteField orderBy, final String... text) throws SQLException {
+  public Collection<Record> findAll(final @Nullable SiteField orderBy, final String... text) {
     throw new AssertionError("Not yet written");
   }
 
   @Override
-  public Collection<Record> findAnyInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
+  public Collection<Record> findAnyInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) {
     throw new AssertionError("Not yet written");
   }
 
   @Override
-  public Collection<Record> findAllInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
+  public Collection<Record> findAllInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) {
     throw new AssertionError("Not yet written");
   }
 

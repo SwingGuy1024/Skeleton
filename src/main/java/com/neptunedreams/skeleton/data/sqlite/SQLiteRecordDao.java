@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
-import com.neptunedreams.skeleton.data.ConnectionSource;
-import com.neptunedreams.skeleton.data.Dao;
+import com.neptunedreams.framework.data.ConnectionSource;
+import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.gen.Tables;
 import com.neptunedreams.skeleton.gen.tables.Site;
@@ -47,8 +47,8 @@ import static org.jooq.impl.DSL.*;
  *
  * @author Miguel Mu\u00f1oz
  */
-@SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "HardCodedStringLiteral"})
-public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
+@SuppressWarnings({"StringConcatenation", "HardCodedStringLiteral"})
+public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, SiteField> {
 
   private static final Map<SiteField, @NonNull TableField<SiteRecord, ?>> fieldMap = makeFieldMap();
   private final ConnectionSource connectionSource;
@@ -102,7 +102,6 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
     return this;
   }
 
-  @SuppressWarnings("JavaDoc")
   static SQLiteRecordDao create(ConnectionSource source) {
     return new SQLiteRecordDao(source).launch();
   }
@@ -322,8 +321,11 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer> {
     }
   }
 
-  @Override
+  // We must set the id to null before inserting into the database, to force the database to choose an unused id.
+  // But the getter will never return null, so we declared the id to be nonNull. So we suppress the warning, since
+  // the id will become non-null by the time we exit this method.
   @SuppressWarnings("argument.type.incompatible")
+  @Override
   public void insert(final SiteRecord entity) throws SQLException {
 
     DSLContext dslContext = getDslContext();

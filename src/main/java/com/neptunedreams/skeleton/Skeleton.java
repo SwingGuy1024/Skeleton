@@ -1,6 +1,6 @@
 package com.neptunedreams.skeleton;
 
-import com.neptunedreams.skeleton.ui.RecordModel;
+import java.awt.Point;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -11,24 +11,32 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.prefs.Preferences;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
-import com.ErrorReport;
-import com.neptunedreams.skeleton.data.ConnectionSource;
-import com.neptunedreams.skeleton.data.Dao;
-import com.neptunedreams.skeleton.data.DatabaseInfo;
+import com.neptunedreams.framework.ErrorReport;
+import com.neptunedreams.framework.data.ConnectionSource;
+import com.neptunedreams.framework.data.Dao;
+import com.neptunedreams.framework.data.DatabaseInfo;
+import com.neptunedreams.framework.data.RecordModel;
+import com.neptunedreams.framework.data.SearchOption;
+import com.neptunedreams.framework.ui.RecordController;
+import com.neptunedreams.framework.ui.StandardCaret;
+import com.neptunedreams.framework.ui.TangoUtils;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.data.sqlite.SQLiteInfo;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
-import com.neptunedreams.skeleton.ui.RecordController;
+import com.neptunedreams.skeleton.ui.LFSizeAdjuster;
 import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
-import com.neptunedreams.skeleton.ui.SearchOption;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Skeleton Key Application
@@ -44,6 +52,7 @@ public final class Skeleton extends JPanel
 {
   @SuppressWarnings("HardcodedFileSeparator")
   private static final String EXPORT_FILE = "/.SkeletonData.serial";
+  private static final String FONT_DELTA = "FONT_DELTA";
   // Done: Write an import mechanism.
   // Done: Test packaging
   // Done: Test Bundling: https://github.com/federkasten/appbundle-maven-plugin
@@ -102,27 +111,61 @@ public final class Skeleton extends JPanel
   done. I'm not sure how these two solutions should be integrated together.
    */
   
-  private RecordUI<SiteRecord> mainPanel;
+  private final RecordUI<@NonNull SiteRecord> mainPanel;
   //    org.jooq.util.JavaGenerator generator;
-  private static JFrame frame = new JFrame("Skeleton");
+  private static @Nullable JFrame frame;
+  public static final Preferences prefs = Preferences.userNodeForPackage(Skeleton.class);
   private final @NonNull DatabaseInfo info;
-  private final @NonNull RecordController<SiteRecord, Integer> controller;
-  //  private RecordController<>
+  private final @NonNull RecordController<SiteRecord, Integer, SiteField> controller;
 
-  @SuppressWarnings({"OverlyBroadThrowsClause"})
+  @SuppressWarnings("OverlyBroadThrowsClause")
   public static void main(String[] args) throws IOException, ClassNotFoundException {
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    } catch(UnsupportedLookAndFeelException | InstantiationException | IllegalAccessException e){
+      throw new IllegalStateException("Should not happen", e);
+    }
     boolean doImport = (args.length > 0) && Objects.equals(args[0], "-import");
+    int initialDelta = prefs.getInt(FONT_DELTA, 0);
+    
+    final Skeleton skeleton = makeMainFrame(doImport, initialDelta);
+    TangoUtils.replaceAllCarets(skeleton, StandardCaret::new);
+
+    doExport(args, skeleton);
+    LFSizeAdjuster.instance.setRelaunch((delta) -> {
+      try {
+        makeMainFrame(false, delta);
+      } catch (IOException | ClassNotFoundException e) {
+        throw new IllegalStateException("Should not happen", e);
+      }
+    });
+  }
+  
+  @NonNull
+  private static Skeleton makeMainFrame(final boolean doImport, int delta) throws IOException, ClassNotFoundException {
+    LFSizeAdjuster.instance.setDelta(delta);
+    Point priorLocation = null;
+    if (frame != null) {
+      priorLocation = frame.getLocation();
+      frame.dispose();
+    }
+    LFSizeAdjuster.instance.adjustLookAndFeel();
+    frame = new JFrame("Skeleton");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-    frame.setLocationByPlatform(true);
-    final Skeleton skeleton = new Skeleton(doImport);
+    if (priorLocation == null) {
+      frame.setLocationByPlatform(true);
+    } else {
+      frame.setLocation(priorLocation);
+    }
+    Skeleton skeleton = new Skeleton(doImport);
     frame.add(skeleton.getPanel());
     frame.pack();
     frame.addWindowListener(skeleton.shutdownListener());
 //    UIMenus.Menu.installMenu(frame);
     skeleton.mainPanel.launchInitialSearch();
-    frame.setVisible(true);
-
-    doExport(args, skeleton);
+    Objects.requireNonNull(frame).setVisible(true);
+    prefs.putInt(FONT_DELTA, delta);
+    return skeleton;
   }
 
   private static void doExport(final String[] args, final Skeleton skeleton) {
@@ -130,13 +173,12 @@ public final class Skeleton extends JPanel
       try {
         // There has to be a delay, because there's a 1-second delay built into the launchInitialSearch() method,
         // and this needs to take place after that finishes, or we won't see any records. 
-        //noinspection MagicNumber
         Thread.sleep(1000); // Yeah, this is kludgy, but it's only for the export, which is only done in development.
       } catch (InterruptedException ignored) { }
 
       SwingUtilities.invokeLater(() -> {
         RecordModel<SiteRecord> model = skeleton.controller.getModel();
-        //noinspection StringConcatenation
+        // noinspection StringConcatenation
         String exportPath = System.getProperty("user.home") + EXPORT_FILE;
         System.err.printf("Exporting %d records to %s%n", model.getSize(), exportPath); // NON-NLS
         //noinspection OverlyBroadCatchBlock
@@ -158,9 +200,9 @@ public final class Skeleton extends JPanel
     try {
       info.init();
       final ConnectionSource connectionSource = info.getConnectionSource();
-      Dao<SiteRecord, Integer> dao = info.getDao(SiteRecord.class, connectionSource);
+      Dao<SiteRecord, Integer, SiteField> dao = info.getDao(SiteRecord.class, connectionSource);
       SiteRecord dummyRecord = new SiteRecord(0, "", "", "", "");
-      final RecordView<SiteRecord> view = new RecordView.Builder<>(dummyRecord, SiteField.Source)
+      final RecordView<@NonNull SiteRecord> view = new RecordView.Builder<>(dummyRecord, SiteField.Source)
           .source  (SiteRecord::getSource,   SiteRecord::setSource)
           .id      (SiteRecord::getId,       SiteRecord::setId)
           .userName(SiteRecord::getUsername, SiteRecord::setUsername)
@@ -171,21 +213,21 @@ public final class Skeleton extends JPanel
           .build();
       controller = view.getController();
       final RecordModel<SiteRecord> model = controller.getModel();
-      mainPanel = new RecordUI<>(model, view, controller); // RecordUI launches the initial search
+      mainPanel = RecordUI.makeRecordUI(model, view, controller); // RecordUI launches the initial search
 
       if ((model.getSize() == 1) && (model.getRecordAt(0).getId() == 0) && doImport) {
         importFromFile(dao, controller); // throws ClassNotFoundException
       }
 
       // Make sure you save the last change before shutting down.
-      frame.addWindowListener(new WindowAdapter() {
+      Objects.requireNonNull(frame).addWindowListener(new WindowAdapter() {
+        // Normalli I override windowClosing, which can be cancelled. But I don't need to do that,
+        // and it doesn't get sent when the window is disposed. This one does.
         @Override
-        public void windowClosing(final WindowEvent e) {
+        public void windowClosed(final WindowEvent e) {
           //noinspection ErrorNotRethrown
           try {
             if (view.saveOnExit()) {
-              //noinspection ConstantConditions
-              assert controller != null;
               controller.getDao().insertOrUpdate(view.getCurrentRecord());
             }
           } catch (SQLException | RuntimeException | Error e1) {
@@ -214,10 +256,10 @@ public final class Skeleton extends JPanel
   }
 
   private static void importFromFile(
-      final Dao<? super SiteRecord, Integer> dao, 
-      RecordController<SiteRecord, Integer> controller)
+      final Dao<? super SiteRecord, Integer, SiteField> dao, 
+      RecordController<SiteRecord, Integer, ?> controller)
       throws SQLException, IOException, ClassNotFoundException {
-    //noinspection StringConcatenation
+    // noinspection StringConcatenation
     String exportPath = System.getProperty("user.home") + EXPORT_FILE;
     try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(exportPath))) {
       @SuppressWarnings("unchecked")
@@ -230,7 +272,7 @@ public final class Skeleton extends JPanel
   }
 
   @SuppressWarnings("unused")
-  private SiteRecord recordConstructor(@UnderInitialization Skeleton this) {
+  private @NonNull SiteRecord recordConstructor(@UnderInitialization Skeleton this) {
     return new SiteRecord(0, "", "", "", "");
   }
   
@@ -269,8 +311,8 @@ public final class Skeleton extends JPanel
     };
   }
 
-  private void shutDownDatabase(@UnknownInitialization Skeleton this, DatabaseInfo dInfo) {
-    dInfo.shutdown();
+  private void shutDownDatabase(@UnknownInitialization Skeleton this, @NonNull DatabaseInfo databaseInfo) {
+    databaseInfo.shutdown();
   }
 }
 

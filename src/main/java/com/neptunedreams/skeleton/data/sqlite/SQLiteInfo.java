@@ -4,9 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Objects;
-import com.neptunedreams.skeleton.data.AbstractDatabaseInfo;
-import com.neptunedreams.skeleton.data.ConnectionSource;
-import com.neptunedreams.skeleton.data.Dao;
+import com.neptunedreams.framework.data.AbstractDatabaseInfo;
+import com.neptunedreams.framework.data.ConnectionSource;
+import com.neptunedreams.framework.data.DBField;
+import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.skeleton.gen.DefaultSchema;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import org.jooq.DSLContext;
@@ -46,11 +47,11 @@ public class SQLiteInfo extends AbstractDatabaseInfo {
   }
 
   @Override
-  public <T, PK> Dao<T, PK> getDao(final Class<T> entityClass, final ConnectionSource source) {
+  public <T, PK, F extends DBField> Dao<T, PK, F> getDao(final Class<T> entityClass, final ConnectionSource source) {
     //noinspection EqualityOperatorComparesObjects
     if (entityClass == RECORD_RECORD_CLASS) {
       //noinspection unchecked
-      return (Dao<T, PK>) SQLiteRecordDao.create(source);
+      return (Dao<T, PK, F>) SQLiteRecordDao.create(source);
     }
     throw new IllegalArgumentException(String.valueOf(entityClass));
   }

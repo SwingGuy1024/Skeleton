@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.7.2-SNAPSHOT</version>
+  <version>0.8.10-SNAPSHOT</version>
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -24,91 +24,86 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- These properties will be set by the Maven Dependency plugin -->
-    <!--suppress UnresolvedMavenProperty -->
+    <!--suppress UnresolvedMavenProperty, GradlePackageUpdate -->
     <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
     <!--suppress UnresolvedMavenProperty -->
     <errorProneJavac>${com.google.errorprone:javac:jar}</errorProneJavac>
+	  <jooqVersion>3.12.3</jooqVersion>
+    <javaHome>/Library/Java/JavaVirtualMachines/jdk1.8.0_212/Contents/Home</javaHome>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
+      <groupId>com.neptunedreams</groupId>
+      <artifactId>tango</artifactId>
+      <version>2.0.17-SNAPSHOT</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.apache.derby/derby -->
     <dependency>
-      <groupId>org.apache.derby</groupId>
-      <artifactId>derby</artifactId>
-      <version>10.14.1.0</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
     <dependency>
       <groupId>org.xerial</groupId>
       <artifactId>sqlite-jdbc</artifactId>
-      <version>3.20.1</version>
+      <version>3.36.0.3</version>
     </dependency>
-
-    <!--&lt;!&ndash; https://mvnrepository.com/artifact/javax.persistence/persistence-api &ndash;&gt;-->
-    <!--<dependency>-->
-      <!--<groupId>javax.persistence</groupId>-->
-      <!--<artifactId>persistence-api</artifactId>-->
-      <!--<version>1.0.2</version>-->
-    <!--</dependency>-->
 
     <!-- https://mvnrepository.com/artifact/org.jetbrains/annotations -->
     <dependency>
       <groupId>org.jetbrains</groupId>
       <artifactId>annotations</artifactId>
-      <version>13.0</version>
+      <version>23.0.0</version>
     </dependency>
 
     <!--Google guava-->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>23.0</version>
+      <version>31.1-jre</version>
     </dependency>
     
     <!--jOOQ-->
+	  <!-- https://mvnrepository.com/artifact/org.jooq/jooq -->
     <dependency>
       <groupId>org.jooq</groupId>
       <artifactId>jooq</artifactId>
-      <version>3.12.3</version>
+      <!-- Upgrading this fails with a java version mismatch when using 1.8. -->
+      <!--suppress MavenPackageUpdate -->
+      <version>${jooqVersion}</version>
       <!--The following version will have a fix to the derby code-generation bug.-->
       <!--<version>3.10.2</version>-->
     </dependency>
+
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-library</artifactId>
-      <version>1.1</version>
+      <version>2.2</version>
       <scope>test</scope>
     </dependency>
-    <!--<dependency>-->
-      <!--<groupId>org.jooq</groupId>-->
-      <!--<artifactId>jooq-meta</artifactId>-->
-      <!--<version>3.12.3</version>-->
-    <!--</dependency>-->
-    <!--<dependency>-->
-      <!--<groupId>org.jooq</groupId>-->
-      <!--<artifactId>jooq-codegen</artifactId>-->
-      <!--<version>3.12.3</version>-->
-    <!--</dependency>-->
 
     <!-- Annotations from the Checker Framework: nullness, interning, locking, ... -->
     <dependency>
       <groupId>org.checkerframework</groupId>
       <artifactId>checker-qual</artifactId>
-      <version>3.1.0</version>
+      <version>3.22.1</version>
     </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.checkerframework</groupId>-->
+<!--      <artifactId>checker</artifactId>-->
+<!--      <version>3.2.0</version>-->
+<!--    </dependency>-->
     <!-- If using JDK 8, add the following additional dependencies -->
     <dependency>
       <groupId>org.checkerframework</groupId>
       <artifactId>jdk8</artifactId>
-      <version>3.1.0</version>
+      <!-- Upgrading this to 3.3 generates false compiler errors. -->
+      <!--suppress MavenPackageUpdate -->
+      <version>3.2.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.errorprone</groupId>
@@ -116,88 +111,57 @@
       <version>9+181-r4173-1</version>
     </dependency>
 
-    <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.codehaus.jackson/jackson-mapper-asl &ndash;&gt;-->
-    <!--<dependency>-->
-      <!--<groupId>org.codehaus.jackson</groupId>-->
-      <!--<artifactId>jackson-mapper-asl</artifactId>-->
-      <!--<version>1.9.13</version>-->
-    <!--</dependency>-->
-
   </dependencies>
   
   <build>
     <plugins>
       <!--This is the standard Maven plugin-->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
+	    <plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
-        <configuration>
-          <fork>true</fork>
-          <source>1.8</source>
-          <target>1.8</target>
-          <compilerArguments>
-            <Xmaxerrs>10000</Xmaxerrs>
-            <Xmaxwarns>10000</Xmaxwarns>
-            <AsuppressWarnings>uninitialized</AsuppressWarnings>
-          </compilerArguments>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>org.checkerframework</groupId>
-              <artifactId>checker</artifactId>
-              <version>3.1.0</version>
-            </path>
-          </annotationProcessorPaths>
-          <annotationProcessors>
-            <!-- Add all the checkers you want to enable here -->
+		    <configuration>
+			    <fork>true</fork>
+			    <source>1.8</source>
+			    <target>1.8</target>
+			    <compilerArguments>
+				    <Xmaxerrs>10000</Xmaxerrs>
+				    <Xmaxwarns>10000</Xmaxwarns>
+				    <!--<AsuppressWarnings>uninitialized</AsuppressWarnings>-->
+			    </compilerArguments>
+          <showWarnings>true</showWarnings>
+			    <annotationProcessorPaths>
+				    <path>
+					    <groupId>org.checkerframework</groupId>
+					    <artifactId>checker</artifactId>
+					    <version>3.2.0</version>
+				    </path>
+			    </annotationProcessorPaths>
+			    <annotationProcessors>
+				    <!-- Add all the checkers you want to enable here -->
 
-            <!-- Invoke the NullnessChecker at org.checkerframework.checker.nullness.NullnessChecker -->
-            <!-- There are probably other checkers we should invoke. -->
-            <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
-          </annotationProcessors>
-          <compilerArgs>
-            <!-- If using JDK 8, use only the two arguments immediately below. -->
-            <arg>-J-Xbootclasspath/p:${errorProneJavac}</arg>
-            <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
-            <!-- If using JDK 11, remove the two arguments above, remove the
-                 space in the one below, and uncomment it. -->
-            <!-- <arg>-J- -add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg> -->
+				    <!-- Invoke the NullnessChecker at org.checkerframework.checker.nullness.NullnessChecker -->
+				    <!-- There are probably other checkers we should invoke. -->
+				    <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
+			    </annotationProcessors>
+			    <compilerArgs>
+				    <!-- If using JDK 8, use only the two arguments immediately below. -->
+				    <arg>-J-Xbootclasspath/p:${errorProneJavac}</arg>
+				    <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
+				    <!-- If using JDK 11, remove the two arguments above, remove the
+								 space in the one below, and uncomment it. -->
+				    <!-- <arg>-J- -add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg> -->
 
-            <!-- Optionally, -Awarns turns type-checking errors into warnings. -->
-<!--            <arg>-Awarns</arg>-->
+				    <!-- Optionally, -Awarns turns type-checking errors into warnings. -->
+				    <!--<arg>-Awarns</arg>-->
+
+            <arg>-Astubs=nullness-stub/</arg>
+            <arg>-AstubWarnIfNotFound</arg>
           </compilerArgs>
-        </configuration>
-      </plugin>
+		    </configuration>
+	    </plugin>
 
-      <!--&lt;!&ndash; Invoke the NullnessChecker at org.checkerframework.checker.nullness.NullnessChecker &ndash;&gt;-->
-      <!--&lt;!&ndash; There are probably other checkers we should invoke. &ndash;&gt;-->
-      <!--<plugin>-->
-        <!--<artifactId>maven-compiler-plugin</artifactId>-->
-        <!--<configuration>-->
-          <!--&lt;!&ndash; Change source and target to 1.7 to create .class files that can be run on a Java 7 JVM &ndash;&gt;-->
-          <!--&lt;!&ndash; Uncomment the following line to use the type annotations compiler. &ndash;&gt;-->
-          <!--&lt;!&ndash; <fork>true</fork> &ndash;&gt;-->
-          <!--<compilerArguments>-->
-            <!--<Xmaxerrs>10000</Xmaxerrs>-->
-            <!--<Xmaxwarns>10000</Xmaxwarns>-->
-          <!--</compilerArguments>-->
-          <!--<annotationProcessors>-->
-            <!--&lt;!&ndash; Add all the checkers you want to enable here &ndash;&gt;-->
-            <!--<annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>-->
-          <!--</annotationProcessors>-->
-          <!--<compilerArgs>-->
-            <!--<arg>-AprintErrorStack</arg>-->
-            <!--&lt;!&ndash; location of the annotated JDK, which comes from a Maven dependency &ndash;&gt;-->
-            <!--<arg>-Xbootclasspath/p:${annotatedJdk}</arg>-->
-            <!--&lt;!&ndash; Uncomment the following line to use the type annotations compiler. &ndash;&gt;-->
-            <!--&lt;!&ndash; <arg>-J-Xbootclasspath/p:${typeAnnotationsJavac}</arg> &ndash;&gt;-->
-            <!--&lt;!&ndash; Uncomment the following line to turn type-checking warnings into errors. &ndash;&gt;-->
-            <!--&lt;!&ndash; <arg>-Awarns</arg> &ndash;&gt;-->
-          <!--</compilerArgs>-->
-        <!--</configuration>-->
-      <!--</plugin>-->
-
-      <plugin>
+	    <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.5</version>
@@ -232,6 +196,7 @@
         <!--This is the Maven dependency plugin.-->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.1</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -281,7 +246,10 @@
           <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
           <!--<dictionaryFile>YourCustomInfo.plist</dictionaryFile>-->
           <iconFile>Earth_Neptune.icns</iconFile>
-<!--          <jrePath>/Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk</jrePath>-->
+          <!-- Put this line in to bundle the jdk with the app. -->
+          <!--suppress MavenModelInspection -->
+          <!--<jrePath>${javaHome}/../..</jrePath>-->
+          <!--<jrePath>${env.JAVA_HOME}/../..</jrePath>-->
         </configuration>
         <executions>
           <execution>
@@ -306,7 +274,7 @@
 									 Import the others manually from your distribution -->
         <groupId>org.jooq</groupId>
         <artifactId>jooq-codegen-maven</artifactId>
-        <version>3.12.3</version>
+        <version>${jooqVersion}</version>
 
         <!-- The plugin should hook into the generate goal -->
         <executions>
@@ -361,6 +329,16 @@
               <directory>src/gen/java</directory>
             </target>
           </generator>
+        </configuration>
+      </plugin>
+
+      <!-- Allows user to launch from maven: mvn exec:java -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.4.0</version>
+        <configuration>
+          <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
         </configuration>
       </plugin>
 
