@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.8.10-SNAPSHOT</version>
+  <version>0.8.11-SNAPSHOT</version>
   <!--<modules>-->
     <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -110,7 +110,12 @@
       <artifactId>javac</artifactId>
       <version>9+181-r4173-1</version>
     </dependency>
-
+    <dependency>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-assembly-plugin</artifactId>
+      <version>3.6.0</version>
+      <type>maven-plugin</type>
+    </dependency>
   </dependencies>
   
   <build>
@@ -293,7 +298,7 @@
             <!--<version>10.14.1.0</version>-->
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
-            <version>3.20.1</version>
+            <version>3.41.2.2</version>
           </dependency>
         </dependencies>
 
