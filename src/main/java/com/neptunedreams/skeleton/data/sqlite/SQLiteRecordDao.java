@@ -31,8 +31,8 @@ import static org.jooq.SQLDialect.*;
 import static org.jooq.impl.DSL.*;
 
 /**
- * Create statement: 
- * 
+ * <p>Create statement: </p>
+ * <pre> 
  * CREATE TABLE IF NOT EXISTS site (
  *    id          INTEGER        NOT NULL PRIMARY KEY,
  *    source      VARCHAR (256)  NOT NULL collate noCase,
@@ -40,28 +40,28 @@ import static org.jooq.impl.DSL.*;
  *    password    VARCHAR (256)  NOT NULL collate noCase,
  *    notes       LONG VARCHAR   NOT NULL collate noCase
  * );
- * 
+ * </pre>
  * <p>Created by IntelliJ IDEA.
  * <p>Date: 10/29/17
  * <p>Time: 1:03 AM
  *
- * @author Miguel Mu\u00f1oz
+ * @author Miguel Muñoz
  */
 @SuppressWarnings({"StringConcatenation", "HardCodedStringLiteral"})
-public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, SiteField> {
+public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, @NonNull SiteField> {
 
   private static final Map<SiteField, @NonNull TableField<SiteRecord, ?>> fieldMap = makeFieldMap();
   private final ConnectionSource connectionSource;
   private @NonNull Connection connection;
 
   private static Map<SiteField, @NonNull TableField<SiteRecord, ?>> makeFieldMap() {
-    final EnumMap<SiteField, @NonNull TableField<SiteRecord, ?>> fieldMap = new EnumMap<>(SiteField.class);
-    fieldMap.put(SiteField.ID,       Site.SITE.ID);
-    fieldMap.put(SiteField.Source,   Site.SITE.SOURCE);
-    fieldMap.put(SiteField.Username, Site.SITE.USERNAME);
-    fieldMap.put(SiteField.Password, Site.SITE.PASSWORD);
-    fieldMap.put(SiteField.Notes,    Site.SITE.NOTES);
-    return fieldMap;
+    final EnumMap<SiteField, @NonNull TableField<SiteRecord, ?>> theFieldMap = new EnumMap<>(SiteField.class);
+    theFieldMap.put(SiteField.ID,       Site.SITE.ID);
+    theFieldMap.put(SiteField.Source,   Site.SITE.SOURCE);
+    theFieldMap.put(SiteField.Username, Site.SITE.USERNAME);
+    theFieldMap.put(SiteField.Password, Site.SITE.PASSWORD);
+    theFieldMap.put(SiteField.Notes,    Site.SITE.NOTES);
+    return theFieldMap;
   }
 
   // If you change the CREATE statement, you need to change it two other places. First, you should change the comment
@@ -131,9 +131,9 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, SiteField
 //    }
     
     // Here's what fails when I try to use jOOQ to create my table:
-    // 1. The created table does not have collate noCase for each text field. This means my sorting will be
+    // 1. The created table does not have "collate noCase" for each text field. This means my sorting will be
     //    case-sensitive, which I hate.
-    // 2. The create statement looks has the primary key specified as a constraint, rather than a property, like this:
+    // 2. The "create" statement looks has the primary key specified as a constraint, rather than a property, like this:
     //       create table if not exists site (id integer NOT NULL, ... CONSTRAINT pk_site primary key(id));
     //    instead of this:
     //       create table if not exists site (id integer NOT NULL primary key, ... );
@@ -189,9 +189,9 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, SiteField
    * This used to cast to upper() before returning the field, to implement case-insensitive sorting. Now
    * this is done in the table definitions, this just extracts the right TableField from the fieldMap.
    * @param orderBy The orderBy field
-   * @return A Field{@literal <String>} to pass to the orderBy() method to support case insensitive ordering.
+   * @return A Field{@literal <String>} to pass to the orderBy() method to support case-insensitive ordering.
    */
-//  @SuppressWarnings("unchecked")
+  @SuppressWarnings("argument")
   private @NonNull TableField<SiteRecord, ?> getField(final @Nullable SiteField orderBy) {
     return Objects.requireNonNull(fieldMap.get(orderBy));
   }
@@ -248,6 +248,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, SiteField
 
     DSLContext dslContext = getDslContext();
 
+    @SuppressWarnings("argument")
     final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
     try (
         final SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE);
@@ -265,6 +266,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, SiteField
   public Collection<SiteRecord> findAnyInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
     DSLContext dslContext = getDslContext();
 
+    @SuppressWarnings("argument")
     final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
     Condition condition = SITE.SOURCE.lt(""); // Should always be false
     try (SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
@@ -281,6 +283,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, SiteField
 
     DSLContext dslContext = getDslContext();
 
+    @SuppressWarnings("argument")
     final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
     Condition condition = SITE.SOURCE.ge(""); // Should always be true
     try (SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
@@ -324,13 +327,13 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, SiteField
   // We must set the id to null before inserting into the database, to force the database to choose an unused id.
   // But the getter will never return null, so we declared the id to be nonNull. So we suppress the warning, since
   // the id will become non-null by the time we exit this method.
-  @SuppressWarnings("argument.type.incompatible")
+  @SuppressWarnings("argument")
   @Override
   public void insert(final SiteRecord entity) throws SQLException {
 
     DSLContext dslContext = getDslContext();
     //noinspection ConstantConditions
-    entity.setId(null); // argument.type.incompatible null assumed not allowed in generated code.
+    entity.setId(null); // argument.type.incompatible null assumed not allowed in generated code. See comment above.
     Integer id = entity.getId(); 
     entity.setId(id);
     dslContext.attach(entity);

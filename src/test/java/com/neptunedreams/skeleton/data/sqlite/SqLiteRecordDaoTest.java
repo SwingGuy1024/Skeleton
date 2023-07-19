@@ -28,14 +28,14 @@ import static org.junit.Assert.*;
  * <p>Date: 11/27/17
  * <p>Time: 5:42 PM
  *
- * @author Miguel Mu\u00f1oz
+ * @author Miguel Muñoz
  */
 @SuppressWarnings({"HardCodedStringLiteral", "HardcodedLineSeparator", "MagicNumber", "initialization.static.fields.uninitialized"})
 public class SqLiteRecordDaoTest {
 
-  @SuppressWarnings("StaticVariableMayNotBeInitialized")
+  @SuppressWarnings("initialization.static.field.uninitialized")
   private static ConnectionSource connectionSource;
-  @SuppressWarnings("StaticVariableMayNotBeInitialized")
+  @SuppressWarnings("initialization.static.field.uninitialized")
   private static SQLiteRecordDao dao;
 
   @BeforeClass

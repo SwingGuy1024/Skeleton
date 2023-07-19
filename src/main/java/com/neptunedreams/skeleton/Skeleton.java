@@ -1,23 +1,5 @@
 package com.neptunedreams.skeleton;
 
-import java.awt.Point;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.sql.SQLException;
-import java.util.Objects;
-import java.util.prefs.Preferences;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.WindowConstants;
 import com.neptunedreams.framework.ErrorReport;
 import com.neptunedreams.framework.data.ConnectionSource;
 import com.neptunedreams.framework.data.Dao;
@@ -37,6 +19,30 @@ import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.WindowConstants;
+import java.awt.Point;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.prefs.Preferences;
 
 /**
  * Skeleton Key Application
@@ -113,11 +119,9 @@ public final class Skeleton extends JPanel
   
   private final RecordUI<@NonNull SiteRecord> mainPanel;
   //    org.jooq.util.JavaGenerator generator;
-  private static @Nullable JFrame frame;
   public static final Preferences prefs = Preferences.userNodeForPackage(Skeleton.class);
   private final @NonNull DatabaseInfo info;
-  private final @NonNull RecordController<SiteRecord, Integer, SiteField> controller;
-
+  private final @NonNull RecordController<SiteRecord, Integer, @NonNull SiteField> controller;
   @SuppressWarnings("OverlyBroadThrowsClause")
   public static void main(String[] args) throws IOException, ClassNotFoundException {
     try {
@@ -140,30 +144,32 @@ public final class Skeleton extends JPanel
       }
     });
   }
+
+  private static @Nullable JFrame frame;
   
-  @NonNull
-  private static Skeleton makeMainFrame(final boolean doImport, int delta) throws IOException, ClassNotFoundException {
+  @SuppressWarnings("dereference.of.nullable") // I don't know why I'm getting this error! On statements marked // *
+  private static @NonNull Skeleton makeMainFrame(final boolean doImport, int delta) throws IOException, ClassNotFoundException {
     LFSizeAdjuster.instance.setDelta(delta);
     Point priorLocation = null;
     if (frame != null) {
       priorLocation = frame.getLocation();
-      frame.dispose();
+      frame.dispose(); // *
     }
     LFSizeAdjuster.instance.adjustLookAndFeel();
     frame = new JFrame("Skeleton");
-    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE); // this one doesn't get a warning.
     if (priorLocation == null) {
-      frame.setLocationByPlatform(true);
+      frame.setLocationByPlatform(true); // *
     } else {
-      frame.setLocation(priorLocation);
+      frame.setLocation(priorLocation); // *
     }
     Skeleton skeleton = new Skeleton(doImport);
-    frame.add(skeleton.getPanel());
-    frame.pack();
-    frame.addWindowListener(skeleton.shutdownListener());
+    frame.add(skeleton.getPanel()); // *
+    frame.pack(); // *
+    frame.addWindowListener(skeleton.shutdownListener()); // *
 //    UIMenus.Menu.installMenu(frame);
     skeleton.mainPanel.launchInitialSearch();
-    Objects.requireNonNull(frame).setVisible(true);
+    frame.setVisible(true); // *
     prefs.putInt(FONT_DELTA, delta);
     return skeleton;
   }
@@ -178,7 +184,6 @@ public final class Skeleton extends JPanel
 
       SwingUtilities.invokeLater(() -> {
         RecordModel<SiteRecord> model = skeleton.controller.getModel();
-        // noinspection StringConcatenation
         String exportPath = System.getProperty("user.home") + EXPORT_FILE;
         System.err.printf("Exporting %d records to %s%n", model.getSize(), exportPath); // NON-NLS
         //noinspection OverlyBroadCatchBlock
@@ -200,7 +205,7 @@ public final class Skeleton extends JPanel
     try {
       info.init();
       final ConnectionSource connectionSource = info.getConnectionSource();
-      Dao<SiteRecord, Integer, SiteField> dao = info.getDao(SiteRecord.class, connectionSource);
+      Dao<SiteRecord, Integer, @NonNull SiteField> dao = info.getDao(SiteRecord.class, connectionSource);
       SiteRecord dummyRecord = new SiteRecord(0, "", "", "", "");
       final RecordView<@NonNull SiteRecord> view = new RecordView.Builder<>(dummyRecord, SiteField.Source)
           .source  (SiteRecord::getSource,   SiteRecord::setSource)
@@ -220,34 +225,40 @@ public final class Skeleton extends JPanel
       }
 
       // Make sure you save the last change before shutting down.
-      Objects.requireNonNull(frame).addWindowListener(new WindowAdapter() {
-        // Normalli I override windowClosing, which can be cancelled. But I don't need to do that,
-        // and it doesn't get sent when the window is disposed. This one does.
-        @Override
-        public void windowClosed(final WindowEvent e) {
-          //noinspection ErrorNotRethrown
-          try {
-            if (view.saveOnExit()) {
-              controller.getDao().insertOrUpdate(view.getCurrentRecord());
-            }
-          } catch (SQLException | RuntimeException | Error e1) {
-            ErrorReport.reportException("Saving last change", e1);
+      if (frame == null) { // frame should never be null here.
+        throw new IllegalStateException("Null Frame!");
+      } else {
+        frame.addWindowListener(new WindowAdapter() {
+          // Normally I override windowClosing, which can be cancelled. But I don't need to do that,
+          // and it doesn't get sent when the window is disposed. This one does.
+          @Override
+          public void windowClosed(final WindowEvent e) {
+            closeAndSave();
           }
-        }
-      });
 
-//      // Import from Derby
-//      ObjectMapper objectMapper = new ObjectMapper();
-//      final File file = new File(System.getProperty("user.home"), "skeletonRecords.json");
-//      
-//      FileInputStream inputStream = new FileInputStream(file);
-//      InputStreamReader reader = new InputStreamReader(inputStream, "UTF-8");
-//      List<SiteRecord> recordList = objectMapper.readValue(reader, new TypeReference<List<SiteRecord>>() {});
-//      for (SiteRecord siteRecord: recordList) {
-////        System.out.println(siteRecord);
-////        objectMapper.writeValueAsString(siteRecord); // Didn't work.
-//        dao.insert(siteRecord);
-//      }
+          private void closeAndSave() {
+            //noinspection ErrorNotRethrown
+            try {
+              if (view.saveOnExit()) {
+                controller.getDao().insertOrUpdate(view.getCurrentRecord());
+              }
+            } catch (SQLException | RuntimeException | Error e1) {
+              ErrorReport.reportException("Saving last change", e1);
+            }
+            //noinspection TooBroadScope
+            StringBuilder builder = new StringBuilder();
+            try {
+              Collection<SiteRecord> allResults = controller.getDao().findAll(SiteField.Source, "");
+              extracted(builder, allResults);
+            } catch (SQLException ex) {
+              ErrorReport.reportException("Saving All Records", ex);
+              System.out.println("Error");
+              ex.printStackTrace();
+            }
+          }
+        });
+      }
+
     } catch (SQLException e) {
       e.printStackTrace();
       shutDownDatabase(info);
@@ -255,11 +266,79 @@ public final class Skeleton extends JPanel
     }
   }
 
+  private static void extracted(StringBuilder builder, Collection<SiteRecord> allResults) {
+    //noinspection MagicCharacter,HardcodedLineSeparator
+    final char lf = '\n';
+    //noinspection UnnecessaryUnicodeEscape
+    String delimiter = " \u205D ";
+    for (SiteRecord siteRecord : allResults) {
+      builder.append(siteRecord.getSource())
+          .append(delimiter)
+          .append(siteRecord.getUsername())
+          .append(delimiter)
+          .append(siteRecord.getPassword())
+          .append(delimiter)
+          .append(stripLf(siteRecord.getNotes()))
+          .append(lf)
+          .append(lf);
+    }
+    final File outputFile = new File(System.getProperty("user.home"), "Notes.txt");
+    Path path = outputFile.toPath();
+
+    try {
+      //noinspection ResultOfMethodCallIgnored
+      outputFile.createNewFile();
+      Files.writeString(path, builder.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  private static String stripLf(String txt) {
+    StringBuilder builder = new StringBuilder(txt.trim());
+    //noinspection HardcodedLineSeparator
+    final String lineBreak = "\n";
+    int lfSpot = builder.indexOf(lineBreak);
+    while (lfSpot >= 0) {
+      builder.replace(lfSpot, lfSpot+1, "\\n");
+      lfSpot = builder.indexOf(lineBreak);
+    }
+    return builder.toString();
+  }
+
+//  public static void mainx(String[] args) {
+//    List<SiteRecord> recordList = new LinkedList<>();
+//    recordList.add(make("source1", "pw1", "un1", "Notes1"));
+//    recordList.add(make("src2", "pw2", "un2", "Notes 2 Line 1\nNotes 2 line 2\nNotes 3 line 3\n\n\n"));
+//    recordList.add(make("src3", "pw3", "un3", "Notes 3   "));
+//    StringBuilder builder = new StringBuilder();
+//    extracted(builder, recordList);
+//    System.out.println(builder);
+//    
+//    recordList.add(make("source 4", "PW 4", "userName 4", "Notes 4"));
+//    recordList.remove(1);
+//    builder = new StringBuilder();
+//    extracted(builder, recordList);
+//    System.out.println("---");
+//    System.out.println(builder);
+//    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+//    StringSelection stringSelection = new StringSelection(builder.toString());
+//    clipboard.setContents(stringSelection, stringSelection);
+//  }
+//  
+//  private static SiteRecord make(String source, String password, String username, String notes) {
+//    SiteRecord rd = new SiteRecord();
+//    rd.setSource(source);
+//    rd.setPassword(password);
+//    rd.setUsername(username);
+//    rd.setNotes(notes);
+//    return rd;
+//  }
+//
   private static void importFromFile(
-      final Dao<? super SiteRecord, Integer, SiteField> dao, 
+      final Dao<? super SiteRecord, Integer, @NonNull SiteField> dao, 
       RecordController<SiteRecord, Integer, ?> controller)
       throws SQLException, IOException, ClassNotFoundException {
-    // noinspection StringConcatenation
     String exportPath = System.getProperty("user.home") + EXPORT_FILE;
     try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(exportPath))) {
       @SuppressWarnings("unchecked")

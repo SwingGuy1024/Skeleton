@@ -1,15 +1,29 @@
 package com.neptunedreams.skeleton.ui;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.function.Consumer;
+import com.google.common.eventbus.Subscribe;
+import com.neptunedreams.framework.ErrorReport;
+import com.neptunedreams.framework.data.Dao;
+import com.neptunedreams.framework.data.RecordModel;
+import com.neptunedreams.framework.data.RecordModelListener;
+import com.neptunedreams.framework.data.SearchOption;
+import com.neptunedreams.framework.event.MasterEventBus;
+import com.neptunedreams.framework.task.ParameterizedCallable;
+import com.neptunedreams.framework.task.QueuedTask;
+import com.neptunedreams.framework.ui.ButtonGroupListener;
+import com.neptunedreams.framework.ui.ClearableTextField;
+import com.neptunedreams.framework.ui.EnumGroup;
+import com.neptunedreams.framework.ui.HidingPanel;
+import com.neptunedreams.framework.ui.RecordController;
+import com.neptunedreams.framework.ui.SwipeDirection;
+import com.neptunedreams.framework.ui.SwipeView;
+import com.neptunedreams.skeleton.data.Record;
+import com.neptunedreams.skeleton.data.SiteField;
+import org.checkerframework.checker.initialization.qual.Initialized;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
+
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonModel;
@@ -31,27 +45,18 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import com.google.common.eventbus.Subscribe;
-import com.neptunedreams.framework.ErrorReport;
-import com.neptunedreams.framework.data.RecordModel;
-import com.neptunedreams.framework.data.RecordModelListener;
-import com.neptunedreams.framework.data.SearchOption;
-import com.neptunedreams.framework.event.MasterEventBus;
-import com.neptunedreams.framework.task.ParameterizedCallable;
-import com.neptunedreams.framework.task.QueuedTask;
-import com.neptunedreams.framework.ui.ButtonGroupListener;
-import com.neptunedreams.framework.ui.ClearableTextField;
-import com.neptunedreams.framework.ui.EnumGroup;
-import com.neptunedreams.framework.ui.HidingPanel;
-import com.neptunedreams.framework.ui.RecordController;
-import com.neptunedreams.framework.ui.SwipeDirection;
-import com.neptunedreams.framework.ui.SwipeView;
-import com.neptunedreams.skeleton.data.SiteField;
-import org.checkerframework.checker.initialization.qual.Initialized;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.function.Consumer;
 
 //import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 
@@ -65,9 +70,9 @@ import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
  * <p>Date: 10/29/17
  * <p>Time: 12:50 PM
  * 
- * @author Miguel Mu\u00f1oz
+ * @author Miguel Muñoz
  */
-@SuppressWarnings({"HardCodedStringLiteral", "TypeParameterExplicitlyExtendsObject"})
+@SuppressWarnings("HardCodedStringLiteral")
 public final class RecordUI<R extends @NonNull Object> extends JPanel implements RecordModelListener {
 
   // TODO:  The QueuedTask is terrific, but it doesn't belong in this class. It belongs in the Controller. That way,
@@ -89,10 +94,10 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   private final RecordController<R, Integer, @NonNull SiteField> controller;
   private final EnumGroup<@NonNull SiteField> searchFieldGroup = new EnumGroup<>();
   private final @NonNull RecordModel<? extends R> recordModel;
-  private final JButton prev = new JButton(Resource.getLeftArrow());
-  private final JButton next = new JButton(Resource.getRightArrow());
-  private final JButton first = new JButton(Resource.getFirst());
-  private final JButton last = new JButton(Resource.getLast());
+  private final JButton prev = Resource.ARROW_LEFT_PNG.createButton(null);
+  private final JButton next = Resource.ARROW_RIGHT_PNG.createButton(null);
+  private final JButton first = Resource.ARROW_FIRST_PNG.createButton(null); // null, for now
+  private final JButton last = Resource.ARROW_LAST_PNG.createButton(null); // null, for now
   private final JToggleButton edit;
 
   private final JLabel infoLine = new JLabel("");
@@ -127,7 +132,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     searchOptionsGroup.setSelected(SearchOption.findAny);
 
 //    optionsGroup.addButtonGroupListener(selectedButtonModel -> selectionChanged(selectedButtonModel));
-    @SuppressWarnings("methodref.receiver.bound.invalid") // TODO: I don't understand why I need this.
+    @SuppressWarnings("methodref.receiver.bound") // TODO: I don't understand why I need this.
     @UnknownKeyFor @Initialized ButtonGroupListener selectionChanged = this::selectionChanged;
     searchOptionsGroup.addButtonGroupListener(selectionChanged); // Using a lambda is an error. This is a warning. 
 
@@ -147,7 +152,9 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     recordUI.add(layer, BorderLayout.CENTER);
     recordUI.add(recordUI.createControlPanel(), BorderLayout.PAGE_START);
     recordUI.add(recordUI.createTrashPanel(), BorderLayout.PAGE_END);
-    recordUI.setBorder(new MatteBorder(4, 4, 4, 4, recordUI.getBackground()));
+    @SuppressWarnings("assignment")
+    final @NonNull Color bgColor = recordUI.getBackground();
+    recordUI.setBorder(new MatteBorder(4, 4, 4, 4, bgColor));
     model.addModelListener(recordUI); // argument.type.incompatible checker error suppressed
     recordUI.findField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -264,21 +271,22 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   }
   
   private JPanel getEndButtons() {
+    //noinspection MagicNumber
     JPanel endPanel = new JPanel(new GridLayout(1, 0, 16, 0));
 
-    JButton fontSizeButton = new JButton(Resource.getTextSize());
+    JButton fontSizeButton = Resource.TEXT_SIZE_PNG.createButton(e -> showTextSizeDialog());
     endPanel.add(fontSizeButton);
-    fontSizeButton.addActionListener(e -> showTextSizeDialog());
 
-    JButton trashRecordButton = new JButton(Resource.getBin());
+    JButton trashRecordButton = Resource.BIN_EMPTY_PNG.createButton((e) -> delete());
     endPanel.add(trashRecordButton);
-    trashRecordButton.addActionListener((e) -> delete());
     return endPanel;
   }
 
   private void showTextSizeDialog() {
     final JList<Object> fontList = sizeAdjuster.createFontSizeList();
     JLabel label = new JLabel("Choose your Font Size…");
+    //noinspection MagicNumber
+    @SuppressWarnings("argument")
     Border border = BorderFactory.createMatteBorder(0, 0, 16, 0, label.getBackground());
     label.setBorder(border);
     
@@ -306,6 +314,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     JLabel label = new JLabel("Java version " + System.getProperty("java.version"));
     label.setHorizontalAlignment(SwingConstants.CENTER);
     final Font labelFont = label.getFont();
+    @SuppressWarnings("dereference.of.nullable")
     int textSize = labelFont.getSize();
     //noinspection MagicNumber
     label.setFont(labelFont.deriveFont(0.75f * textSize));
@@ -334,9 +343,8 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
 
   private JPanel getNavButtons() {
     JPanel buttons = new JPanel(new GridLayout(1, 0));
-    JButton add = new JButton(Resource.getAdd());
-//    final JButton importBtn = new JButton("Imp");
-    buttons.add(add);
+    final JButton importBtn = new JButton("Imp");
+    buttons.add(Resource.BULLET_ADD_PNG.createButton((e1) -> addBlankRecord(e1)));
     buttons.add(Box.createHorizontalStrut(10));
     buttons.add(first);
     buttons.add(prev);
@@ -345,9 +353,9 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     buttons.add(Box.createHorizontalStrut(10));
     buttons.add(edit);
 //    buttons.add(importBtn);
-    
-    add.addActionListener((e)->addBlankRecord());
-    SwipeView<@NonNull RecordView<R>> sView = Objects.requireNonNull(swipeView);
+
+    @SuppressWarnings({"assignment", "dereference.of.nullable"})
+    @NonNull SwipeView<@NonNull RecordView<R>> sView = swipeView;
     sView.assignMouseDownAction(prev, recordModel::goPrev, SwipeDirection.SWIPE_RIGHT);
     sView.assignMouseDownAction(next, recordModel::goNext, SwipeDirection.SWIPE_LEFT);
     first.addActionListener((e) -> sView.swipeRight(recordModel::goFirst));
@@ -355,7 +363,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     edit.setSelected(true); // lets me execute the listener immediately
     edit.addItemListener((e) -> sView.getLiveComponent().setTextEditable(edit.isSelected()));
     edit.setSelected(false); // executes because the state changes
-//    importBtn.addActionListener((e) -> doImport());
+    importBtn.addActionListener((e) -> doImport());
     JPanel flowPanel = new JPanel(new FlowLayout());
     flowPanel.add(buttons);
     setupActions(sView);
@@ -363,20 +371,28 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     return flowPanel;
   }
 
-  private void addBlankRecord() {
-    controller.addBlankRecord();
-    MasterEventBus.postUserRequestedNewRecordEvent();
-    loadInfoLine();
+  private void addBlankRecord(ActionEvent event) {
+//    System.out.printf("Modifiers: 0x%08X SD: 0x%04x, SM: 0x%04x%n", event.getModifiers(), KeyEvent.SHIFT_DOWN_MASK, KeyEvent.SHIFT_MASK); // NON-NLS
+    //noinspection deprecation,IfStatementWithNegatedCondition
+    if ((event.getModifiers() & KeyEvent.SHIFT_MASK) != 0) {
+      doImport();
+    } else {
+      controller.addBlankRecord();
+      MasterEventBus.postUserRequestedNewRecordEvent();
+      loadInfoLine();
+    }
   }
 
-//  private void doImport() {
+  private void doImport() {
 //    ImportDialog importDialog = new ImportDialog((Window) getRootPane().getParent(), controller.getDao());
-//    importDialog.setVisible(true);
-//  }
+    @SuppressWarnings({"argument", "unchecked"})
+    ImportDialog importDialog = ImportDialog.build((Window) getRootPane().getParent(), (Dao<Record, ?, ?>) controller.getDao());
+    importDialog.setVisible(true);
+  }
 
 //  @SuppressWarnings("method.invocation.invalid")
   private JPanel getSearchField() {
-    JLabel findIcon = Resource.getMagnifierLabel();
+    JLabel findIcon = Resource.MAGNIFIER_16_PNG.createLabel();
     RecordView.installStandardCaret(findField);
     JPanel searchPanel = new JPanel(new BorderLayout());
     searchPanel.add(findIcon, BorderLayout.LINE_START);
@@ -430,7 +446,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
         total = foundSize;
       }
       //noinspection HardcodedFileSeparator
-      String info = String.format("%d/%d of %d", index, foundSize, total);
+      String info = String.format("%d/%d ", index, foundSize);
       infoLine.setText(info);
 //      System.err.printf("Info: %S%n", info); // NON-NLS
     } catch (SQLException e) {
@@ -460,7 +476,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     solution.  
    */
   private ParameterizedCallable<String, Collection<@NonNull R>> createCallable(@UnderInitialization RecordUI<R> this) {
-    return new ParameterizedCallable<String, Collection<@NonNull R>>(null) {
+    return new ParameterizedCallable<>(null) {
       // Originally, I didn't need to do this. Then I restructured the code to eliminate lots of other warnings, but
       // this warning had to come back. I can't make any sense out of the comment above, although I'm sure it was
       // clear to me at the time. But since this doesn't get called until after construction is complete, it's safe
@@ -511,8 +527,9 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   private void selectionChanged(@SuppressWarnings("unused") ButtonModel selectedButtonModel) { searchNow(); }
   
   private JToggleButton makeEditButton(@UnderInitialization RecordUI<R> this, JToggleButton.ToggleButtonModel model) {
-    JToggleButton editButton = new JToggleButton(Resource.getEdit());
+    JToggleButton editButton = new JToggleButton(Resource.EDIT_PNG.getIcon());
     editButton.setModel(model);
+    editButton.setToolTipText(Resource.EDIT_PNG.getText());
     return editButton;
   }
 }

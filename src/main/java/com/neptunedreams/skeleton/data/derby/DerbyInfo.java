@@ -19,7 +19,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  * <p>Date: 11/10/17
  * <p>Time: 11:24 PM
  *
- * @author Miguel Mu\u00f1oz
+ * @author Miguel Muñoz
  */
 public class DerbyInfo extends AbstractDatabaseInfo {
   private static final String DERBY_SYSTEM_HOME = "derby.system.home";
@@ -27,15 +27,17 @@ public class DerbyInfo extends AbstractDatabaseInfo {
 
   private DerbyDaoFactory derbyDaoFactory;
   
-  DerbyInfo() throws SQLException, IOException {
-    //noinspection StringConcatenation,HardcodedFileSeparator,HardCodedStringLiteral
+  DerbyInfo() {
+    // noinspection HardcodedFileSeparator,HardCodedStringLiteral
     this("/.skeleton");
   }
   
   @SuppressWarnings({"initialization.fields.uninitialized","method.invocation.invalid"}) // Constructor doesn't initialize derbyDaoFactory
   DerbyInfo(@NonNull String derbyHomDir) {
     super(derbyHomDir);
-    System.setProperty(DERBY_SYSTEM_HOME, getHomeDir()); // method.invocation.invalid: getHomeDir
+    @SuppressWarnings("method.invocation")
+    final String homeDir = getHomeDir();
+    System.setProperty(DERBY_SYSTEM_HOME, homeDir); // method.invocation.invalid: getHomeDir
 
 //    init();
   }
@@ -47,8 +49,8 @@ public class DerbyInfo extends AbstractDatabaseInfo {
   }
 
   @Override
-  public <T, PK, F extends DBField> Dao<T, PK, F> getDao(Class<T> eClass, ConnectionSource source) {
-    Dao<T, PK, F> dao = derbyDaoFactory.getDao(eClass);
+  public <T, PK, F extends DBField> Dao<T, PK, @NonNull F> getDao(Class<T> eClass, ConnectionSource source) {
+    Dao<T, PK, @NonNull F> dao = derbyDaoFactory.getDao(eClass);
     if (dao == null) {
       throw new IllegalArgumentException(eClass.toString());
     }
@@ -93,7 +95,7 @@ public class DerbyInfo extends AbstractDatabaseInfo {
   public void shutdown() {
     try {
       // NO need to safely close. We're shutting down!
-      //noinspection CallToDriverManagerGetConnection,JDBCResourceOpenedButNotSafelyClosed,resource
+      //noinspection CallToDriverManagerGetConnection,JDBCResourceOpenedButNotSafelyClosed
       DriverManager.getConnection("jdbc:derby:;shutdown=true");
     } catch (SQLException e1) {
       if (!Objects.toString(e1.getMessage()).contains("Derby system shutdown.")) {

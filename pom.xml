@@ -1,12 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>0.8.11-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <!--<modules>-->
-    <!--<module>skeleton-derby</module>-->
+  <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
   <packaging>jar</packaging>
 
@@ -23,20 +23,26 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+    <!-- Reference: https://checkerframework.org/manual/#maven   -->
     <!-- These properties will be set by the Maven Dependency plugin -->
     <!--suppress UnresolvedMavenProperty, GradlePackageUpdate -->
     <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
     <!--suppress UnresolvedMavenProperty -->
     <errorProneJavac>${com.google.errorprone:javac:jar}</errorProneJavac>
-	  <jooqVersion>3.12.3</jooqVersion>
-    <javaHome>/Library/Java/JavaVirtualMachines/jdk1.8.0_212/Contents/Home</javaHome>
+    <jooqVersion>3.12.3</jooqVersion>
+<!--    <javaHome>/Library/Java/JavaVirtualMachines/jdk1.8.0_212/Contents/Home</javaHome>-->
+    <!-- Java 17 doesn't work. I don't know why. -->
+    <!-- <javaHome>/Library/Java/JavaVirtualMachines/jdk-17.0.1.jdk</javaHome>-->
+
+    <!-- This is JAVA_HOME with the two last directories trimmed off. This is only used when bundling the JDK -->
+    <javaHome>/Library/Java/JavaVirtualMachines/jdk-11.0.16.1.jdk</javaHome>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.neptunedreams</groupId>
       <artifactId>tango</artifactId>
-      <version>2.0.17-SNAPSHOT</version>
+      <version>2.0.20-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -50,7 +56,7 @@
     <dependency>
       <groupId>org.xerial</groupId>
       <artifactId>sqlite-jdbc</artifactId>
-      <version>3.36.0.3</version>
+      <version>3.42.0.0</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.jetbrains/annotations -->
@@ -66,9 +72,9 @@
       <artifactId>guava</artifactId>
       <version>31.1-jre</version>
     </dependency>
-    
+
     <!--jOOQ-->
-	  <!-- https://mvnrepository.com/artifact/org.jooq/jooq -->
+    <!-- https://mvnrepository.com/artifact/org.jooq/jooq -->
     <dependency>
       <groupId>org.jooq</groupId>
       <artifactId>jooq</artifactId>
@@ -90,26 +96,27 @@
     <dependency>
       <groupId>org.checkerframework</groupId>
       <artifactId>checker-qual</artifactId>
-      <version>3.22.1</version>
+      <version>3.36.0</version>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>org.checkerframework</groupId>-->
-<!--      <artifactId>checker</artifactId>-->
-<!--      <version>3.2.0</version>-->
-<!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.checkerframework</groupId>-->
+    <!--      <artifactId>checker</artifactId>-->
+    <!--      <version>3.2.0</version>-->
+    <!--    </dependency>-->
     <!-- If using JDK 8, add the following additional dependencies -->
-    <dependency>
-      <groupId>org.checkerframework</groupId>
-      <artifactId>jdk8</artifactId>
-      <!-- Upgrading this to 3.3 generates false compiler errors. -->
-      <!--suppress MavenPackageUpdate -->
-      <version>3.2.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.errorprone</groupId>
-      <artifactId>javac</artifactId>
-      <version>9+181-r4173-1</version>
-    </dependency>
+    <!--    <dependency>-->
+    <!--      <groupId>org.checkerframework</groupId>-->
+    <!--      <artifactId>jdk8</artifactId>-->
+    <!--      &lt;!&ndash; Upgrading this to 3.3 generates false compiler errors. &ndash;&gt;-->
+    <!--      &lt;!&ndash;suppress MavenPackageUpdate &ndash;&gt;-->
+    <!--      <version>3.2.0</version>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      &lt;!&ndash; Java 8 only &ndash;&gt;-->
+    <!--      <groupId>com.google.errorprone</groupId>-->
+    <!--      <artifactId>javac</artifactId>-->
+    <!--      <version>9+181-r4173-1</version>-->
+    <!--    </dependency>-->
     <dependency>
       <groupId>org.apache.maven.plugins</groupId>
       <artifactId>maven-assembly-plugin</artifactId>
@@ -117,56 +124,65 @@
       <type>maven-plugin</type>
     </dependency>
   </dependencies>
-  
+
   <build>
     <plugins>
       <!--This is the standard Maven plugin-->
-	    <plugin>
-		    <groupId>org.apache.maven.plugins</groupId>
-		    <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-		    <configuration>
-			    <fork>true</fork>
-			    <source>1.8</source>
-			    <target>1.8</target>
-			    <compilerArguments>
-				    <Xmaxerrs>10000</Xmaxerrs>
-				    <Xmaxwarns>10000</Xmaxwarns>
-				    <!--<AsuppressWarnings>uninitialized</AsuppressWarnings>-->
-			    </compilerArguments>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.10.1</version>
+        <configuration>
+          <fork>true</fork>
+          <source>11</source>
+          <target>11</target>
+<!--          <compilerArguments>-->
+                <!-- JDK 8 only-->
+<!--            <Xmaxerrs>10000</Xmaxerrs>-->
+<!--            <Xmaxwarns>10000</Xmaxwarns>-->
+            <!--<AsuppressWarnings>uninitialized</AsuppressWarnings>-->
+<!--          </compilerArguments>-->
           <showWarnings>true</showWarnings>
-			    <annotationProcessorPaths>
-				    <path>
-					    <groupId>org.checkerframework</groupId>
-					    <artifactId>checker</artifactId>
-					    <version>3.2.0</version>
-				    </path>
-			    </annotationProcessorPaths>
-			    <annotationProcessors>
-				    <!-- Add all the checkers you want to enable here -->
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.checkerframework</groupId>
+              <artifactId>checker</artifactId>
+              <version>3.36.0</version>
+            </path>
+          </annotationProcessorPaths>
+          <annotationProcessors>
+            <!-- Add all the checkers you want to enable here -->
 
-				    <!-- Invoke the NullnessChecker at org.checkerframework.checker.nullness.NullnessChecker -->
-				    <!-- There are probably other checkers we should invoke. -->
-				    <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
-			    </annotationProcessors>
-			    <compilerArgs>
-				    <!-- If using JDK 8, use only the two arguments immediately below. -->
-				    <arg>-J-Xbootclasspath/p:${errorProneJavac}</arg>
-				    <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
-				    <!-- If using JDK 11, remove the two arguments above, remove the
-								 space in the one below, and uncomment it. -->
-				    <!-- <arg>-J- -add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg> -->
+            <!-- Invoke the NullnessChecker at org.checkerframework.checker.nullness.NullnessChecker -->
+            <!-- There are probably other checkers we should invoke. -->
+            <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
+          </annotationProcessors>
+          <compilerArgs>
+            <!-- If using JDK 8, use only the two arguments immediately below. -->
+            <!--				    <arg>-J-Xbootclasspath/p:${errorProneJavac}</arg>-->
+            <!--				    <arg>-Xbootclasspath/p:${annotatedJdk}</arg>-->
+            <!-- If using JDK 11, remove the two arguments above, remove the
+                         space in the one below, and uncomment it. -->
+            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
+            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
+            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
+            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
+            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
 
-				    <!-- Optionally, -Awarns turns type-checking errors into warnings. -->
-				    <!--<arg>-Awarns</arg>-->
+            <!-- Optionally, -Awarns turns type-checking errors into warnings. -->
+            <!--<arg>-Awarns</arg>-->
 
             <arg>-Astubs=nullness-stub/</arg>
             <arg>-AstubWarnIfNotFound</arg>
           </compilerArgs>
-		    </configuration>
-	    </plugin>
+        </configuration>
+      </plugin>
 
-	    <plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.5</version>
@@ -191,8 +207,8 @@
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
           <!--This "appendAssemblyId" tag removes the "with-dependencies" from the name.-->
-	        <!--This is commented out because it overwrites the other jar file.-->
-	        <!--That interferes with the creation of the Mac App Bundle.-->
+          <!--This is commented out because it overwrites the other jar file.-->
+          <!--That interferes with the creation of the Mac App Bundle.-->
           <!--<appendAssemblyId>false</appendAssemblyId>-->
         </configuration>
       </plugin>
@@ -230,7 +246,7 @@
         <version>2.6</version>
         <configuration>
           <!--<detail>-->
-            <!--<derby.system.home>${user.home}/.skeleton</derby.system.home>-->
+          <!--<derby.system.home>${user.home}/.skeleton</derby.system.home>-->
           <!--</detail>-->
           <archive>
             <manifest>
@@ -239,21 +255,35 @@
           </archive>
         </configuration>
       </plugin>
-      
+
       <!--This one will bundle everything into a Mac Application bundle.-->
       <plugin>
         <!-- https://github.com/federkasten/appbundle-maven-plugin -->
         <groupId>sh.tak.appbundler</groupId>
         <artifactId>appbundle-maven-plugin</artifactId>
         <version>1.2.0</version>
+        <!-- Dependencies added when I switched to Java 11. -->
+        <!-- See https://stackoverflow.com/questions/53696439/appbundle-maven-plugin-fails-on-mac-osx-with-java-10 -->
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-archiver</artifactId>
+            <version>RELEASE</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity-tools</artifactId>
+            <version>2.0</version>
+          </dependency>
+        </dependencies>
         <configuration>
           <!--Put your custom Info.plist and Icon.icns under your maven resource paths (src/main/resources on default configuration).-->
           <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
           <!--<dictionaryFile>YourCustomInfo.plist</dictionaryFile>-->
           <iconFile>Earth_Neptune.icns</iconFile>
-          <!-- Put this line in to bundle the jdk with the app. -->
+          <!-- Put this line in to bundle the jdk with the app.-->
+          <jrePath>${javaHome}</jrePath>
           <!--suppress MavenModelInspection -->
-          <!--<jrePath>${javaHome}/../..</jrePath>-->
           <!--<jrePath>${env.JAVA_HOME}/../..</jrePath>-->
         </configuration>
         <executions>
@@ -271,12 +301,12 @@
 
         <!-- Specify the maven code generator plugin -->
         <!-- Use org.jooq            for the Open Source Edition
-								 org.jooq.pro        for commercial editions, 
-								 org.jooq.pro-java-6 for commercial editions with Java 6 support,
-								 org.jooq.trial      for the free trial edition 
-							 
-						 Note: Only the Open Source Edition is hosted on Maven Central. 
-									 Import the others manually from your distribution -->
+                                 org.jooq.pro        for commercial editions, 
+                                 org.jooq.pro-java-6 for commercial editions with Java 6 support,
+                                 org.jooq.trial      for the free trial edition 
+                             
+                         Note: Only the Open Source Edition is hosted on Maven Central. 
+                                     Import the others manually from your distribution -->
         <groupId>org.jooq</groupId>
         <artifactId>jooq-codegen-maven</artifactId>
         <version>${jooqVersion}</version>
@@ -303,7 +333,7 @@
         </dependencies>
 
         <!-- Specify the plugin configuration.
-						 The configuration format is the same as for the standalone code generator -->
+                         The configuration format is the same as for the standalone code generator -->
         <configuration>
 
           <!-- JDBC connection parameters -->
@@ -324,8 +354,8 @@
               <includes>.*</includes>
               <!--<excludes></excludes>-->
               <!-- In case your database supports catalogs, e.g. SQL Server:
-							<inputCatalog>public</inputCatalog>
-								-->
+                            <inputCatalog>public</inputCatalog>
+                                -->
               <!--<inputSchema>skeleton</inputSchema>-->
               <!--<inputSchema>public</inputSchema>-->
             </database>
@@ -344,6 +374,7 @@
         <version>1.4.0</version>
         <configuration>
           <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
+<!--          <cleanupDaemonThreads>false</cleanupDaemonThreads>-->
         </configuration>
       </plugin>
 

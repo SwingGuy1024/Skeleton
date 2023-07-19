@@ -1,17 +1,8 @@
 package com.neptunedreams.skeleton.ui;
 
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.event.ItemEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.function.Consumer;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
@@ -24,9 +15,17 @@ import javax.swing.ListSelectionModel;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
-import sun.swing.SwingLazyValue;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.event.ItemEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.function.Consumer;
 
 /**
  * <p>Tool to adjust the size of the fonts used in the file. I created this because on MS Windows, the text was a bit too small to read.
@@ -35,18 +34,24 @@ import sun.swing.SwingLazyValue;
  * <p>Date: 3/2/23</p>
  * <p>Time: 6:48 PM</p>
  *
- * @author Miguel Mu\u00f1oz
+ * @author Miguel Muñoz
  */
 @SuppressWarnings("Singleton")
 public enum LFSizeAdjuster {
   instance;
-  
+
+  public static final int INITIAL_DEFAULT_FONT_SIZE = 13;
   private int delta = 0;
   private static final Set<Object> fontKeys = extractFontKeys();
-  private static final Map<Object, Integer> defaultFontSizes = extractFontSizeMap(fontKeys);
+  private static final @NonNull Map<Object, Integer> defaultFontSizes = extractFontSizeMap(fontKeys);
 
-  private final int defaultFontSize = UIManager.getLookAndFeelDefaults().getFont("TextField.font").getSize();
-  
+  private final int defaultFontSize = getDefaultFontSize();
+
+  private static int getDefaultFontSize() {
+    final Font font = UIManager.getLookAndFeelDefaults().getFont("TextField.font");
+    return (font == null)? INITIAL_DEFAULT_FONT_SIZE : font.getSize();
+  }
+
   private @Nullable Consumer<Integer> relaunch;
   
   public void setDelta(final int delta) {
@@ -61,8 +66,10 @@ public enum LFSizeAdjuster {
     UIDefaults defaults = UIManager.getLookAndFeelDefaults();
     for (Object key: fontKeys) {
       Font font = (Font) defaults.get(key);
-      int defaultSize = Objects.requireNonNull(defaultFontSizes.get(key));
+      Integer fontSize = defaultFontSizes.get(key);
+      int defaultSize = (fontSize == null) ? defaultFontSize : fontSize;
       float newSize = defaultSize + delta; // has to be a float to mean size when we call deriveFont()
+      @SuppressWarnings("dereference.of.nullable")
       Font revisedFont = font.deriveFont(newSize);
       defaults.put(key, revisedFont);
     }
@@ -70,7 +77,7 @@ public enum LFSizeAdjuster {
 
   // Only gets created once.
   private static Set<Object> extractFontKeys() {
-    Set<Object> fontKeys = new HashSet<>();
+    Set<Object> theFontKeys = new HashSet<>();
     UIDefaults defaults = UIManager.getLookAndFeelDefaults();
 
     // Do Not convert to EntrySet iteration. That strangely returns values of the wrong type.
@@ -78,10 +85,10 @@ public enum LFSizeAdjuster {
     for (Object key: defaults.keySet()) {
       Object value = defaults.get(key);
       if (value instanceof Font) {
-        fontKeys.add(key);
+        theFontKeys.add(key);
       }
     }
-    return fontKeys;
+    return theFontKeys;
   }
 
   // Only gets created once.
@@ -129,10 +136,9 @@ public enum LFSizeAdjuster {
     return comboBox;
   }
 
-  @NonNull
-  private ListCellRenderer<Object> getFontSizeRenderer() {
-    @SuppressWarnings("unchecked")
-    ListCellRenderer<Object> renderer = (ListCellRenderer<Object>) new BasicComboBoxRenderer() {
+  private @NonNull ListCellRenderer<Object> getFontSizeRenderer() {
+//    @SuppressWarnings("unchecked")
+    return new BasicComboBoxRenderer() {
       @Override
       public Component getListCellRendererComponent(
           final JList list,
@@ -145,15 +151,15 @@ public enum LFSizeAdjuster {
             = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         JLabel label = (JLabel) listCellRendererComponent;
         float size = firstWordToNumber(value.toString());
-        label.setFont(label.getFont().deriveFont(size));
+        @SuppressWarnings("dereference.of.nullable")
+        final Font font = label.getFont().deriveFont(size);
+        label.setFont(font);
         return listCellRendererComponent;
       }
     };
-    return renderer;
   }
 
-  @NonNull
-  private String[] getFontSizesArray() {
+  private @NonNull String[] getFontSizesArray() {
     final int max = 11;
     List<String> itemList = new ArrayList<>(max);
     for (int i=0; i<max; ++i) {
@@ -177,7 +183,7 @@ public enum LFSizeAdjuster {
   public void changeFontSize(final String text) {
     int size = firstWordToNumber(text);
     delta = size - defaultFontSize;
-    Objects.requireNonNull(relaunch).accept(delta);
+    if (relaunch != null) { relaunch.accept(delta); } // Should never be null.
   }
 
   private int firstWordToNumber(final String s) {

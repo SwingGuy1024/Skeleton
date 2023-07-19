@@ -35,6 +35,7 @@ import com.neptunedreams.framework.ui.TangoUtils;
 import com.neptunedreams.skeleton.data.SiteField;
 import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
@@ -44,7 +45,7 @@ import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
  * <p>Date: 10/29/17
  * <p>Time: 10:54 AM
  *
- * @author Miguel Mu\u00f1oz
+ * @author Miguel Muñoz
  */
 @SuppressWarnings({"WeakerAccess", "HardCodedStringLiteral", "TypeParameterExplicitlyExtendsObject", "RedundantSuppression"})
 public final class RecordView<R extends @NonNull Object> extends JPanel implements RecordSelectionModel<R> {
@@ -60,8 +61,8 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
   private final JToggleButton.ToggleButtonModel editModel = new JToggleButton.ToggleButtonModel();
 
   @NotOnlyInitialized
-  private final RecordController<R, Integer, SiteField> controller;
-  private final List<? extends FieldBinding<R, ? extends Serializable, ? extends JComponent>> allBindings;
+  private final RecordController<R, Integer, @NonNull SiteField> controller;
+  private final List<? extends FieldBinding<R, ? extends Serializable, ? extends @NonNull JComponent>> allBindings;
   private final JTextComponent sourceField;
 
   // If I don't suppress the method.invocation.invalid warnings, I need to specify an @UnderInitialization implicit 
@@ -69,10 +70,10 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
   // If I suppress the warning, it's much easier to get this class to compile, but the implicit parameter must then be
   // removed.
 
-  @SuppressWarnings("method.invocation.invalid")
+  @SuppressWarnings({"method.invocation.invalid", "method.invocation"})
   private RecordView(R record,
                      SiteField initialSort,
-                     Dao<R, Integer, SiteField> dao,
+                     Dao<R, Integer, @NonNull SiteField> dao,
                      Supplier<@NonNull R> recordConstructor,
                      Function<R, Integer> getIdFunction, BiConsumer<R, Integer> setIdFunction,
                      Function<R, String> getSourceFunction, BiConsumer<R, String> setSourceFunction,
@@ -82,7 +83,9 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
    ) {
     super(new BorderLayout());
     currentRecord = record;
-    controller = makeController(initialSort, dao, recordConstructor, getIdFunction);
+    @SuppressWarnings("method.invocation")
+    RecordController<R, Integer, @NonNull SiteField> theController = makeController(initialSort, dao, recordConstructor, getIdFunction);
+    controller = theController;
     final JLabel idField = (JLabel) addField("ID", false, SiteField.ID, initialSort);
     sourceField = (JTextComponent) addField("Source", true, SiteField.Source, initialSort);
     final JTextComponent usernameField = (JTextComponent) addField("User Name", true, SiteField.Username, initialSort);
@@ -109,9 +112,9 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     TangoUtils.installStandardCaret(sourceField, usernameField, pwField, notesField);
   }
 
-  private RecordController<R, Integer, SiteField> makeController(
+  private RecordController<R, Integer, @NonNull SiteField> makeController(
       final SiteField initialSort,
-      final Dao<R, Integer, SiteField> dao,
+      final Dao<R, Integer, @NonNull SiteField> dao,
       final Supplier<@NonNull R> recordConstructor,
       Function<R, Integer> getIdFunction
   ) {
@@ -146,7 +149,7 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
    * @return The field display panel
    */
   @RequiresNonNull({"labelPanel", "fieldPanel", "checkBoxPanel"})
-  private JPanel makeFieldDisplayPanel() {
+  private JPanel makeFieldDisplayPanel(@UnderInitialization RecordView<R> this) {
     JPanel fieldDisplayPanel = new JPanel(new BorderLayout());
     fieldDisplayPanel.add(labelPanel, BorderLayout.LINE_START);
     fieldDisplayPanel.add(fieldPanel, BorderLayout.CENTER);
@@ -160,7 +163,7 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
 //  }
 //  
 //  @UnknownInitialization
-  public RecordController<R, Integer, SiteField> getController() { return controller; }
+  public RecordController<R, Integer, @NonNull SiteField> getController() { return controller; }
 
   /**
    * On the Mac, the AquaCaret will get installed. This caret has an annoying feature of selecting all the text on a
@@ -233,7 +236,7 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
   }
 
   @Subscribe
-  public void setCurrentRecord(ChangeRecord<? extends R> recordEvent) {
+  public void setCurrentRecord(@NonNull ChangeRecord<? extends R> recordEvent) {
     R newRecord = recordEvent.getNewRecord();
     assert newRecord != null;
     currentRecord = newRecord;
@@ -310,7 +313,7 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
       private BiConsumer<RR, String> setPassword;
       private Function<RR, String> getNotes;
       private BiConsumer<RR, String> setNotes;
-      private Dao<RR, Integer, SiteField> dao;
+      private Dao<RR, Integer, @NonNull SiteField> dao;
       private Supplier<@NonNull RR> recordConstructor;
       public Builder(RR record, SiteField initialSort) {
         this.record = record;
@@ -347,7 +350,7 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
       return this;
     }
     
-    public Builder<RR> withDao(Dao<RR, Integer, SiteField> dao) {
+    public Builder<RR> withDao(Dao<RR, Integer, @NonNull SiteField> dao) {
         this.dao = dao;
         return this;
     }
