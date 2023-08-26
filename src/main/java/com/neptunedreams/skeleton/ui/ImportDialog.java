@@ -1,21 +1,29 @@
 package com.neptunedreams.skeleton.ui;
 
-import com.neptunedreams.framework.data.Dao;
-import com.neptunedreams.skeleton.data.Record;
+import com.neptunedreams.framework.ui.RecordController;
+import com.neptunedreams.skeleton.data.SiteField;
+import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLayer;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.text.JTextComponent;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Window;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -26,15 +34,68 @@ import java.util.List;
  */
 @SuppressWarnings("StringConcatenation")
 public final class ImportDialog extends JDialog {
-  private final Dao<Record, ?, ?> recordDao;
-  private ImportDialog(Window parent, Dao<Record, ?, ?> dao) {
+  private final RecordController<SiteRecord, Integer, @NonNull SiteField> controller;
+
+  private @Nullable JTextComponent sourceField = null;
+  private @Nullable JTextComponent usernameField = null;
+  private @Nullable JTextComponent passwordField = null;
+  private @Nullable JTextComponent notesField = null;
+
+  private ImportDialog(
+      Window parent,
+      RecordController<SiteRecord, Integer, @NonNull SiteField> controller,
+      RecordUI<@NonNull SiteField> recordUi
+    ) {
     super(parent, ModalityType.DOCUMENT_MODAL);
-    recordDao = dao;
-//    build();
+    this.controller = controller;
+    findRecordView(recordUi);
   }
+
+  private void findRecordView(RecordUI<?> recordUI) {
+    Map<Object, Consumer<JTextComponent>> cMap = new HashMap<>();
+    cMap.put(RecordView.SOURCE_LABEL, c-> sourceField = c);
+    cMap.put(RecordView.USER_NAME_LABEL, c-> usernameField = c);
+    cMap.put(RecordView.PASSWORD_LABEL, c-> passwordField = c);
+    cMap.put(RecordView.NOTES_LABEL, c-> notesField = c);
+    for (Component c: recordUI.getComponents()) {
+      if (c instanceof JLayer<?>) {
+        @SuppressWarnings("unchecked")
+        JLayer<RecordView<?>> layer = (JLayer<RecordView<?>>) c;
+        JComponent rView = layer.getView();
+        findTextComponents(rView, cMap);
+      }
+    }
+  }
+
+  @SuppressWarnings("argument") // this one makes no sense.
+  private void findTextComponents(JComponent parent, Map<Object, Consumer<JTextComponent>> cMap) {
+    for (Component c : parent.getComponents()) {
+      if (c instanceof JComponent) {
+        JComponent jc = (JComponent) c;
+        if (jc instanceof JTextComponent) {
+          JTextComponent jtc = (JTextComponent) jc;
+          Object prop = jc.getClientProperty(RecordView.FIELD_NAME);
+          if (cMap.containsKey(prop)) { // Suppressed warning: [argument] incompatible argument for parameter arg0 of Map.containsKey.
+            cMap.get(prop).accept(jtc);
+          }
+        } else {
+          if (!cMap.isEmpty()) {
+            findTextComponents(jc, cMap);
+          }
+        }
+        if (cMap.isEmpty()) {
+          break;
+        }
+      }
+    }
+  } 
   
-  static ImportDialog build(Window parent, Dao<Record, ?, ?> dao) {
-    ImportDialog importDialog = new ImportDialog(parent, dao);
+  static ImportDialog build(
+      Window parent,
+      RecordController<SiteRecord, Integer, @NonNull SiteField> controller,
+      RecordUI<@NonNull SiteField> recordUI
+  ) {
+    ImportDialog importDialog = new ImportDialog(parent, controller, recordUI);
     importDialog.build();
     return importDialog;
   }
@@ -62,23 +123,25 @@ public final class ImportDialog extends JDialog {
       String line = "";
       ImportRecord importRecord = null;
       while (line != null) {
+        line = line.trim();
         if (line.isEmpty()) {
           if (importRecord != null) {
+            controller.addBlankRecord();
             importRecord.updateRecord();
+            importRecord = null;
           }
-          importRecord = null;
         } else {
           if (importRecord == null) {
             importRecord = new ImportRecord();
           }
-          importRecord.addString(line.trim());
+          importRecord.addString(line);
         }
         line = reader.readLine();
       }
-//    } catch (IOException | SQLException e) {
     } catch (IOException e) {
       e.printStackTrace();
     }
+    dispose();
   }
   
   private class ImportRecord {
@@ -90,22 +153,11 @@ public final class ImportDialog extends JDialog {
     }
     
     public void updateRecord() {
-      Record newRecord = readRecord(stringList);
-//        printRecord(newRecord);
-      try {
-        recordDao.update(newRecord);
-      } catch (SQLException e) {
-        e.printStackTrace();
-      }
-    }
-
-    @NonNull
-    private Record readRecord(List<String> sList) {
       String pw;
       String userName;
       String source;
       String notes;
-      final String firstLine = sList.get(0).trim();
+      final String firstLine = stringList.get(0).trim();
 
       // If there is a word with an @, that's the username. Everything after it is the password, and
       // everything before it is the source.
@@ -138,58 +190,38 @@ public final class ImportDialog extends JDialog {
       }
 
       StringBuilder buffer = new StringBuilder();
-      for (int i = 1; i < sList.size(); ++i) {
+      for (int i = 1; i < stringList.size(); ++i) {
         //noinspection MagicCharacter
         buffer
-            .append(sList.get(i).trim())
+            .append(stringList.get(i).trim())
             .append('\n');
       }
       notes = buffer.toString().trim();
-      Record newRecord = new Record();
 
-      newRecord.setPassword(pw);
-      newRecord.setUserName(userName);
-      newRecord.setSource(source);
-      newRecord.setNotes(notes);
-      return newRecord;
+      assert (notesField != null);
+      assert (passwordField != null);
+      assert (usernameField != null);
+      assert (sourceField != null);
+
+      if (notesField == null) {
+        throw new IllegalStateException("Notes field");
+      }
+      notesField.setText(notes);
+
+      if (passwordField == null) {
+        throw new IllegalStateException("Password field");
+      }
+      passwordField.setText(pw);
+
+      if (usernameField == null) {
+        throw new IllegalStateException("UserName field");
+      }
+      usernameField.setText(userName);
+
+      if (sourceField == null) {
+        throw new IllegalStateException("Source field");
+      }
+      sourceField.setText(source);
     }
   }
-
-//  public static void run() {
-//
-//    @SuppressWarnings("HardcodedLineSeparator") @NonNls
-//    String stringData =
-//        "lollygagging me@mydomain.com swfes\n" +
-//        "Lots of Ads.\n" +
-//        '\n' +
-//        '\n' +
-//        "aol.com miguelMunoz myPw\n" +
-//        '\n' +
-//        "stackOverflow other stack exchange sites, too. MiguelMunoz soPassword\n" +
-//        '\n' +
-//        "fiddleSticks.com: fsPw\n" +
-//        "fs Line 2\n" +
-//        "fs Line 3\n" +
-//        "fs Line 4\n" +
-//        "fs Last Line\n" +
-//        '\n' +
-//        "you@yourDomain.net yourPW\n" +
-//        '\n' +
-//        "SingleWord\n" +
-//        '\n' +
-//        '\n' +
-//        '\n' +
-//        "lastLine pwerd";
-//
-////    doLoad(stringData); // Need to make ImportRecord static to run this.
-//
-//  }
-//
-//  private static void printRecord(Record record) {
-//    System.out.printf("Record: %n"); // NON-NLS
-//    System.out.printf("source:   %s%n", record.getSource()); // NON-NLS
-//    System.out.printf("UserName: %s%n", record.getUserName()); // NON-NLS
-//    System.out.printf("Password: %s%n", record.getPassword()); // NON-NLS
-//    System.out.printf("Notes:%n%s%n%n%n", record.getNotes()); // NON-NLS
-//  }
 }

@@ -51,6 +51,11 @@ import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 public final class RecordView<R extends @NonNull Object> extends JPanel implements RecordSelectionModel<R> {
   private static final int TEXT_COLUMNS = 40;
   private static final int TEXT_ROWS = 6;
+  public static final String SOURCE_LABEL = "Source";
+  public static final String USER_NAME_LABEL = "User Name";
+  public static final String PASSWORD_LABEL = "Password";
+  public static final String FIELD_NAME = "FieldName";
+  public static final String NOTES_LABEL = "Notes";
   private final JPanel labelPanel = new JPanel(new GridLayout(0, 1));
   private final JPanel fieldPanel = new JPanel(new GridLayout(0, 1));
   private final JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
@@ -87,10 +92,11 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     RecordController<R, Integer, @NonNull SiteField> theController = makeController(initialSort, dao, recordConstructor, getIdFunction);
     controller = theController;
     final JLabel idField = (JLabel) addField("ID", false, SiteField.ID, initialSort);
-    sourceField = (JTextComponent) addField("Source", true, SiteField.Source, initialSort);
-    final JTextComponent usernameField = (JTextComponent) addField("User Name", true, SiteField.Username, initialSort);
-    final JTextComponent pwField = (JTextComponent) addField("Password", true, SiteField.Password, initialSort);
+    sourceField = (JTextComponent) addField(SOURCE_LABEL, true, SiteField.Source, initialSort);
+    final JTextComponent usernameField = (JTextComponent) addField(USER_NAME_LABEL, true, SiteField.Username, initialSort);
+    final JTextComponent pwField = (JTextComponent) addField(PASSWORD_LABEL, true, SiteField.Password, initialSort);
     final JTextArea notesField = new JTextArea(TEXT_ROWS, TEXT_COLUMNS);
+    notesField.putClientProperty(FIELD_NAME, NOTES_LABEL);
     add(BorderLayout.CENTER, TangoUtils.scrollArea(notesField));
     assert getIdFunction != null : "Null id getter";
     assert setIdFunction != null : "Null id Setter";
@@ -208,6 +214,7 @@ public final class RecordView<R extends @NonNull Object> extends JPanel implemen
     JComponent field;
     if (editable) {
       field = new JTextField(TEXT_COLUMNS);
+      field.putClientProperty(FIELD_NAME, labelText);
     } else {
       field = new JLabel();
     }

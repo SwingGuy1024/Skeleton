@@ -2,55 +2,29 @@ package com.neptunedreams.skeleton.ui;
 
 import com.google.common.eventbus.Subscribe;
 import com.neptunedreams.framework.ErrorReport;
-import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.framework.data.RecordModel;
 import com.neptunedreams.framework.data.RecordModelListener;
 import com.neptunedreams.framework.data.SearchOption;
 import com.neptunedreams.framework.event.MasterEventBus;
 import com.neptunedreams.framework.task.ParameterizedCallable;
 import com.neptunedreams.framework.task.QueuedTask;
-import com.neptunedreams.framework.ui.ButtonGroupListener;
-import com.neptunedreams.framework.ui.ClearableTextField;
-import com.neptunedreams.framework.ui.EnumGroup;
-import com.neptunedreams.framework.ui.HidingPanel;
-import com.neptunedreams.framework.ui.RecordController;
-import com.neptunedreams.framework.ui.SwipeDirection;
-import com.neptunedreams.framework.ui.SwipeView;
-import com.neptunedreams.skeleton.data.Record;
+import com.neptunedreams.framework.ui.*;
 import com.neptunedreams.skeleton.data.SiteField;
+import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.ButtonModel;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JLayer;
-import javax.swing.JList;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
-import javax.swing.JToggleButton;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Window;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -386,7 +360,11 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   private void doImport() {
 //    ImportDialog importDialog = new ImportDialog((Window) getRootPane().getParent(), controller.getDao());
     @SuppressWarnings({"argument", "unchecked"})
-    ImportDialog importDialog = ImportDialog.build((Window) getRootPane().getParent(), (Dao<Record, ?, ?>) controller.getDao());
+    ImportDialog importDialog = ImportDialog.build(
+        (Window) getRootPane().getParent(),
+        (RecordController<SiteRecord, Integer, @NonNull SiteField>) controller,
+        (RecordUI<@NonNull SiteField>) this
+    );
     importDialog.setVisible(true);
   }
 

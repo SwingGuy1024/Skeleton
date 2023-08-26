@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.1-SNAPSHOT</version>
   <!--<modules>-->
   <!--<module>skeleton-derby</module>-->
   <!--</modules>-->
@@ -117,12 +117,15 @@
     <!--      <artifactId>javac</artifactId>-->
     <!--      <version>9+181-r4173-1</version>-->
     <!--    </dependency>-->
-    <dependency>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-assembly-plugin</artifactId>
-      <version>3.6.0</version>
-      <type>maven-plugin</type>
-    </dependency>
+
+<!-- Warning:(120, 5)  Provides transitive vulnerable dependency maven:org.codehaus.plexus:plexus-archiver:4.7.1 CVE-2023-37460 9.8 UNIX Symbolic Link (Symlink) Following vulnerability with high severity found  Results powered by Checkmarx(c)  -->
+<!-- So I commented this out. -->
+<!--    <dependency>-->
+<!--      <groupId>org.apache.maven.plugins</groupId>-->
+<!--      <artifactId>maven-assembly-plugin</artifactId>-->
+<!--      <version>3.6.0</version>-->
+<!--      <type>maven-plugin</type>-->
+<!--    </dependency>-->
   </dependencies>
 
   <build>
@@ -265,11 +268,11 @@
         <!-- Dependencies added when I switched to Java 11. -->
         <!-- See https://stackoverflow.com/questions/53696439/appbundle-maven-plugin-fails-on-mac-osx-with-java-10 -->
         <dependencies>
-          <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-archiver</artifactId>
-            <version>RELEASE</version>
-          </dependency>
+<!--          <dependency>-->
+<!--            <groupId>org.codehaus.plexus</groupId>-->
+<!--            <artifactId>plexus-archiver</artifactId>-->
+<!--            <version>RELEASE</version>-->
+<!--          </dependency>-->
           <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity-tools</artifactId>
@@ -374,7 +377,7 @@
         <version>1.4.0</version>
         <configuration>
           <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
-<!--          <cleanupDaemonThreads>false</cleanupDaemonThreads>-->
+          <cleanupDaemonThreads>false</cleanupDaemonThreads>
         </configuration>
       </plugin>
 

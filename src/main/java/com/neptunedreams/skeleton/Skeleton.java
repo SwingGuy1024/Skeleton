@@ -395,4 +395,18 @@ public final class Skeleton extends JPanel
   }
 }
 
-/**/
+/* Import Test Data:
+test1Source test1Username test1 password
+ testOne line of notes
+test1 another line of notes  
+  
+test2Source test2@username.com test2password
+
+test3 source test3 password
+
+test4Source test4@username.com after test4Password
+
+test5Source before test5@user.com test5Password
+
+test6Source before test6@user.gov after test6Password
+* */
