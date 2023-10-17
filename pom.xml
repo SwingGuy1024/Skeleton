@@ -4,14 +4,11 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
-  <!--<modules>-->
-  <!--<module>skeleton-derby</module>-->
-  <!--</modules>-->
+  <version>1.0.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>skeleton</name>
-  <url>http://maven.apache.org</url>
+  <url>https://maven.apache.org</url>
   <developers>
     <developer>
       <id>SwingGuy1024</id>
@@ -31,13 +28,14 @@
     <!--suppress UnresolvedMavenProperty -->
     <errorProneJavac>${com.google.errorprone:javac:jar}</errorProneJavac>
     <jooqVersion>3.12.3</jooqVersion>
-<!--    <javaHome>/Library/Java/JavaVirtualMachines/jdk1.8.0_212/Contents/Home</javaHome>-->
-    <!-- Java 17 doesn't work. I don't know why. -->
-    <!-- <javaHome>/Library/Java/JavaVirtualMachines/jdk-17.0.1.jdk</javaHome>-->
 
     <!-- This is JAVA_HOME with the two last directories trimmed off. This is only used when bundling the JDK -->
-<!--    <javaHome>/Library/Java/JavaVirtualMachines/jdk-11.0.16.1.jdk</javaHome>-->
+    <!-- <javaHome>/Library/Java/JavaVirtualMachines/jdk-11.0.16.1.jdk</javaHome>-->
+    <!-- <javaHome>/Library/Java/JavaVirtualMachines/jdk-17.0.1.jdk</javaHome>-->
     <javaHome>/Library/Java/JavaVirtualMachines/jdk-17.0.1.jdk</javaHome>
+    <iconFile>Earth_Neptune.icns</iconFile>
+    <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
+    <appName>Skeleton</appName>
   </properties>
 
   <dependencies>
@@ -100,25 +98,6 @@
       <artifactId>checker-qual</artifactId>
       <version>3.39.0</version>
     </dependency>
-    <!--    <dependency>-->
-    <!--      <groupId>org.checkerframework</groupId>-->
-    <!--      <artifactId>checker</artifactId>-->
-    <!--      <version>3.2.0</version>-->
-    <!--    </dependency>-->
-    <!-- If using JDK 8, add the following additional dependencies -->
-    <!--    <dependency>-->
-    <!--      <groupId>org.checkerframework</groupId>-->
-    <!--      <artifactId>jdk8</artifactId>-->
-    <!--      &lt;!&ndash; Upgrading this to 3.3 generates false compiler errors. &ndash;&gt;-->
-    <!--      &lt;!&ndash;suppress MavenPackageUpdate &ndash;&gt;-->
-    <!--      <version>3.2.0</version>-->
-    <!--    </dependency>-->
-    <!--    <dependency>-->
-    <!--      &lt;!&ndash; Java 8 only &ndash;&gt;-->
-    <!--      <groupId>com.google.errorprone</groupId>-->
-    <!--      <artifactId>javac</artifactId>-->
-    <!--      <version>9+181-r4173-1</version>-->
-    <!--    </dependency>-->
 
 <!-- Warning:(120, 5)  Provides transitive vulnerable dependency maven:org.codehaus.plexus:plexus-archiver:4.7.1 CVE-2023-37460 9.8 UNIX Symbolic Link (Symlink) Following vulnerability with high severity found  Results powered by Checkmarx(c)  -->
 <!-- So I commented this out. -->
@@ -168,11 +147,6 @@
             <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
           </annotationProcessors>
           <compilerArgs>
-            <!-- If using JDK 8, use only the two arguments immediately below. -->
-            <!--				    <arg>-J-Xbootclasspath/p:${errorProneJavac}</arg>-->
-            <!--				    <arg>-Xbootclasspath/p:${annotatedJdk}</arg>-->
-            <!-- If using JDK 11, remove the two arguments above, remove the
-                         space in the one below, and uncomment it. -->
             <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
             <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
             <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
@@ -206,7 +180,10 @@
 
       <!--This packs all the classes into a single jar-->
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.6.0</version>
+        
         <configuration>
           <archive>
             <manifest>
@@ -255,9 +232,6 @@
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.6</version>
         <configuration>
-          <!--<detail>-->
-          <!--<derby.system.home>${user.home}/.skeleton</derby.system.home>-->
-          <!--</detail>-->
           <archive>
             <manifest>
               <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
@@ -266,35 +240,34 @@
         </configuration>
       </plugin>
 
-      <!--This one will bundle everything into a Mac Application bundle.-->
+      <!--      This is an alternate plugin to bundle everything into a Mac Application Bundle, which-->
+      <!--      I added to support Java 17.-->
+      <!-- Source: https://github.com/perdian/macosappbundler-maven-plugin -->
       <plugin>
-        <!-- https://github.com/federkasten/appbundle-maven-plugin -->
-        <groupId>sh.tak.appbundler</groupId>
-        <artifactId>appbundle-maven-plugin</artifactId>
-        <version>1.2.0</version>
-        <!-- Dependencies added when I switched to Java 11. -->
-        <!-- See https://stackoverflow.com/questions/53696439/appbundle-maven-plugin-fails-on-mac-osx-with-java-10 -->
-        <dependencies>
-<!--          <dependency>-->
-<!--            <groupId>org.codehaus.plexus</groupId>-->
-<!--            <artifactId>plexus-archiver</artifactId>-->
-<!--            <version>RELEASE</version>-->
-<!--          </dependency>-->
-          <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity-tools</artifactId>
-            <version>2.0</version>
-          </dependency>
-        </dependencies>
+        <groupId>de.perdian.maven.plugins</groupId>
+        <artifactId>macosappbundler-maven-plugin</artifactId>
+        <version>1.20.0</version>
         <configuration>
-          <!--Put your custom Info.plist and Icon.icns under your maven resource paths (src/main/resources on default configuration).-->
-          <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
-          <!--<dictionaryFile>YourCustomInfo.plist</dictionaryFile>-->
-          <iconFile>Earth_Neptune.icns</iconFile>
-          <!-- Put this line in to bundle the jdk with the app.-->
-          <jrePath>${javaHome}</jrePath>
-          <!--suppress MavenModelInspection -->
-          <!--<jrePath>${env.JAVA_HOME}/../..</jrePath>-->
+          <plist>
+            <JVMMainClassName>${mainClass}</JVMMainClassName>
+
+            <CFBundleIconFile>src/main/resources/${iconFile}</CFBundleIconFile>
+            <CFBundleDisplayName>${appName}</CFBundleDisplayName>
+            <CFBundleDevelopmentRegion>English</CFBundleDevelopmentRegion>
+            <!--            <CFBundleURLTypes>-->
+            <!--              <string>msa</string>-->
+            <!--            </CFBundleURLTypes>-->
+            <JVMVersion>17+</JVMVersion>
+            <!--            <JVMRuntimePath>(unused)</JVMRuntimePath>-->
+            <!--            <JVMOptions>-->
+            <!--              <string>-Dfoo=bar</string>-->
+            <!--              <string>-Dx=y</string>-->
+            <!--            </JVMOptions>-->
+            <!--            <JVMArguments>-->
+            <!--              <string>-example</string>-->
+            <!--              <string>${someProperty}</string>-->
+            <!--            </JVMArguments>-->
+          </plist>
         </configuration>
         <executions>
           <execution>
@@ -305,6 +278,7 @@
           </execution>
         </executions>
       </plugin>
+
 
       <!--This is the jooq code generation plugin-->
       <plugin>
@@ -333,9 +307,6 @@
         <!-- Manage the plugin's dependency. -->
         <dependencies>
           <dependency>
-            <!--<groupId>org.apache.derby</groupId>-->
-            <!--<artifactId>derby</artifactId>-->
-            <!--<version>10.14.1.0</version>-->
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.41.2.2</version>
@@ -359,7 +330,6 @@
           <!-- Generator parameters -->
           <generator>
             <database>
-              <!--<name>org.jooq.util.derby.DerbyDatabase</name>-->
               <name>org.jooq.meta.sqlite.SQLiteDatabase</name>
               <includes>.*</includes>
               <!--<excludes></excludes>-->
@@ -387,15 +357,6 @@
           <cleanupDaemonThreads>false</cleanupDaemonThreads>
         </configuration>
       </plugin>
-
     </plugins>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.11.0</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>  </build>
+  </build>
 </project>
