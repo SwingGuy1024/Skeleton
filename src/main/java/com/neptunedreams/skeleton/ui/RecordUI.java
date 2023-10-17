@@ -64,7 +64,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
 
   // We set the initial text to a space, so we can fire the initial search by setting the text to the empty String.
   private final JTextField findField = new JTextField(" ", 10);
-  private final ClearableTextField clearableTextField = new ClearableTextField(findField);
+  private final ClearableTextField clearableTextField = ClearableTextField.wrap(findField);
   private final RecordController<R, Integer, @NonNull SiteField> controller;
   private final EnumGroup<@NonNull SiteField> searchFieldGroup = new EnumGroup<>();
   private final @NonNull RecordModel<? extends R> recordModel;

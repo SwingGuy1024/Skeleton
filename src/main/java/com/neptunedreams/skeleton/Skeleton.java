@@ -1,5 +1,35 @@
 package com.neptunedreams.skeleton;
 
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.TreeMap;
+import java.util.prefs.Preferences;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
+import javax.swing.WindowConstants;
+
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import com.neptunedreams.framework.ErrorReport;
 import com.neptunedreams.framework.data.ConnectionSource;
 import com.neptunedreams.framework.data.Dao;
@@ -19,30 +49,6 @@ import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.WindowConstants;
-import java.awt.Point;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.prefs.Preferences;
 
 /**
  * Skeleton Key Application
@@ -124,14 +130,10 @@ public final class Skeleton extends JPanel
   private final @NonNull RecordController<SiteRecord, Integer, @NonNull SiteField> controller;
   @SuppressWarnings("OverlyBroadThrowsClause")
   public static void main(String[] args) throws IOException, ClassNotFoundException {
-    try {
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    } catch(UnsupportedLookAndFeelException | InstantiationException | IllegalAccessException e){
-      throw new IllegalStateException("Should not happen", e);
-    }
+    FlatMacDarkLaf.setup();
     boolean doImport = (args.length > 0) && Objects.equals(args[0], "-import");
     int initialDelta = prefs.getInt(FONT_DELTA, 0);
-    
+
     final Skeleton skeleton = makeMainFrame(doImport, initialDelta);
     TangoUtils.replaceAllCarets(skeleton, StandardCaret::new);
 
