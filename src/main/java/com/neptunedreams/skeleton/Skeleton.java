@@ -1,6 +1,5 @@
 package com.neptunedreams.skeleton;
 
-import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -17,19 +16,12 @@ import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.UIDefaults;
-import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
-import com.formdev.flatlaf.FlatDarculaLaf;
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatIntelliJLaf;
-import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import com.neptunedreams.framework.ErrorReport;
 import com.neptunedreams.framework.data.ConnectionSource;
 import com.neptunedreams.framework.data.Dao;
@@ -47,8 +39,8 @@ import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Skeleton Key Application
@@ -130,7 +122,7 @@ public final class Skeleton extends JPanel
   private final @NonNull RecordController<SiteRecord, Integer, @NonNull SiteField> controller;
   @SuppressWarnings("OverlyBroadThrowsClause")
   public static void main(String[] args) throws IOException, ClassNotFoundException {
-    FlatMacDarkLaf.setup();
+    TangoUtils.installDarkLookAndFeel();
     boolean doImport = (args.length > 0) && Objects.equals(args[0], "-import");
     int initialDelta = prefs.getInt(FONT_DELTA, 0);
 
@@ -147,9 +139,8 @@ public final class Skeleton extends JPanel
     });
   }
 
-  private static @Nullable JFrame frame;
+  private static @MonotonicNonNull JFrame frame;
   
-  @SuppressWarnings("dereference.of.nullable") // I don't know why I'm getting this error! On statements marked // *
   private static @NonNull Skeleton makeMainFrame(final boolean doImport, int delta) throws IOException, ClassNotFoundException {
     LFSizeAdjuster.instance.setDelta(delta);
     Point priorLocation = null;

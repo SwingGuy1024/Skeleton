@@ -22,7 +22,19 @@ public class JComponent extends Container {
   public void setBorder(@UnknownInitialization JComponent this, @Nullable Border border);
 }
 
+public class AbstractAction {
+  public AbstractAction(String name, @Nullable Icon icon);
+  static void setToolTipTextFromAction(JComponent c, @Nullable Action a);
+  static boolean hasSelectedKey(@Nullable Action a);
+  public void putValue(String key, @Nullable Object newValue);
+  public @Nullable Object[] getKeys();
+  protected void firePropertyChange(@Nullable String propertyName, @Nullable Object oldValue, @Nullable Object newValue);
+}
+
 package java.awt;
+
 public class Container extends Component {
   public void add(@UnknownInitialization Container this, @NonNull Component component, @NonNull Object constraint);
+  public Component add(@UnknownInitialization Container this, String name, Component comp);
+  public void add(@UnknownInitialization Container this, Component comp, Object constraints);
 }
