@@ -4,7 +4,7 @@
 
   <groupId>neptunedreams.com</groupId>
   <artifactId>skeleton</artifactId>
-  <version>1.0.3-SNAPSHOT</version>
+  <version>${revision}${sha1}${changelist}</version>
   <packaging>jar</packaging>
 
   <name>skeleton</name>
@@ -21,6 +21,11 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>17</maven.compiler.release>
 
+    <!--  See https://maven.apache.org/maven-ci-friendly.html#Multi_Module_Setup  -->
+    <revision>1.0.4</revision>
+    <changelist>-SNAPSHOT</changelist>
+    <sha1/>
+
     <!-- Reference: https://checkerframework.org/manual/#maven   -->
     <!-- These properties will be set by the Maven Dependency plugin -->
     <!--suppress UnresolvedMavenProperty, GradlePackageUpdate -->
@@ -36,13 +41,14 @@
     <iconFile>Earth_Neptune.icns</iconFile>
     <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
     <appName>Skeleton</appName>
+    <tango.version>2.0.24-SNAPSHOT</tango.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.neptunedreams</groupId>
       <artifactId>tango</artifactId>
-      <version>2.0.24-SNAPSHOT</version>
+      <version>${tango.version}</version>
     </dependency>
 
     <dependency>
@@ -166,6 +172,24 @@
         </configuration>
       </plugin>
 
+      <!--   This lets us read Maven properties in the application. See https://www.baeldung.com/java-accessing-maven-properties   -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.0.0</version>
+        <executions>
+          <execution>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>write-project-properties</goal>
+            </goals>
+            <configuration>
+              <outputFile>${project.build.outputDirectory}/pom.properties</outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
