@@ -229,6 +229,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
       final boolean vis = text.trim().contains(" ");
       searchOptionsPanel.setContentVisible(vis);
     } catch (BadLocationException e1) {
+      //noinspection CallToPrintStackTrace
       e1.printStackTrace();
     }
   }
@@ -551,6 +552,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   
   private JToggleButton makeEditButton(@UnderInitialization RecordUI<R> this, JToggleButton.ToggleButtonModel model) {
     JToggleButton editButton = new JToggleButton(Resource.EDIT_PNG.getIcon());
+    editButton.setRequestFocusEnabled(false);
     editButton.setModel(model);
     editButton.setToolTipText(Resource.EDIT_PNG.getText());
     return editButton;

@@ -22,7 +22,7 @@
     <maven.compiler.release>17</maven.compiler.release>
 
     <!--  See https://maven.apache.org/maven-ci-friendly.html#Multi_Module_Setup  -->
-    <revision>1.0.5</revision>
+    <revision>1.0.6</revision>
     <changelist>-SNAPSHOT</changelist>
     <sha1/>
 
@@ -41,7 +41,7 @@
     <iconFile>Earth_Neptune.icns</iconFile>
     <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
     <appName>Skeleton</appName>
-    <tango.version>2.0.25-SNAPSHOT</tango.version>
+    <tango.version>2.0.28-SNAPSHOT</tango.version>
   </properties>
 
   <dependencies>
