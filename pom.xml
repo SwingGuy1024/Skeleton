@@ -41,7 +41,7 @@
     <iconFile>Earth_Neptune.icns</iconFile>
     <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
     <appName>Skeleton</appName>
-    <tango.version>2.0.28-SNAPSHOT</tango.version>
+    <tango.version>2.0.29-SNAPSHOT</tango.version>
   </properties>
 
   <dependencies>
@@ -274,7 +274,7 @@
         <configuration>
           <plist>
             <JVMMainClassName>${mainClass}</JVMMainClassName>
-
+      
             <CFBundleIconFile>src/main/resources/${iconFile}</CFBundleIconFile>
             <CFBundleDisplayName>${appName}</CFBundleDisplayName>
             <CFBundleDevelopmentRegion>English</CFBundleDevelopmentRegion>
