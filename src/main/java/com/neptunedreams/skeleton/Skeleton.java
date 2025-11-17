@@ -246,6 +246,7 @@ public final class Skeleton
             } catch (SQLException ex) {
               ErrorReport.reportException("Saving All Records", ex);
               System.out.println("Error");
+              //noinspection CallToPrintStackTrace
               ex.printStackTrace();
             }
           }
@@ -253,6 +254,7 @@ public final class Skeleton
       }
 
     } catch (SQLException e) {
+      //noinspection CallToPrintStackTrace
       e.printStackTrace();
       shutDownDatabase(info);
       throw new IOException(e); // don't even open the window!
