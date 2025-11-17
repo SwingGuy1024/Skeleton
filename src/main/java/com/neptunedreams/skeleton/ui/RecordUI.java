@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -47,6 +48,7 @@ import com.neptunedreams.framework.task.ParameterizedCallable;
 import com.neptunedreams.framework.task.QueuedTask;
 import com.neptunedreams.framework.ui.ButtonGroupListener;
 import com.neptunedreams.framework.ui.ClearableTextField;
+import com.neptunedreams.framework.ui.Constrainer;
 import com.neptunedreams.framework.ui.EnumGroup;
 import com.neptunedreams.framework.ui.HidingPanel;
 import com.neptunedreams.framework.ui.RecordController;
@@ -362,16 +364,17 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   }
 
   private JPanel getNavButtons() {
-    JPanel buttons = new JPanel(new GridLayout(1, 0));
+    JPanel buttons = new JPanel(new GridBagLayout());
     final JButton importBtn = new JButton("Imp");
-    buttons.add(Resource.BULLET_ADD_PNG.createButton((e1) -> addBlankRecord(e1)));
-    buttons.add(Box.createHorizontalStrut(10));
-    buttons.add(first);
-    buttons.add(prev);
-    buttons.add(next);
-    buttons.add(last);
-    buttons.add(Box.createHorizontalStrut(10));
-    buttons.add(edit);
+    Constrainer constrainer = new Constrainer();
+    buttons.add(Resource.BULLET_ADD_PNG.createButton((e1) -> addBlankRecord(e1)), constrainer);
+    buttons.add(Box.createHorizontalStrut(10), constrainer);
+    buttons.add(first, constrainer);
+    buttons.add(prev, constrainer);
+    buttons.add(next, constrainer);
+    buttons.add(last, constrainer);
+    buttons.add(Box.createHorizontalStrut(10), constrainer);
+    buttons.add(edit, constrainer);
 //    buttons.add(importBtn);
 
     @SuppressWarnings({"assignment", "dereference.of.nullable"})
