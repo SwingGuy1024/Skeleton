@@ -52,7 +52,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  * immediately after exporting and deleting the database.
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
-public final class Skeleton extends JPanel
+public final class Skeleton
 {
   @SuppressWarnings("HardcodedFileSeparator")
   private static final String EXPORT_FILE = "/.SkeletonData.serial";
@@ -127,7 +127,6 @@ public final class Skeleton extends JPanel
     int initialDelta = prefs.getInt(FONT_DELTA, 0);
 
     final Skeleton skeleton = makeMainFrame(doImport, initialDelta);
-    TangoUtils.replaceAllCarets(skeleton, StandardCaret::new);
 
     doExport(args, skeleton);
     LFSizeAdjuster.instance.setRelaunch((delta) -> {
@@ -137,6 +136,7 @@ public final class Skeleton extends JPanel
         throw new IllegalStateException("Should not happen", e);
       }
     });
+    TangoUtils.replaceAllCarets(skeleton.mainPanel, StandardCaret::new);
   }
 
   private static @MonotonicNonNull JFrame frame;
