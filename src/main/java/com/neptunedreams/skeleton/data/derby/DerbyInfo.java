@@ -7,12 +7,13 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Properties;
+
 import com.neptunedreams.framework.data.AbstractDatabaseInfo;
 import com.neptunedreams.framework.data.ConnectionSource;
 import com.neptunedreams.framework.data.DBField;
 import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.skeleton.data.Record;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -32,10 +33,8 @@ public class DerbyInfo extends AbstractDatabaseInfo {
     this("/.skeleton");
   }
   
-  @SuppressWarnings({"initialization.fields.uninitialized","method.invocation.invalid"}) // Constructor doesn't initialize derbyDaoFactory
-  DerbyInfo(@NonNull String derbyHomDir) {
+  DerbyInfo(@NotNull String derbyHomDir) {
     super(derbyHomDir);
-    @SuppressWarnings("method.invocation")
     final String homeDir = getHomeDir();
     System.setProperty(DERBY_SYSTEM_HOME, homeDir); // method.invocation.invalid: getHomeDir
 
@@ -49,8 +48,8 @@ public class DerbyInfo extends AbstractDatabaseInfo {
   }
 
   @Override
-  public <T, PK, F extends DBField> Dao<T, PK, @NonNull F> getDao(Class<T> eClass, ConnectionSource source) {
-    Dao<T, PK, @NonNull F> dao = derbyDaoFactory.getDao(eClass);
+  public <T, PK, F extends DBField> Dao<T, PK, @NotNull F> getDao(Class<T> eClass, ConnectionSource source) {
+    Dao<T, PK, @NotNull F> dao = derbyDaoFactory.getDao(eClass);
     if (dao == null) {
       throw new IllegalArgumentException(eClass.toString());
     }

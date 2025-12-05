@@ -6,14 +6,15 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
+
 import com.neptunedreams.framework.data.ConnectionSource;
 import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.gen.Tables;
 import com.neptunedreams.skeleton.gen.tables.Site;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
@@ -26,9 +27,9 @@ import org.jooq.SelectWhereStep;
 import org.jooq.TableField;
 import org.jooq.impl.DSL;
 
-import static com.neptunedreams.skeleton.gen.Tables.*;
-import static org.jooq.SQLDialect.*;
-import static org.jooq.impl.DSL.*;
+import static com.neptunedreams.skeleton.gen.Tables.SITE;
+import static org.jooq.SQLDialect.SQLITE;
+import static org.jooq.impl.DSL.max;
 
 /**
  * <p>Create statement: </p>
@@ -48,14 +49,14 @@ import static org.jooq.impl.DSL.*;
  * @author Miguel Muñoz
  */
 @SuppressWarnings({"StringConcatenation", "HardCodedStringLiteral"})
-public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, @NonNull SiteField> {
+public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, @NotNull SiteField> {
 
-  private static final Map<SiteField, @NonNull TableField<SiteRecord, ?>> fieldMap = makeFieldMap();
+  private static final Map<SiteField, @NotNull TableField<SiteRecord, ?>> fieldMap = makeFieldMap();
   private final ConnectionSource connectionSource;
-  private @NonNull Connection connection;
+  private @NotNull Connection connection;
 
-  private static Map<SiteField, @NonNull TableField<SiteRecord, ?>> makeFieldMap() {
-    final EnumMap<SiteField, @NonNull TableField<SiteRecord, ?>> theFieldMap = new EnumMap<>(SiteField.class);
+  private static Map<SiteField, @NotNull TableField<SiteRecord, ?>> makeFieldMap() {
+    final EnumMap<SiteField, @NotNull TableField<SiteRecord, ?>> theFieldMap = new EnumMap<>(SiteField.class);
     theFieldMap.put(SiteField.ID,       Site.SITE.ID);
     theFieldMap.put(SiteField.Source,   Site.SITE.SOURCE);
     theFieldMap.put(SiteField.Username, Site.SITE.USERNAME);
@@ -158,7 +159,7 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, @NonNull 
     }
   }
 
-  private Collection<SiteRecord> getOrderedSiteRecords(final @NonNull SiteField orderBy, final SelectWhereStep<SiteRecord> siteRecords) {
+  private Collection<SiteRecord> getOrderedSiteRecords(final @NotNull SiteField orderBy, final SelectWhereStep<SiteRecord> siteRecords) {
     try (final SelectSeekStep1<SiteRecord, ?> foundRecords = siteRecords.orderBy(getField(orderBy))) {
       return foundRecords.fetch();
     }
@@ -191,12 +192,11 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, @NonNull 
    * @param orderBy The orderBy field
    * @return A Field{@literal <String>} to pass to the orderBy() method to support case-insensitive ordering.
    */
-  @SuppressWarnings("argument")
-  private @NonNull TableField<SiteRecord, ?> getField(final @Nullable SiteField orderBy) {
+  private @NotNull TableField<SiteRecord, ?> getField(final @Nullable SiteField orderBy) {
     return Objects.requireNonNull(fieldMap.get(orderBy));
   }
 
-  private @NonNull String wrapWithWildCards(final String text) {
+  private @NotNull String wrapWithWildCards(final String text) {
     return WC + text + WC;
   }
 
@@ -241,15 +241,14 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, @NonNull 
   @Override
   public Collection<SiteRecord> findInField(
       final String text, 
-      final @NonNull SiteField findBy, 
+      final @NotNull SiteField findBy, 
       final @Nullable SiteField orderBy
   ) throws SQLException {
     String wildCardText = wrapWithWildCards(text);
 
     DSLContext dslContext = getDslContext();
 
-    @SuppressWarnings("argument")
-    final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
+    final @NotNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
     try (
         final SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE);
         final SelectConditionStep<SiteRecord> where = siteRecords.where((findByField.like(wildCardText)))
@@ -263,11 +262,10 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, @NonNull 
   }
 
   @Override
-  public Collection<SiteRecord> findAnyInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
+  public Collection<SiteRecord> findAnyInField(final @NotNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
     DSLContext dslContext = getDslContext();
 
-    @SuppressWarnings("argument")
-    final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
+    final @NotNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
     Condition condition = SITE.SOURCE.lt(""); // Should always be false
     try (SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
       for (String txt : text) {
@@ -279,12 +277,11 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, @NonNull 
   }
 
   @Override
-  public Collection<SiteRecord> findAllInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
+  public Collection<SiteRecord> findAllInField(final @NotNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) throws SQLException {
 
     DSLContext dslContext = getDslContext();
 
-    @SuppressWarnings("argument")
-    final @NonNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
+    final @NotNull TableField<SiteRecord, ?> findByField = Objects.requireNonNull(fieldMap.get(findBy));
     Condition condition = SITE.SOURCE.ge(""); // Should always be true
     try (SelectWhereStep<SiteRecord> siteRecords = dslContext.selectFrom(SITE)) {
       for (String txt : text) {
@@ -325,15 +322,14 @@ public final class SQLiteRecordDao implements Dao<SiteRecord, Integer, @NonNull 
   }
 
   // We must set the id to null before inserting into the database, to force the database to choose an unused id.
-  // But the getter will never return null, so we declared the id to be nonNull. So we suppress the warning, since
+  // But the getter will never return null, so we declared the id to be NotNull. So we suppress the warning, since
   // the id will become non-null by the time we exit this method.
-  @SuppressWarnings("argument")
   @Override
   public void insert(final SiteRecord entity) throws SQLException {
 
     DSLContext dslContext = getDslContext();
     //noinspection ConstantConditions
-    entity.setId(null); // argument.type.incompatible null assumed not allowed in generated code. See comment above.
+    entity.setId(null); // not allowed in generated code. See comment above.
     Integer id = entity.getId(); 
     entity.setId(id);
     dslContext.attach(entity);

@@ -30,12 +30,10 @@ import static org.junit.Assert.*;
  *
  * @author Miguel Muñoz
  */
-@SuppressWarnings({"HardCodedStringLiteral", "HardcodedLineSeparator", "MagicNumber", "initialization.static.fields.uninitialized"})
+@SuppressWarnings({"HardCodedStringLiteral", "HardcodedLineSeparator", "MagicNumber"})
 public class SqLiteRecordDaoTest {
 
-  @SuppressWarnings("initialization.static.field.uninitialized")
   private static ConnectionSource connectionSource;
-  @SuppressWarnings("initialization.static.field.uninitialized")
   private static SQLiteRecordDao dao;
 
   @BeforeClass

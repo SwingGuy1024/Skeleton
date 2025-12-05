@@ -8,12 +8,13 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+
 import com.neptunedreams.framework.data.ConnectionSource;
 import com.neptunedreams.framework.data.Dao;
 import com.neptunedreams.skeleton.data.Record;
 import com.neptunedreams.skeleton.data.SiteField;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.neptunedreams.framework.data.DataUtil.printResultSet;
 
@@ -23,10 +24,10 @@ import static com.neptunedreams.framework.data.DataUtil.printResultSet;
  * <p>Date: 10/29/17
  * <p>Time: 1:03 AM
  *
- * @author Miguel Mu\u00f1oz
+ * @author Miguel Muñoz
  */
-@SuppressWarnings({"StringConcatenation", "SqlResolve", "StringConcatenationMissingWhitespace", "SqlNoDataSourceInspection", "resource", "HardCodedStringLiteral"})
-public final class DerbyRecordDao implements Dao<Record, Integer, SiteField> {
+@SuppressWarnings({"StringConcatenation", "SqlResolve", "SqlNoDataSourceInspection", "HardCodedStringLiteral"})
+public final class DerbyRecordDao implements Dao<Record, Integer, @NotNull SiteField> {
   private static final String CREATE_TABLE = "CREATE TABLE record (" +
       "id INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY," +
       "source VARCHAR(256) NOT NULL," +
@@ -43,7 +44,7 @@ public final class DerbyRecordDao implements Dao<Record, Integer, SiteField> {
   private static final String ORDER_BY = "ORDER BY ";
   private static final char WC = '%';
   private static final String SELECT_MAX = "SELECT MAX(ID) FROM RECORD";
-  private final @NonNull Connection connection;
+  private final @NotNull Connection connection;
   
   private DerbyRecordDao(ConnectionSource source) {
     connection = source.getConnection();
@@ -131,7 +132,6 @@ public final class DerbyRecordDao implements Dao<Record, Integer, SiteField> {
     //   "There is a ? parameter in the select list.  This is not allowed."
     final String sql = sqlWithOrder(FIND, orderBy);
     PreparedStatement statement = connection.prepareStatement(sql);
-    //noinspection StringConcatenationMissingWhitespace
     String wildCardText = WC + text + WC;
 //    System.out.println("WC text: " + wildCardText);
     statement.setObject(1, wildCardText);
@@ -142,13 +142,12 @@ public final class DerbyRecordDao implements Dao<Record, Integer, SiteField> {
   }
 
   @Override
-  public Collection<Record> findInField(final String text, final @NonNull SiteField fieldName, final @Nullable SiteField orderBy) throws SQLException {
+  public Collection<Record> findInField(final String text, final @NotNull SiteField fieldName, final @Nullable SiteField orderBy) throws SQLException {
     // using setObject() for the orderBy value gives this error message:
     //   "There is a ? parameter in the select list.  This is not allowed."
     final String sql = sqlWithOrder(FIND_BY_FIELD, orderBy);
 //    System.out.println("Find By Field: " + sql);
     PreparedStatement statement = connection.prepareStatement(sql);
-    //noinspection StringConcatenationMissingWhitespace
     String wildCardText = WC + text + WC;
     statement.setObject(1, fieldName.toString());
     statement.setObject(2, wildCardText);
@@ -166,12 +165,12 @@ public final class DerbyRecordDao implements Dao<Record, Integer, SiteField> {
   }
 
   @Override
-  public Collection<Record> findAnyInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) {
+  public Collection<Record> findAnyInField(final @NotNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) {
     throw new AssertionError("Not yet written");
   }
 
   @Override
-  public Collection<Record> findAllInField(final @NonNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) {
+  public Collection<Record> findAllInField(final @NotNull SiteField findBy, final @Nullable SiteField orderBy, final String... text) {
     throw new AssertionError("Not yet written");
   }
 
@@ -284,7 +283,7 @@ public final class DerbyRecordDao implements Dao<Record, Integer, SiteField> {
    * @throws SQLException duh
    */
 //  @Override
-  @SuppressWarnings({"HardCodedStringLiteral", "resource", "JDBCResourceOpenedButNotSafelyClosed"})
+  @SuppressWarnings({"HardCodedStringLiteral", "JDBCResourceOpenedButNotSafelyClosed"})
   <T> Collection<T> getTableInfo() throws SQLException {
     String sql1 = "select * from \"SYS\".\"SYSSCHEMAS\"";
     PreparedStatement statement = connection.prepareStatement(sql1);

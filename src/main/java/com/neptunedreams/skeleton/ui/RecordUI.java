@@ -54,15 +54,10 @@ import com.neptunedreams.framework.ui.HidingPanel;
 import com.neptunedreams.framework.ui.RecordController;
 import com.neptunedreams.framework.ui.SwipeDirection;
 import com.neptunedreams.framework.ui.SwipeView;
+import com.neptunedreams.framework.ui.TangoUtils;
 import com.neptunedreams.skeleton.data.SiteField;
 import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
-import org.checkerframework.checker.initialization.qual.Initialized;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
-
-//import org.checkerframework.checker.initialization.qual.UnknownInitialization;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Functions
@@ -76,8 +71,8 @@ import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
  * 
  * @author Miguel Muñoz
  */
-@SuppressWarnings("HardCodedStringLiteral")
-public final class RecordUI<R extends @NonNull Object> extends JPanel implements RecordModelListener {
+@SuppressWarnings({"HardCodedStringLiteral", "ExtractMethodRecommender"})
+public final class RecordUI<R extends @NotNull Object> extends JPanel implements RecordModelListener {
 
   // TODO:  The QueuedTask is terrific, but it doesn't belong in this class. It belongs in the Controller. That way,
   // todo   it can be accessed by other UI classes like RecordView. To do this, I also need to move the SearchOption
@@ -95,9 +90,9 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   // We set the initial text to a space, so we can fire the initial search by setting the text to the empty String.
   private final JTextField findField = new JTextField(" ", 10);
   private final ClearableTextField clearableTextField = ClearableTextField.wrap(findField);
-  private final RecordController<R, Integer, @NonNull SiteField> controller;
-  private final EnumGroup<@NonNull SiteField> searchFieldGroup = new EnumGroup<>();
-  private final @NonNull RecordModel<? extends R> recordModel;
+  private final RecordController<R, Integer, @NotNull SiteField> controller;
+  private final EnumGroup<@NotNull SiteField> searchFieldGroup = new EnumGroup<>();
+  private final @NotNull RecordModel<? extends R> recordModel;
   private final JButton prev = Resource.ARROW_LEFT_PNG.createButton(null);
   private final JButton next = Resource.ARROW_RIGHT_PNG.createButton(null);
   private final JButton first = Resource.ARROW_FIRST_PNG.createButton(null); // null, for now
@@ -105,14 +100,14 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   private final JToggleButton edit;
 
   private final JLabel infoLine = new JLabel("");
-  private final EnumGroup<@NonNull SearchOption> optionsGroup = new EnumGroup<>();
-  private @MonotonicNonNull SwipeView<@NonNull RecordView<R>> swipeView=null;
+  private final EnumGroup<@NotNull SearchOption> optionsGroup = new EnumGroup<>();
+  private SwipeView<@NotNull RecordView<R>> swipeView=null;
 
   private final HidingPanel searchOptionsPanel = makeSearchOptionsPanel(optionsGroup);
 
   // recordConsumer is how the QueuedTask communicates with the application code.
-  private final Consumer<Collection<@NonNull R>> recordConsumer = createRecordConsumer();
-  private final @NonNull QueuedTask<@NonNull String, Collection<R>> queuedTask;
+  private final Consumer<Collection<@NotNull R>> recordConsumer = createRecordConsumer();
+  private final @NotNull QueuedTask<@NotNull String, Collection<R>> queuedTask;
   private final LFSizeAdjuster sizeAdjuster = LFSizeAdjuster.instance;
 
   /**
@@ -121,10 +116,8 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
    * @param searchOptionsGroup The searchOptions Group, to which the radio buttons will all be added.
    * @return The search options panel
    */
-//  @SuppressWarnings("methodref.inference.unimplemented")
   private HidingPanel makeSearchOptionsPanel(
-      @UnderInitialization RecordUI<R> this,
-      @SuppressWarnings("BoundedWildcard") EnumGroup<@NonNull SearchOption> searchOptionsGroup
+      @SuppressWarnings("BoundedWildcard") EnumGroup<@NotNull SearchOption> searchOptionsGroup
   ) {
     JPanel optionsPanel = new JPanel(new GridLayout(1, 0));
     JRadioButton findExact = searchOptionsGroup.add(SearchOption.findWhole);
@@ -136,8 +129,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     searchOptionsGroup.setSelected(SearchOption.findAny);
 
 //    optionsGroup.addButtonGroupListener(selectedButtonModel -> selectionChanged(selectedButtonModel));
-    @SuppressWarnings("methodref.receiver.bound") // TODO: I don't understand why I need this.
-    @UnknownKeyFor @Initialized ButtonGroupListener selectionChanged = this::selectionChanged;
+    ButtonGroupListener selectionChanged = this::selectionChanged;
     searchOptionsGroup.addButtonGroupListener(selectionChanged); // Using a lambda is an error. This is a warning. 
 
     final HidingPanel hidingPanel = HidingPanel.create(optionsPanel);
@@ -145,19 +137,17 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     return hidingPanel;
   }
 
-//  @SuppressWarnings({"method.invocation.invalid", "argument.type.incompatible"})
-  public static <RR extends @NonNull Object> RecordUI<RR> makeRecordUI(
-      @NonNull RecordModel<? extends RR> model,
+  public static <RR extends @NotNull Object> RecordUI<RR> makeRecordUI(
+      @NotNull RecordModel<? extends RR> model,
       RecordView<RR> theView,
-      @SuppressWarnings("BoundedWildcard") RecordController<RR, Integer, @NonNull SiteField> theController
+      @SuppressWarnings("BoundedWildcard") RecordController<RR, Integer, @NotNull SiteField> theController
   ) {
     final RecordUI<RR> recordUI = new RecordUI<>(model, theController, theView.getEditModel());
     final JLayer<RecordView<RR>> layer = recordUI.wrapInLayer(theView);
     recordUI.add(layer, BorderLayout.CENTER);
     recordUI.add(recordUI.createControlPanel(), BorderLayout.PAGE_START);
     recordUI.add(recordUI.createTrashPanel(), BorderLayout.PAGE_END);
-    @SuppressWarnings("assignment")
-    final @NonNull Color bgColor = recordUI.getBackground();
+    final @NotNull Color bgColor = recordUI.getBackground();
     recordUI.setBorder(new MatteBorder(4, 4, 4, 4, bgColor));
     model.addModelListener(recordUI); // argument.type.incompatible checker error suppressed
     recordUI.findField.getDocument().addDocumentListener(new DocumentListener() {
@@ -182,8 +172,8 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
   } 
   
   private RecordUI(
-      @NonNull RecordModel<? extends R> model,
-      @SuppressWarnings("BoundedWildcard") RecordController<R, Integer, @NonNull SiteField> theController,
+      @NotNull RecordModel<? extends R> model,
+      @SuppressWarnings("BoundedWildcard") RecordController<R, Integer, @NotNull SiteField> theController,
       JToggleButton.ToggleButtonModel editModel
   ) {
     super(new BorderLayout());
@@ -194,7 +184,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     queuedTask.launch();
   }
   
-  private void setupActions(SwipeView<@NonNull RecordView<R>> swipeView) {
+  private void setupActions(SwipeView<@NotNull RecordView<R>> swipeView) {
     swipeView.assignRestrictedRepeatingKeystrokeAction("Previous", KeyEvent.VK_LEFT, 0, () -> recordModel.goPrev(), SwipeDirection.SWIPE_RIGHT);
     swipeView.assignRestrictedRepeatingKeystrokeAction("Next", KeyEvent.VK_RIGHT, 0, () -> recordModel.goNext(), SwipeDirection.SWIPE_LEFT);
 
@@ -291,7 +281,6 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     final JList<Object> fontList = sizeAdjuster.createFontSizeList();
     JLabel label = new JLabel("Choose your Font Size…");
     //noinspection MagicNumber
-    @SuppressWarnings("argument")
     Border border = BorderFactory.createMatteBorder(0, 0, 16, 0, label.getBackground());
     label.setBorder(border);
     
@@ -330,13 +319,13 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     final String javaVersion = "Java version " + System.getProperty("java.version");
     final String appVersion = String.format("App: %s", properties.getProperty("revision"));
     final String tango = properties.getProperty("tango.version");
-    @SuppressWarnings({"MagicCharacter", "dereference.of.nullable"})
+
+    @SuppressWarnings("MagicCharacter")
     final String tangoVersion = String.format("Tango: %s", tango.substring(0, tango.indexOf('-')));
     final JLabel label = new JLabel(String.format("%s   •   %s   •   %s", javaVersion, appVersion, tangoVersion));
     
     label.setHorizontalAlignment(SwingConstants.CENTER);
     final Font labelFont = label.getFont();
-    @SuppressWarnings("dereference.of.nullable")
     int textSize = labelFont.getSize();
     //noinspection MagicNumber
     label.setFont(labelFont.deriveFont(0.75f * textSize));
@@ -377,8 +366,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     buttons.add(edit, constrainer);
 //    buttons.add(importBtn);
 
-    @SuppressWarnings({"assignment", "dereference.of.nullable"})
-    @NonNull SwipeView<@NonNull RecordView<R>> sView = swipeView;
+    @NotNull SwipeView<@NotNull RecordView<R>> sView = swipeView;
     sView.assignMouseDownAction(prev, recordModel::goPrev, SwipeDirection.SWIPE_RIGHT);
     sView.assignMouseDownAction(next, recordModel::goNext, SwipeDirection.SWIPE_LEFT);
     first.addActionListener((e) -> sView.swipeRight(recordModel::goFirst));
@@ -408,19 +396,18 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
 
   private void doImport() {
 //    ImportDialog importDialog = new ImportDialog((Window) getRootPane().getParent(), controller.getDao());
-    @SuppressWarnings({"argument", "unchecked"})
+    @SuppressWarnings("unchecked")
     ImportDialog importDialog = ImportDialog.build(
         (Window) getRootPane().getParent(),
-        (RecordController<SiteRecord, Integer, @NonNull SiteField>) controller,
-        (RecordUI<@NonNull SiteField>) this
+        (RecordController<SiteRecord, Integer, @NotNull SiteField>) controller,
+        (RecordUI<@NotNull SiteField>) this
     );
     importDialog.setVisible(true);
   }
 
-//  @SuppressWarnings("method.invocation.invalid")
   private JPanel getSearchField() {
     JLabel findIcon = Resource.MAGNIFIER_16_PNG.createLabel();
-    RecordView.installStandardCaret(findField);
+    TangoUtils.installStandardCaret(findField);
     JPanel searchPanel = new JPanel(new BorderLayout());
     searchPanel.add(findIcon, BorderLayout.LINE_START);
     searchPanel.add(clearableTextField, BorderLayout.CENTER);
@@ -502,7 +489,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     construction completes, so it works fine. Very annoying that I need to do this, but it's a relatively clean
     solution.  
    */
-  private ParameterizedCallable<String, Collection<@NonNull R>> createCallable(@UnderInitialization RecordUI<R> this) {
+  private ParameterizedCallable<String, Collection<@NotNull R>> createCallable() {
     return new ParameterizedCallable<>(null) {
       // Originally, I didn't need to do this. Then I restructured the code to eliminate lots of other warnings, but
       // this warning had to come back. I can't make any sense out of the comment above, although I'm sure it was
@@ -510,15 +497,14 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
       // to suppress this warning. I don't understand why I had to replace the implicit parameter, but it may be because
       // I had restore all the implicit parameters after I stopped suppressing the method.invocation.invalid and 
       // argument.type.incompatible warnings on the constructor.
-      @SuppressWarnings("method.invocation.invalid")
       @Override
-      public Collection<@NonNull R> call(String inputData) {
+      public Collection<@NotNull R> call(String inputData) {
         return retrieveNow(inputData);
       }
     };
   }
   
-  private Collection<@NonNull R> retrieveNow(String text) {
+  private Collection<@NotNull R> retrieveNow(String text) {
     assert controller != null;
     assert searchFieldGroup != null;
     return controller.retrieveNow(searchFieldGroup.getSelected(), getSearchOption(), text);
@@ -541,8 +527,7 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     return searchOptionsPanel.isContentVisible() ? optionsGroup.getSelected() : SearchOption.findWhole;
   }
 
-  @SuppressWarnings("dereference.of.nullable") // controller is null when we call this, but not when we call the lambda.
-  private Consumer<Collection<@NonNull R>> createRecordConsumer(@UnderInitialization RecordUI<R>this) {
+  private Consumer<Collection<@NotNull R>> createRecordConsumer() {
     return records -> SwingUtilities.invokeLater(() -> controller.setFoundRecords(records));
   }
 
@@ -551,9 +536,9 @@ public final class RecordUI<R extends @NonNull Object> extends JPanel implements
     loadInfoLine();
   }
 
-  private void selectionChanged(@SuppressWarnings("unused") ButtonModel selectedButtonModel) { searchNow(); }
+  private void selectionChanged(ButtonModel selectedButtonModel) { searchNow(); }
   
-  private JToggleButton makeEditButton(@UnderInitialization RecordUI<R> this, JToggleButton.ToggleButtonModel model) {
+  private JToggleButton makeEditButton(JToggleButton.ToggleButtonModel model) {
     JToggleButton editButton = new JToggleButton(Resource.EDIT_PNG.getIcon());
     editButton.setRequestFocusEnabled(false);
     editButton.setModel(model);

@@ -37,10 +37,7 @@ import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
 import com.neptunedreams.skeleton.ui.LFSizeAdjuster;
 import com.neptunedreams.skeleton.ui.RecordUI;
 import com.neptunedreams.skeleton.ui.RecordView;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
-import org.checkerframework.checker.initialization.qual.UnknownInitialization;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Skeleton Key Application
@@ -115,11 +112,11 @@ public final class Skeleton
   done. I'm not sure how these two solutions should be integrated together.
    */
   
-  private final RecordUI<@NonNull SiteRecord> mainPanel;
+  private final RecordUI<@NotNull SiteRecord> mainPanel;
   //    org.jooq.util.JavaGenerator generator;
   public static final Preferences prefs = Preferences.userNodeForPackage(Skeleton.class);
-  private final @NonNull DatabaseInfo info;
-  private final @NonNull RecordController<SiteRecord, Integer, @NonNull SiteField> controller;
+  private final @NotNull DatabaseInfo info;
+  private final @NotNull RecordController<SiteRecord, Integer, @NotNull SiteField> controller;
   @SuppressWarnings("OverlyBroadThrowsClause")
   public static void main(String[] args) throws IOException, ClassNotFoundException {
     TangoUtils.installDarkLookAndFeel();
@@ -139,9 +136,9 @@ public final class Skeleton
     TangoUtils.replaceAllCarets(skeleton.mainPanel, StandardCaret::new);
   }
 
-  private static @MonotonicNonNull JFrame frame;
+  private static JFrame frame;
   
-  private static @NonNull Skeleton makeMainFrame(final boolean doImport, int delta) throws IOException, ClassNotFoundException {
+  private static @NotNull Skeleton makeMainFrame(final boolean doImport, int delta) throws IOException, ClassNotFoundException {
     LFSizeAdjuster.instance.setDelta(delta);
     Point priorLocation = null;
     if (frame != null) {
@@ -198,9 +195,9 @@ public final class Skeleton
     try {
       info.init();
       final ConnectionSource connectionSource = info.getConnectionSource();
-      Dao<SiteRecord, Integer, @NonNull SiteField> dao = info.getDao(SiteRecord.class, connectionSource);
+      Dao<SiteRecord, Integer, @NotNull SiteField> dao = info.getDao(SiteRecord.class, connectionSource);
       SiteRecord dummyRecord = new SiteRecord(0, "", "", "", "");
-      final RecordView<@NonNull SiteRecord> view = new RecordView.Builder<>(dummyRecord, SiteField.Source)
+      final RecordView<@NotNull SiteRecord> view = new RecordView.Builder<>(dummyRecord, SiteField.Source)
           .source  (SiteRecord::getSource,   SiteRecord::setSource)
           .id      (SiteRecord::getId,       SiteRecord::setId)
           .userName(SiteRecord::getUsername, SiteRecord::setUsername)
@@ -331,7 +328,7 @@ public final class Skeleton
 //  }
 //
   private static void importFromFile(
-      final Dao<? super SiteRecord, Integer, @NonNull SiteField> dao, 
+      final Dao<? super SiteRecord, Integer, @NotNull SiteField> dao, 
       RecordController<SiteRecord, Integer, ?> controller)
       throws SQLException, IOException, ClassNotFoundException {
     String exportPath = System.getProperty("user.home") + EXPORT_FILE;
@@ -345,8 +342,7 @@ public final class Skeleton
     controller.findTextAnywhere("", SearchOption.findWhole);
   }
 
-  @SuppressWarnings("unused")
-  private @NonNull SiteRecord recordConstructor(@UnderInitialization Skeleton this) {
+  private @NotNull SiteRecord recordConstructor() {
     return new SiteRecord(0, "", "", "", "");
   }
   
@@ -385,7 +381,7 @@ public final class Skeleton
     };
   }
 
-  private void shutDownDatabase(@UnknownInitialization Skeleton this, @NonNull DatabaseInfo databaseInfo) {
+  private void shutDownDatabase(@NotNull DatabaseInfo databaseInfo) {
     databaseInfo.shutdown();
   }
 }

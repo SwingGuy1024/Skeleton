@@ -1,14 +1,13 @@
 package com.neptunedreams.skeleton.data.derby;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collection;
-import com.neptunedreams.framework.data.ConnectionSource;
+
 import com.neptunedreams.framework.data.DatabaseInfo;
 import com.neptunedreams.skeleton.data.Record;
 import com.neptunedreams.skeleton.data.SiteField;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -18,9 +17,9 @@ import static org.junit.Assert.*;
  * <p>Date: 11/24/17
  * <p>Time: 3:43 PM
  *
- * @author Miguel Mu\u00f1oz
+ * @author Miguel Muñoz
  */
-@SuppressWarnings({"HardCodedStringLiteral", "StringConcatenation"})
+@SuppressWarnings({"HardCodedStringLiteral", "StringConcatenation", "unused"})
 public class DerbyRecordDaoTest {
 //  @Test
 //  @SuppressWarnings({"HardCodedStringLiteral", "unused", "HardcodedLineSeparator"})
@@ -86,9 +85,9 @@ public class DerbyRecordDaoTest {
     //noinspection HardcodedLineSeparator
     Record record1b = new Record("TestSite a", "testName a", "testPw a", "testNotes\nNote line 2\nNoteLine 3");
     dao.insert(record1b);
-    Collection<@NonNull ?> tInfo = dao.getTableInfo();
+    Collection<?> tInfo = dao.getTableInfo();
     System.out.printf("Total of %d objects%n", tInfo.size());
-    for (@NonNull Object o : tInfo) {
+    for (@NotNull Object o : tInfo) {
       System.out.println(o);
     }
   }
@@ -100,7 +99,7 @@ public class DerbyRecordDaoTest {
   }
 
   @Test
-  public void DaoInfoTest() throws SQLException, IOException {
+  public void DaoInfoTest() {
     DatabaseInfo info = new DerbyInfo();
 //    ensureHomeExists(info.getHomeDir());
     assertTrue("Home Dir doesn't exist!:" + info.getHomeDir(), new File(info.getHomeDir()).exists());

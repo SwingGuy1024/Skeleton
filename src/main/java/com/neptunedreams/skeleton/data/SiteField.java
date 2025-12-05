@@ -2,15 +2,14 @@ package com.neptunedreams.skeleton.data;
 
 import com.neptunedreams.framework.data.DBField;
 import com.neptunedreams.framework.ui.DisplayEnum;
-import org.checkerframework.checker.nullness.qual.KeyFor;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>Created by IntelliJ IDEA.
  * <p>Date: 11/22/17
  * <p>Time: 5:18 PM
  *
- * @author Miguel Mu\u00f1oz
+ * @author Miguel Muñoz
  */
 public enum SiteField implements DisplayEnum, DBField {
   ID,
@@ -36,7 +35,7 @@ public enum SiteField implements DisplayEnum, DBField {
   }
 
   @Override
-  public @NonNull String getDisplay() {
+  public @NotNull String getDisplay() {
     return toString();
   }
 }

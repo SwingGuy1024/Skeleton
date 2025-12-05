@@ -1,19 +1,19 @@
 package com.neptunedreams.skeleton.ui;
 
-import com.neptunedreams.framework.ui.TangoUtils;
-import org.jetbrains.annotations.Nullable;
-
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.net.URL;
+import java.util.EnumSet;
+import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.net.URL;
-import java.util.EnumSet;
-import java.util.Set;
+
+import com.neptunedreams.framework.ui.TangoUtils;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -52,7 +52,6 @@ enum Resource {
     };
   }
 
-  @SuppressWarnings("argument")
   public JButton createButton(@Nullable ActionListener actionListener) {
     Action action = createAction(actionListener);
     JButton button = new JButton(action);
@@ -67,16 +66,6 @@ enum Resource {
   
   public String getText() { return text; }
 
-//  private static final String ARROW_RIGHT_PNG = "arrow_right.png";
-//  private static final String ARROW_LEFT_PNG = "arrow_left.png";
-//  private static final String MAGNIFIER_16_PNG = "magnifier16.png";
-//  private static final String BIN_EMPTY_PNG = "bin_empty.png";
-//  private static final String BULLET_ADD_PNG = "bullet_add.png";
-//  private static final String ARROW_FIRST_PNG = "arrow_first.png";
-//  private static final String ARROW_LAST_PNG = "arrow_last.png";
-//  private static final String EDIT_PNG = "bullet_edit.png";
-//  private static final String TEXT_SIZE_PNG = "text_smallcaps.png";
-
   private static final Set<Resource> colorShiftImages = EnumSet.of(
       ARROW_FIRST_PNG,
       ARROW_LAST_PNG,
@@ -89,7 +78,6 @@ enum Resource {
   
   public Icon getIcon() { return getIcon(this); }
 
-  @SuppressWarnings("argument")
   private static Icon getIcon(Resource item) {
     URL resource = Resource.class.getResource(item.fileName);
     if (resource == null) {

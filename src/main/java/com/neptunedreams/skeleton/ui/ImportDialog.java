@@ -1,18 +1,5 @@
 package com.neptunedreams.skeleton.ui;
 
-import com.neptunedreams.framework.ui.RecordController;
-import com.neptunedreams.skeleton.data.SiteField;
-import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLayer;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.text.JTextComponent;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Window;
@@ -24,6 +11,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLayer;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.text.JTextComponent;
+
+import com.neptunedreams.framework.ui.RecordController;
+import com.neptunedreams.skeleton.data.SiteField;
+import com.neptunedreams.skeleton.gen.tables.records.SiteRecord;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>Created by IntelliJ IDEA.
@@ -34,7 +34,7 @@ import java.util.function.Consumer;
  */
 @SuppressWarnings("StringConcatenation")
 public final class ImportDialog extends JDialog {
-  private final RecordController<SiteRecord, Integer, @NonNull SiteField> controller;
+  private final RecordController<SiteRecord, Integer, @NotNull SiteField> controller;
 
   private @Nullable JTextComponent sourceField = null;
   private @Nullable JTextComponent usernameField = null;
@@ -43,8 +43,8 @@ public final class ImportDialog extends JDialog {
 
   private ImportDialog(
       Window parent,
-      RecordController<SiteRecord, Integer, @NonNull SiteField> controller,
-      RecordUI<@NonNull SiteField> recordUi
+      RecordController<SiteRecord, Integer, @NotNull SiteField> controller,
+      RecordUI<@NotNull SiteField> recordUi
     ) {
     super(parent, ModalityType.DOCUMENT_MODAL);
     this.controller = controller;
@@ -67,13 +67,10 @@ public final class ImportDialog extends JDialog {
     }
   }
 
-  @SuppressWarnings("argument") // this one makes no sense.
   private void findTextComponents(JComponent parent, Map<Object, Consumer<JTextComponent>> cMap) {
     for (Component c : parent.getComponents()) {
-      if (c instanceof JComponent) {
-        JComponent jc = (JComponent) c;
-        if (jc instanceof JTextComponent) {
-          JTextComponent jtc = (JTextComponent) jc;
+      if (c instanceof JComponent jc) {
+        if (jc instanceof JTextComponent jtc) {
           Object prop = jc.getClientProperty(RecordView.FIELD_NAME);
           if (cMap.containsKey(prop)) { // Suppressed warning: [argument] incompatible argument for parameter arg0 of Map.containsKey.
             cMap.get(prop).accept(jtc);
@@ -92,8 +89,8 @@ public final class ImportDialog extends JDialog {
   
   static ImportDialog build(
       Window parent,
-      RecordController<SiteRecord, Integer, @NonNull SiteField> controller,
-      RecordUI<@NonNull SiteField> recordUI
+      RecordController<SiteRecord, Integer, @NotNull SiteField> controller,
+      RecordUI<@NotNull SiteField> recordUI
   ) {
     ImportDialog importDialog = new ImportDialog(parent, controller, recordUI);
     importDialog.build();

@@ -1,8 +1,17 @@
 package com.neptunedreams.skeleton.ui;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.event.ItemEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.function.Consumer;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
@@ -15,17 +24,9 @@ import javax.swing.ListSelectionModel;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.event.ItemEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.function.Consumer;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>Tool to adjust the size of the fonts used in the file. I created this because on MS Windows, the text was a bit too small to read.
@@ -43,7 +44,7 @@ public enum LFSizeAdjuster {
   public static final int INITIAL_DEFAULT_FONT_SIZE = 13;
   private int delta = 0;
   private static final Set<Object> fontKeys = extractFontKeys();
-  private static final @NonNull Map<Object, Integer> defaultFontSizes = extractFontSizeMap(fontKeys);
+  private static final @NotNull Map<Object, Integer> defaultFontSizes = extractFontSizeMap();
 
   private final int defaultFontSize = getDefaultFontSize();
 
@@ -69,7 +70,6 @@ public enum LFSizeAdjuster {
       Integer fontSize = defaultFontSizes.get(key);
       int defaultSize = (fontSize == null) ? defaultFontSize : fontSize;
       float newSize = defaultSize + delta; // has to be a float to mean size when we call deriveFont()
-      @SuppressWarnings("dereference.of.nullable")
       Font revisedFont = font.deriveFont(newSize);
       defaults.put(key, revisedFont);
     }
@@ -92,13 +92,12 @@ public enum LFSizeAdjuster {
   }
 
   // Only gets created once.
-  private static Map<Object, Integer> extractFontSizeMap(Set<Object> fontKeys) {
+  private static Map<Object, Integer> extractFontSizeMap() {
     UIDefaults defaults = UIManager.getLookAndFeelDefaults();
-    Map<Object, @NonNull Integer> fontMap = new HashMap<>();
+    Map<Object, @NotNull Integer> fontMap = new HashMap<>();
     for (Object key: fontKeys) {
       Object value = defaults.get(key);
-      if (value instanceof Font) {
-        final Font theFont = (Font) value;
+      if (value instanceof Font theFont) {
         fontMap.put(key, theFont.getSize());
 //        System.out.printf("From %s, found %s %d point%n", key, theFont.getFamily(), theFont.getSize()); // NON-NLS
       }
@@ -106,6 +105,7 @@ public enum LFSizeAdjuster {
     return fontMap;
   }
 
+  @SuppressWarnings("unused")
   public JComponent createComboBox() {
     JPanel comboPanel = new JPanel();
     final BoxLayout layout = new BoxLayout(comboPanel, BoxLayout.LINE_AXIS);
@@ -136,8 +136,7 @@ public enum LFSizeAdjuster {
     return comboBox;
   }
 
-  private @NonNull ListCellRenderer<Object> getFontSizeRenderer() {
-//    @SuppressWarnings("unchecked")
+  private @NotNull ListCellRenderer<Object> getFontSizeRenderer() {
     return new BasicComboBoxRenderer() {
       @Override
       public Component getListCellRendererComponent(
@@ -151,7 +150,6 @@ public enum LFSizeAdjuster {
             = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         JLabel label = (JLabel) listCellRendererComponent;
         float size = firstWordToNumber(value.toString());
-        @SuppressWarnings("dereference.of.nullable")
         final Font font = label.getFont().deriveFont(size);
         label.setFont(font);
         return listCellRendererComponent;
@@ -159,7 +157,7 @@ public enum LFSizeAdjuster {
     };
   }
 
-  private @NonNull String[] getFontSizesArray() {
+  private @NotNull String[] getFontSizesArray() {
     final int max = 11;
     List<String> itemList = new ArrayList<>(max);
     for (int i=0; i<max; ++i) {

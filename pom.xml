@@ -19,19 +19,13 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.release>17</maven.compiler.release>
+    <!--<maven.compiler.release>17</maven.compiler.release>-->
 
     <!--  See https://maven.apache.org/maven-ci-friendly.html#Multi_Module_Setup  -->
-    <revision>1.0.6</revision>
+    <revision>2.0.0</revision>
     <changelist>-SNAPSHOT</changelist>
     <sha1/>
 
-    <!-- Reference: https://checkerframework.org/manual/#maven   -->
-    <!-- These properties will be set by the Maven Dependency plugin -->
-    <!--suppress UnresolvedMavenProperty, GradlePackageUpdate -->
-    <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
-    <!--suppress UnresolvedMavenProperty -->
-    <errorProneJavac>${com.google.errorprone:javac:jar}</errorProneJavac>
     <jooqVersion>3.12.3</jooqVersion>
 
     <!-- This is JAVA_HOME with the two last directories trimmed off. This is only used when bundling the JDK -->
@@ -41,7 +35,7 @@
     <iconFile>Earth_Neptune.icns</iconFile>
     <mainClass>com.neptunedreams.skeleton.Skeleton</mainClass>
     <appName>Skeleton</appName>
-    <tango.version>2.0.29-SNAPSHOT</tango.version>
+    <tango.version>3.0.0-SNAPSHOT</tango.version>
   </properties>
 
   <dependencies>
@@ -98,13 +92,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Annotations from the Checker Framework: nullness, interning, locking, ... -->
-    <dependency>
-      <groupId>org.checkerframework</groupId>
-      <artifactId>checker-qual</artifactId>
-      <version>3.39.0</version>
-    </dependency>
-
 <!-- Warning:(120, 5)  Provides transitive vulnerable dependency maven:org.codehaus.plexus:plexus-archiver:4.7.1 CVE-2023-37460 9.8 UNIX Symbolic Link (Symlink) Following vulnerability with high severity found  Results powered by Checkmarx(c)  -->
 <!-- So I commented this out. -->
 <!--    <dependency>-->
@@ -131,44 +118,7 @@
           <fork>true</fork>
           <source>17</source>
           <target>17</target>
-<!--          <compilerArguments>-->
-                <!-- JDK 8 only-->
-<!--            <Xmaxerrs>10000</Xmaxerrs>-->
-<!--            <Xmaxwarns>10000</Xmaxwarns>-->
-            <!--<AsuppressWarnings>uninitialized</AsuppressWarnings>-->
-<!--          </compilerArguments>-->
           <showWarnings>true</showWarnings>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>org.checkerframework</groupId>
-              <artifactId>checker</artifactId>
-              <version>3.39.0</version>
-            </path>
-          </annotationProcessorPaths>
-          <annotationProcessors>
-            <!-- Add all the checkers you want to enable here -->
-
-            <!-- Invoke the NullnessChecker at org.checkerframework.checker.nullness.NullnessChecker -->
-            <!-- There are probably other checkers we should invoke. -->
-            <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
-          </annotationProcessors>
-          <compilerArgs>
-            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
-            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
-            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
-            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
-            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
-            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
-            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
-            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
-            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
-
-            <!-- Optionally, -Awarns turns type-checking errors into warnings. -->
-            <!--<arg>-Awarns</arg>-->
-
-            <arg>-Astubs=nullness-stub/</arg>
-            <arg>-AstubWarnIfNotFound</arg>
-          </compilerArgs>
         </configuration>
       </plugin>
 
